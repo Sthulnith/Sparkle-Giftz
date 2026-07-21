@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import {
+  clearSession,
+  isAuthenticated,
+} from '../lib/auth';
 
 
 interface Product {
@@ -172,17 +177,19 @@ const DEFAULT_ORDERS: Order[] = [
 ];
 
 export const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [loginError, setLoginError] = useState<string>('');
-  
+  const navigate = useNavigate();
+
+  // ── Auth state ──────────────────────────────────────────────────────────────
+  const [authChecked, setAuthChecked] = useState<boolean>(false);
+  const [authed, setAuthed]           = useState<boolean>(false);
+  const [adminEmail, setAdminEmail]   = useState<string>('');
+
   // Dashboard Tabs
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'reviews'>('products');
 
   // Stateful Data
-  const [products, setProducts] = useState<Product[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts]           = useState<Product[]>([]);
+  const [orders, setOrders]               = useState<Order[]>([]);
   const [clientReviews, setClientReviews] = useState<ClientReview[]>([]);
 
   // Selected Item Modals
@@ -212,13 +219,7 @@ export const Admin = () => {
     images: []
   });
 
-  // Check login session & seed localStorage
-  useEffect(() => {
-    const authStatus = localStorage.getItem('sparkle_admin_auth');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    }
-
+  const loadData = useCallback(() => {
     // Seed products
     const storedProducts = localStorage.getItem('sparkle_products');
     if (storedProducts) {
@@ -267,22 +268,27 @@ export const Admin = () => {
     }
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email === 'admin@sparklegiftz.com' && (password === 'admin' || password === 'admin123')) {
-      localStorage.setItem('sparkle_admin_auth', 'true');
-      setIsAuthenticated(true);
-      setLoginError('');
-    } else {
-      setLoginError('Invalid credentials. Please try again.');
-    }
-  };
+  // ── Session check on mount ───────────────────────────────────────────────────
+  useEffect(() => {
+    isAuthenticated().then((ok) => {
+      setAuthed(ok);
+      setAuthChecked(true);
+      if (!ok) {
+        navigate('/login?expired=1', { replace: true });
+        return;
+      }
+      setAdminEmail('admin@sparklegiftz.com');
+      loadData();
+    });
+  }, [navigate, loadData]);
 
+  // ── Logout handler ───────────────────────────────────────────────────────────
   const handleLogout = () => {
-    localStorage.removeItem('sparkle_admin_auth');
-    setIsAuthenticated(false);
-    setEmail('');
-    setPassword('');
+    clearSession();
+    sessionStorage.removeItem('sg_api_token');
+    setAuthed(false);
+    setAdminEmail('');
+    navigate('/login', { replace: true });
   };
 
   // Review Image Upload Handler
@@ -462,63 +468,18 @@ export const Admin = () => {
     }
   };
 
-  if (!isAuthenticated) {
+  // ── Session check spinner ───────────────────────────────────────────────────
+  if (!authChecked || !authed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-        <div className="max-w-md w-full space-y-8 gold-gradient-border bg-charcoal p-8 rounded-lg shadow-gold-glow transition-all duration-300">
-          <div className="text-center">
-            <img src={logo} alt="Sparkle Giftz Logo" className="h-16 w-auto mx-auto object-contain mb-4" />
-            <h2 className="font-serif text-3xl text-gold tracking-widest uppercase mb-2">SPARKLE GIFTZ</h2>
-            <p className="text-xs font-sans uppercase tracking-[0.2em] text-muted">Admin Portal Access</p>
-          </div>
-
-          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-            {loginError && (
-              <div className="bg-red-950/40 border border-red-500/30 text-red-200 text-sm px-4 py-3 rounded text-center">
-                {loginError}
-              </div>
-            )}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-muted mb-2 font-medium">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="concierge@sparklegiftz.com"
-                  className="w-full bg-background border border-gold/25 p-3 rounded text-ivory placeholder-muted/50 focus:border-gold outline-none transition duration-200"
-                />
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-muted mb-2 font-medium">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-background border border-gold/25 p-3 rounded text-ivory placeholder-muted/50 focus:border-gold outline-none transition duration-200"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 bg-gold hover:bg-gold-light text-background font-medium font-sans uppercase tracking-widest text-xs rounded transition-all duration-300 shadow-gold-glow hover:shadow-gold-glow-hover active:scale-98"
-            >
-              Sign In
-            </button>
-          </form>
-
-          <div className="pt-4 border-t border-gold/10 text-center text-[10px] text-muted tracking-wider leading-relaxed">
-            <p>Authorized access only. Credential hints:</p>
-            <p className="text-gold mt-1 font-mono">admin@sparklegiftz.com / admin123</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+          <p className="text-xs text-muted uppercase tracking-widest font-sans">Verifying session…</p>
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-background py-10 px-4 md:px-8">
@@ -536,7 +497,7 @@ export const Admin = () => {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-xs text-muted">Signed in as</p>
-              <p className="text-sm text-gold font-medium">admin@sparklegiftz.com</p>
+              <p className="text-sm text-gold font-medium">{adminEmail}</p>
             </div>
             <button
               onClick={handleLogout}

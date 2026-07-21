@@ -9,6 +9,9 @@ import { Checkout } from './pages/Checkout';
 import { Reviews } from './pages/Reviews';
 import { Contact } from './pages/Contact';
 import { Admin } from './pages/Admin';
+import { Login } from './pages/Login';
+import { MyOrders } from './pages/MyOrders';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Policies } from './pages/Policies';
 import logo from './assets/logo.png';
 
@@ -31,8 +34,8 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
   return (
     <>
       {/* Sticky Header */}
-      <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-gold/15 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-gold/20 transition-all duration-300 shadow-[0_2px_20px_rgba(212,175,55,0.08)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center">
           
           {/* Mobile Hamburger Menu Icon (☰) matching Image 2 */}
           <button
@@ -45,9 +48,9 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
           </button>
 
           {/* Brand Logo & Title */}
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
-            <img src={logo} alt="Sparkle Giftz Logo" className="h-8 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
-            <span className="text-xs sm:text-xl font-serif tracking-[0.1em] sm:tracking-[0.2em] gold-sparkle-text">
+          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
+            <img src={logo} alt="Sparkle Giftz Logo" className="h-11 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
+            <span className="text-base sm:text-2xl font-serif font-bold tracking-[0.15em] sm:tracking-[0.22em] gold-sparkle-text" style={{ textShadow: '0 0 18px rgba(212,175,55,0.55), 0 1px 4px rgba(0,0,0,0.6)' }}>
               {["S", "P", "A", "R", "K", "L", "E", "\u00A0", "G", "I", "F", "T", "Z"].map((char, index) => (
                 <span
                   key={index}
@@ -79,8 +82,8 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
                 </span>
               )}
             </Link>
-            <Link to="/admin" className="hover:text-gold transition duration-200 flex items-center">
-              <span className="material-symbols-outlined text-2xl">admin_panel_settings</span>
+            <Link to="/login" className="hover:text-gold transition duration-200 flex items-center">
+              <span className="material-symbols-outlined text-2xl">person</span>
             </Link>
           </div>
         </div>
@@ -177,7 +180,7 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
                   <span className="material-symbols-outlined text-xs text-gold/50">chevron_right</span>
                 </Link>
                 <Link
-                  to="/admin"
+                  to="/login"
                   onClick={() => setIsMenuOpen(false)}
                   className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between"
                 >
@@ -263,7 +266,9 @@ function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin"     element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="/login"     element={<Login />} />
+              <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/policies" element={<Policies />} />
             </Routes>
           </main>
