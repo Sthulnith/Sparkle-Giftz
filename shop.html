@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Shop | Sparkle Giftz</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Design System Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#aaa69d",
+                    "outline-variant": "#4d4635",
+                    "inverse-primary": "#755b00",
+                    "inverse-on-surface": "#313030",
+                    "primary-container": "#c9a227",
+                    "inverse-surface": "#e5e2e1",
+                    "on-primary-container": "#4b3a00",
+                    "on-background": "#e5e2e1",
+                    "on-primary": "#3d2e00",
+                    "error": "#ffb4ab",
+                    "on-primary-fixed": "#241a00",
+                    "surface-container": "#20201f",
+                    "error-container": "#93000a",
+                    "on-tertiary-container": "#3e3c35",
+                    "surface-container-low": "#1c1b1b",
+                    "tertiary": "#cac6bd",
+                    "surface-variant": "#353535",
+                    "on-tertiary-fixed-variant": "#494740",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#0e0e0e",
+                    "background": "#131313",
+                    "surface-container-high": "#2a2a2a",
+                    "primary-fixed": "#ffe08e",
+                    "surface": "#131313",
+                    "surface-dim": "#131313",
+                    "tertiary-fixed-dim": "#cac6bd",
+                    "on-secondary-container": "#bab8b7",
+                    "surface-tint": "#ecc246",
+                    "on-secondary": "#313030",
+                    "on-surface": "#e5e2e1",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-surface-variant": "#d1c5af",
+                    "on-error": "#690005",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-bright": "#393939",
+                    "on-tertiary": "#32302a",
+                    "secondary": "#c9c6c5",
+                    "on-tertiary-fixed": "#1d1c16",
+                    "outline": "#99907b",
+                    "primary-fixed-dim": "#ecc246",
+                    "secondary-container": "#4a4949",
+                    "primary": "#ecc246",
+                    "on-primary-fixed-variant": "#584400",
+                    "surface-container-highest": "#353535",
+                    "on-secondary-fixed-variant": "#474646",
+                    "tertiary-fixed": "#e7e2d8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-mobile": "24px",
+                    "container-max": "1280px",
+                    "gutter": "32px",
+                    "margin-desktop": "80px",
+                    "section-gap": "120px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Playfair Display"],
+                    "label-caps": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg-mobile": ["Playfair Display"],
+                    "headline-md": ["Playfair Display"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.2em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .gold-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #c9a227, transparent);
+        }
+        .gold-border-gradient {
+            border: 1px solid rgba(201, 162, 39, 0.3);
+        }
+        .product-card:hover .gold-border-gradient {
+            border-color: #ecc246;
+            box-shadow: 0px 0px 15px rgba(212, 175, 55, 0.2);
+        }
+        .nav-blur {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-20 max-w-container-max mx-auto left-0 right-0 bg-background/90 backdrop-blur-md border-b border-primary/30">
+<div class="flex items-center gap-8">
+<a class="font-display-lg text-headline-md text-primary tracking-tighter" href="index.html">Sparkle Giftz</a>
+<div class="hidden md:flex gap-6">
+<a class="text-on-surface-variant font-label-caps hover:text-primary transition-colors duration-300" href="index.html">HOME</a>
+<a class="text-primary font-semibold border-b border-primary pb-1 font-label-caps" href="shop.html">SHOP</a>
+<a class="text-on-surface-variant font-label-caps hover:text-primary transition-colors duration-300" href="reviews.html">REVIEWS</a>
+<a class="text-on-surface-variant font-label-caps hover:text-primary transition-colors duration-300" href="reviews.html#contact-section">CONTACT</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-transform active:scale-95">search</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-transform active:scale-95">person</button>
+<a href="cart.html" class="relative block text-on-surface-variant hover:text-primary transition-colors active:scale-95 transition-transform">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="cart-badge absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+</a>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="pt-32 pb-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<!-- Breadcrumb & Header -->
+<div class="mb-12">
+<nav class="mb-4 flex items-center text-label-caps text-on-surface-variant/60 gap-2">
+<a class="hover:text-primary transition-colors" href="#">Home</a>
+<span class="text-[10px]">/</span>
+<span class="text-primary">Shop</span>
+</nav>
+<div class="text-center">
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface mb-4">The Collection</h1>
+<div class="flex justify-center items-center gap-4">
+<div class="w-10 h-[1px] bg-primary/40"></div>
+<div class="w-1 h-1 bg-primary rotate-45"></div>
+<div class="w-10 h-[1px] bg-primary/40"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-gutter">
+<!-- Sidebar Filters -->
+<aside class="space-y-10">
+<!-- Categories -->
+<div>
+<h3 class="font-label-caps text-primary mb-6">Product Categories</h3>
+<ul class="space-y-4 font-body-md text-on-surface-variant">
+<li class="flex justify-between items-center group cursor-pointer hover:text-primary transition-colors">
+<span>Luxury Hampers</span>
+<span class="text-xs opacity-40 group-hover:opacity-100">(24)</span>
+</li>
+<li class="flex justify-between items-center group cursor-pointer hover:text-primary transition-colors">
+<span>Business Gifts</span>
+<span class="text-xs opacity-40 group-hover:opacity-100">(18)</span>
+</li>
+<li class="flex justify-between items-center group cursor-pointer hover:text-primary transition-colors">
+<span>Seasonal Sets</span>
+<span class="text-xs opacity-40 group-hover:opacity-100">(12)</span>
+</li>
+<li class="flex justify-between items-center group cursor-pointer hover:text-primary transition-colors">
+<span>Newborn Collection</span>
+<span class="text-xs opacity-40 group-hover:opacity-100">(08)</span>
+</li>
+</ul>
+<div class="gold-divider mt-8"></div>
+</div>
+<!-- Occasions -->
+<div>
+<h3 class="font-label-caps text-primary mb-6">Occasions</h3>
+<div class="flex flex-wrap gap-2">
+<button class="px-3 py-1 text-[11px] font-label-caps border border-primary/20 hover:border-primary text-on-surface-variant hover:text-primary transition-all">ANNIVERSARY</button>
+<button class="px-3 py-1 text-[11px] font-label-caps border border-primary/20 hover:border-primary text-on-surface-variant hover:text-primary transition-all">WEDDING</button>
+<button class="px-3 py-1 text-[11px] font-label-caps border border-primary/20 hover:border-primary text-on-surface-variant hover:text-primary transition-all">BIRTHDAY</button>
+<button class="px-3 py-1 text-[11px] font-label-caps border border-primary/20 hover:border-primary text-on-surface-variant hover:text-primary transition-all">GRADUATION</button>
+<button class="px-3 py-1 text-[11px] font-label-caps border border-primary/20 hover:border-primary text-on-surface-variant hover:text-primary transition-all">HOUSEWARMING</button>
+</div>
+<div class="gold-divider mt-8"></div>
+</div>
+<!-- Price Slider -->
+<div>
+<h3 class="font-label-caps text-primary mb-6">Price Range</h3>
+<div class="px-2">
+<input class="w-full h-1 bg-surface-variant appearance-none cursor-pointer accent-primary" max="1000" min="50" step="50" type="range"/>
+<div class="flex justify-between mt-4 text-xs font-label-caps text-on-surface-variant">
+<span>$50</span>
+<span>$1,000+</span>
+</div>
+</div>
+<div class="gold-divider mt-8"></div>
+</div>
+<!-- Color Swatches -->
+<div>
+<h3 class="font-label-caps text-primary mb-6">Signature Colors</h3>
+<div class="flex gap-3">
+<button class="w-6 h-6 rounded-full bg-primary border border-white/20 hover:scale-110 transition-transform" title="Gold"></button>
+<button class="w-6 h-6 rounded-full bg-black border border-white/20 hover:scale-110 transition-transform" title="Midnight"></button>
+<button class="w-6 h-6 rounded-full bg-[#f4f1ea] border border-black/10 hover:scale-110 transition-transform" title="Ivory"></button>
+<button class="w-6 h-6 rounded-full bg-[#3d332d] border border-white/20 hover:scale-110 transition-transform" title="Mocha"></button>
+</div>
+</div>
+</aside>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-12 gap-x-gutter">
+<!-- Product 1: Corporate Box -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A luxury corporate gift box with professional branding, containing high-end leather accessories, a metallic pen, and gourmet chocolates, presented on a dark textured background with dramatic warm spotlighting in a high-end boutique style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2WToeac7WMGZtCP9GBaJbwhx6dCRdszBFQiHnyOES54zESE_ToDF21132vNfvhsY4oCl1R18Eqnca-Rv7gGsKAXY5oGk0_YB8xCxby72qdZUciY61cVNBhwtSbfeuUMCgpwKpCbZXEmyoeSwA7MDJYif3cHMHtUm7JI7rTzUJKWPMBygxzC5Ojez9O8fShvqXvNGCa5PQFep-BqvuB9sx-_v2yhrlSa_XrtmyEEubc5hqYmp-xshL7wzTBdNcHh878O3v7w2y8sk"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">ADD TO CART</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Executive Corporate Suite</h2>
+<p class="text-primary mt-2 font-semibold">$245.00</p>
+</article>
+<!-- Product 2: Baby Hamper -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A premium baby welcome hamper featuring organic cotton clothing in ivory, a soft handcrafted wooden rattle, and luxury skincare products for mother and baby, styled with silk ribbons and gold metallic accents in a dark, sophisticated room." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4XGMONTCvtpttFw5vYSjn1h96Ll5uIq8SghAg0W4ymEbtFJfGd-tZzuwzGCMQ5Rt7fmT-NjTvydWK2PyC9OAAOTPwwvtIrpsBlvHHP_VAA-AshMqdiP7tQ-RctPnhc0ME6jG8PcVEqCQ32YuwDYt9JHaVJH7v0AHStqadbAp6pRtRlr2q4qQZ8tqx0J9pVXCVveVA42DKAbd4bKbdUQcvrcJ5q2VEx34htMgVBLPFbbPGuAIg4-JdvPrgl5PFZ-7WRK8Cn_wHwWs"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">SELECT OPTIONS</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Petite Royal Welcome</h2>
+<p class="text-primary mt-2 font-semibold">$180.00</p>
+</article>
+<!-- Product 3: Anniversary Luxe -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="An opulent anniversary gift box overflowing with deep red velvet roses, a bottle of vintage champagne, and gold-foiled artisanal truffles, set against a dark cavernous background with light reflecting off metallic gold edges." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDITkJ_KDCBSbu8bw4szgpKRWgaKPqOQuNgmCYxqWTCQUr-mqeazrmZeWo_L-xd1tTmY5pxJDcb2N86MlLyu_jdCRRa5Ygw3O6vBd8bR-wZV8zI7nOpow1H29TjK5agQ8CbdrtnnfQ9WL9aGYZuGQVk_ZnVfPCAJxSDm0xRohUnvoBV0jjLGEjQBqT00GRjM-svlsiFip6xdbEEkry03Xk0ZNo0ZkqIFexJkXDzIdz0QRzJlbT7yR9NCpyfZngtTVn_q3me1pp2Khs"/>
+<div class="absolute inset-0 bg-background/60 flex items-center justify-center opacity-100">
+<span class="border border-primary/60 px-6 py-2 font-label-caps text-primary tracking-[0.3em] bg-background/40 backdrop-blur-sm">OUT OF STOCK</span>
+</div>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Golden Anniversary Grandeur</h2>
+<p class="text-primary mt-2 font-semibold">$450.00</p>
+</article>
+<!-- Product 4: Wellness Retreat -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A sophisticated wellness gift box containing a silk eye mask, artisanal scented candle in a gold glass jar, and botanical bath oils, arranged meticulously on a dark slate surface with soft golden glow highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWsyboXWxcIgctJEk4J841zweEjr5NBWFPfF6YootHamw_azdUxgH5tSrsQQlINcIQFC1zcqDqmDVa_MCrW_U-Q-Z-39S_P0ti2a6kdOyFbam0vtf-DSn3x1hXFiglNh5vB-YHJPBg9PaQUBkX6m2nqixUAXlsTaqncxuuCaRHw1JSFNbgj7GvVx0qaFSjBvBM06hywl7zGVdc98iIqBjsco7gHMA8j32PF9rRH5WDbzlJX7rNzXeR42cROPIMX_2-CYeNE6uTqLg"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">ADD TO CART</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Midnight Serenity Ritual</h2>
+<p class="text-primary mt-2 font-semibold">$135.00</p>
+</article>
+<!-- Product 5: Connoisseur's Choice -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A dark wood presentation case holding a set of crystal whiskey glasses and a variety of rare coffee beans, accented by thin gold hairlines and atmospheric lighting in a luxury atelier aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5bcXdVFIMKttNXWFwAvy9bZq_kcHTlgSdYLvWvzIRA_8O6JnGJqGPl8tZakyVb_W2ebtlDwNQLWwtPa2-Udint8h_p9SQR2MSwx-joR43DtLYp-MCCg-OqD1tTggdMDIaC3Tc5-KAbO35hZIoR36jK9PIIgbod3_gsKvgc0V7XiA84shrwhvSBsptldayhxUyqu1gzDmM-olqFUhU5gqloq8ckn9y4eybvK4VyF-h_R_O5ps7Un3ZjFhg3AnaCJUsyZs88bwmenk"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">SELECT OPTIONS</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">The Modern Connoisseur</h2>
+<p class="text-primary mt-2 font-semibold">$310.00</p>
+</article>
+<!-- Product 6: Wedding Toast -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="An elegant white and gold wedding gift box with satin lining, containing twin champagne flutes with gold rims and a personalized leather-bound guestbook, captured in a bright yet moody high-contrast lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlSM3vtkQEWHAIOfLdkU7kAMcd6opBz7QmRNtDFAc7H0kVanK5G5rHCB1IIa5uBlNOgOmxoHs6MKeT14W1a7qN-cjUvbBz3VNO4B69z95Og6Be8vcZc22Zxfo6k-WbM2_7B0eXEOTyAjnh_yuPS7tf_vQBgXeZVXfvZ07FBGQn_FUO4KQYURCfbLijseiwwlBzBL--Ge3TpibHerBH8UM11U8ShzWYZJt_LvZmM-i5VYUC-8WC-jj27vv0fXVAT6LOORV5F7QYJDA"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">ADD TO CART</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Vows &amp; Vintage Toast</h2>
+<p class="text-primary mt-2 font-semibold">$220.00</p>
+</article>
+<!-- Product 7: Gourmet Explorer -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A black matte gift box with gold leaf detailing, filled with exotic spices, aged balsamic, and artisanal pastas, professionally lit to emphasize textures and quality in a high-end designer style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDR7jZGe2JjZaPrz6qxK9aLWSO6eFgCnGFCngUR443uz2gC72r4nkqIg3mY1FSMtzU1OMJEK8UrWxj6Z7NaFMP1Sqot_fUCjRtFe0rmrphSlkbYR0pnNGsdPrmvUpIUpu7-XFmD-OmVpdk8pKRwA9kJeT67Qgt6M-Q_1CwsSxbBQfGlEvRgq62AxnFELiDtNeBj1NDq1iaMgSlZ7Y2unVf_ce-ggRi_7AqfuZ6xrXIlOURJlRQ08xLkq2VIavWL6_A_M4I0xJd1_U"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">ADD TO CART</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Epicurean Global Voyage</h2>
+<p class="text-primary mt-2 font-semibold">$195.00</p>
+</article>
+<!-- Product 8: Garden Bloom -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A lifestyle gift set for the garden lover, including gold-finished gardening tools, premium seeds in designer packets, and a ceramic planter, styled on dark stone with greenery accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq-6mdymCV1WIaRz_12BvDt51N8GBdhGSmmECuNaLei-XiE-mDjorak-GWvsch-U39zpV0QOLa2D5FOTE33cdpZjwAxKmiwRH7cumA9JCvEkdGQsZJN7L22pTT11CXCSY8B4WfZBrLRbNnVGck2O6o1gLPZFr7cu7YqeRcLM4XhrawQzjgZ9wfZdEeruWrEyYe1JpZvN6J8E8HR6U4Sthq593YMFwmoLpqCNGmG5HbpWV2pp1JlhHG3LeM1xVQlV9NzM_4I1oGllE"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">SELECT OPTIONS</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Artisanal Garden Retreat</h2>
+<p class="text-primary mt-2 font-semibold">$165.00</p>
+</article>
+<!-- Product 9: Luxe Stationary -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A premium stationary box featuring a heavy brass paperweight, gold-embossed notebooks, and luxury ink pens, set in a dark minimalist office environment with sharp lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzXoKCI8FUK_HybRcE2qqR28YcPvBf0Kg-5df__itiYCxHuS9j3L0jGb0thHFJMq17EHjlCaKif9V7rRUQYiTWEjwOSIRD36cuXCuolkhCUcHZ8Yuzb6dr-lM__fYfvFMxvo0ze_KlEf4KD1Dmc4HM4iP6gKloMYMUDlPMps6ZMcawxRQeqdZ6-9Welx-agEzZasgZyKT_xt7-5_ydYaVVVhZ6rtc6KvHsBUOQO_WsAroGSP6GbsHVLBw5LgnP1RFn6twQuUaeUeQ"/>
+<div class="absolute inset-0 bg-background/60 flex items-center justify-center opacity-100">
+<span class="border border-primary/60 px-6 py-2 font-label-caps text-primary tracking-[0.3em] bg-background/40 backdrop-blur-sm">OUT OF STOCK</span>
+</div>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">The Writer's Signature</h2>
+<p class="text-primary mt-2 font-semibold">$110.00</p>
+</article>
+<!-- Product 10: Celebration Spark -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A celebration box featuring sparkling gold confetti, high-end party crackers, and a selection of mini spirit bottles, captured with motion-blurred light particles for a festive luxury feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlXhqS0V4Sj6Gc6fKIW2CBijxHN3tErOkMU-J6QL99hKsrcIvDS9iC-Q5YoDm6MHytzNGHCfw3SyYaqqSJeeAKiIDO9nAzczWFjK9cBAC3oJW6QiBqh0y1Gbdu_eRe5obY3CSmgFFBiOPIFSw62kZCD4PZngY9ym4_hCLsEFTPNNzu3Md8GPIa-yDL0YXB0MW3Xj2_pmRMKRxnw3WR9ZpGUvOSrmRcEEHnAmHXXR0yWF5MnE4edDuWsLNIit1s15CgNqqDzUf2eqY"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">ADD TO CART</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Midnight Celebration Spark</h2>
+<p class="text-primary mt-2 font-semibold">$95.00</p>
+</article>
+<!-- Product 11: Home Sanctuary -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A luxury home fragrance set with a large diffuser, soy candle, and room mist in dark glass bottles with gold labels, arranged on a marble tray in a dark premium interior." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC99sLB5G6QbTEH31GEpr4TRBrlu6hb0UzOuaIRpUs8mVBKbhvzGQlC1duyrtg-HmRCbK0TwS1A65BM0vkpztGkL5_s3L0LdoWi21VzmYV78hjcQK7WRMeVB92leOhnEaAXfQZTSeUFYgDE35ntPhPsGW9iCx7-lLhKNy-xDGnJif6gQvHAES9lPBk1NeiXVGsLiOACQ-YmpgBMnKS7ElclOZJEYCf-ddckMCPVldRtUfs8LJ45QZTKiv4Xk4iXvoBhkBHfBmJ4mvc"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">ADD TO CART</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Celestial Home Sanctuary</h2>
+<p class="text-primary mt-2 font-semibold">$140.00</p>
+</article>
+<!-- Product 12: New Beginnings -->
+<article class="product-card group flex flex-col h-full">
+<div class="relative aspect-[4/5] overflow-hidden gold-border-gradient bg-surface-container-low mb-6">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A housewarming gift hamper with a luxury woven throw, artisanal salt and pepper mills, and a bottle of extra virgin olive oil, presented in a minimalist dark wicker basket with gold ribbons." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlJL93LYXeU3dnt5zdCp2Bf5DigqKU5SkuVH6CMoZD3mxS9FmDfaWP_HdVxPMseEFdwWFdXVD3r2CLttoyASrOWxuryICP_NkjfiVWEoZZLXaxuRGALwOzrX_eFyM2l_oeP7PPHbbx0NXNmiWi_1OSbA1S9n9HJZrKITwjNDhGEh5i7Mo-BDBNgczDq3hoS2_SLgDvCnlnOGVtkI-pE-up0cWUO3HIWk5DgMWD2WdccIE0g0gKLPwAyEkD_WYSJZ2Jd8zkxST-xFQ"/>
+<button class="absolute bottom-0 left-0 w-full py-4 bg-background/80 backdrop-blur-md text-primary font-label-caps translate-y-full group-hover:translate-y-0 transition-transform duration-300">SELECT OPTIONS</button>
+</div>
+<h2 class="font-headline-md text-on-surface text-xl group-hover:text-primary transition-colors">Modern Hearth &amp; Home</h2>
+<p class="text-primary mt-2 font-semibold">$275.00</p>
+</article>
+</div>
+</div>
+<!-- Pagination -->
+<div class="mt-20 flex justify-center items-center gap-6 font-label-caps text-on-surface-variant">
+<button class="hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span> PREV
+            </button>
+<div class="flex gap-4">
+<span class="text-primary border-b border-primary">01</span>
+<span class="hover:text-primary cursor-pointer transition-colors">02</span>
+<span class="hover:text-primary cursor-pointer transition-colors">03</span>
+</div>
+<button class="hover:text-primary transition-colors flex items-center gap-2">
+                NEXT <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap px-margin-mobile md:px-margin-desktop grid grid-cols-1 md:grid-cols-4 gap-gutter border-t border-primary/30">
+<div class="space-y-6">
+<h2 class="font-display-lg text-headline-md text-primary">Sparkle Giftz</h2>
+<p class="text-on-surface-variant text-body-md max-w-xs">Curating moments of prestige and exclusivity through the art of luxury gifting.</p>
+</div>
+<div class="space-y-6">
+<h3 class="font-label-caps text-primary">Brand Info</h3>
+<ul class="space-y-3 font-body-md text-on-surface-variant">
+<li><a class="hover:text-primary transition-colors" href="#">Our Story</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Craftsmanship</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Sustainability</a></li>
+</ul>
+</div>
+<div class="space-y-6">
+<h3 class="font-label-caps text-primary">Quick Links</h3>
+<ul class="space-y-3 font-body-md text-on-surface-variant">
+<li><a class="hover:text-primary transition-colors" href="#">Bespoke Services</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Corporate Gifting</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Gift Cards</a></li>
+</ul>
+</div>
+<div class="space-y-6">
+<h3 class="font-label-caps text-primary">Stay Connected</h3>
+<div class="flex flex-col gap-4">
+<p class="text-on-surface-variant text-body-md">Join our private circle for exclusive updates.</p>
+<div class="flex border-b border-primary/30 pb-2">
+<input class="bg-transparent border-none focus:ring-0 text-on-surface w-full font-body-md" placeholder="Email Address" type="email"/>
+<button class="material-symbols-outlined text-primary">arrow_forward</button>
+</div>
+</div>
+<div class="flex gap-4 pt-4">
+<a class="w-10 h-10 flex items-center justify-center border border-primary/20 hover:border-primary text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">share</span>
+</a>
+<a class="w-10 h-10 flex items-center justify-center border border-primary/20 hover:border-primary text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">chat</span>
+</a>
+</div>
+</div>
+<div class="col-span-1 md:col-span-4 pt-12 flex flex-col md:flex-row justify-between items-center text-label-caps text-on-surface-variant/40 gap-6">
+<p>© 2024 Sparkle Giftz. All Rights Reserved.</p>
+<div class="flex gap-8">
+<a class="hover:text-primary transition-colors" href="#">PRIVACY POLICY</a>
+<a class="hover:text-primary transition-colors" href="#">TERMS OF SERVICE</a>
+<a class="hover:text-primary transition-colors" href="#">COOKIE POLICY</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions and effects
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const img = card.querySelector('img');
+                if (img) img.style.transition = 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)';
+            });
+        });
+
+        // Sticky Nav logic
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 20) {
+                nav.classList.add('nav-blur', 'h-16');
+                nav.classList.remove('h-20');
+            } else {
+                nav.classList.remove('nav-blur', 'h-16');
+                nav.classList.add('h-20');
+            }
+        });
+    </script>
+<script src="cart.js"></script>
+</body></html>

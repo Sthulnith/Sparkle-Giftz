@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reviews &amp; Contact | Sparkle Giftz</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#aaa69d",
+                    "outline-variant": "#4d4635",
+                    "inverse-primary": "#755b00",
+                    "inverse-on-surface": "#313030",
+                    "primary-container": "#c9a227",
+                    "inverse-surface": "#e5e2e1",
+                    "on-primary-container": "#4b3a00",
+                    "on-background": "#e5e2e1",
+                    "on-primary": "#3d2e00",
+                    "error": "#ffb4ab",
+                    "on-primary-fixed": "#241a00",
+                    "surface-container": "#20201f",
+                    "error-container": "#93000a",
+                    "on-tertiary-container": "#3e3c35",
+                    "surface-container-low": "#1c1b1b",
+                    "tertiary": "#cac6bd",
+                    "surface-variant": "#353535",
+                    "on-tertiary-fixed-variant": "#494740",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#0e0e0e",
+                    "background": "#131313",
+                    "surface-container-high": "#2a2a2a",
+                    "primary-fixed": "#ffe08e",
+                    "surface": "#131313",
+                    "surface-dim": "#131313",
+                    "tertiary-fixed-dim": "#cac6bd",
+                    "on-secondary-container": "#bab8b7",
+                    "surface-tint": "#ecc246",
+                    "on-secondary": "#313030",
+                    "on-surface": "#e5e2e1",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-surface-variant": "#d1c5af",
+                    "on-error": "#690005",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-bright": "#393939",
+                    "on-tertiary": "#32302a",
+                    "secondary": "#c9c6c5",
+                    "on-tertiary-fixed": "#1d1c16",
+                    "outline": "#99907b",
+                    "primary-fixed-dim": "#ecc246",
+                    "secondary-container": "#4a4949",
+                    "primary": "#ecc246",
+                    "on-primary-fixed-variant": "#584400",
+                    "surface-container-highest": "#353535",
+                    "on-secondary-fixed-variant": "#474646",
+                    "tertiary-fixed": "#e7e2d8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-mobile": "24px",
+                    "container-max": "1280px",
+                    "gutter": "32px",
+                    "margin-desktop": "80px",
+                    "section-gap": "120px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Playfair Display"],
+                    "label-caps": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg-mobile": ["Playfair Display"],
+                    "headline-md": ["Playfair Display"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.2em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body {
+            background-color: #0d0d0d;
+            color: #e5e2e1;
+            scroll-behavior: smooth;
+        }
+
+        .gold-border {
+            border: 1px solid rgba(201, 162, 39, 0.3);
+        }
+
+        .gold-border-bottom {
+            border-bottom: 1px solid rgba(201, 162, 39, 0.3);
+        }
+
+        .gold-gradient-bg {
+            background: linear-gradient(135deg, #c9a227 0%, #ecc246 50%, #c9a227 100%);
+        }
+
+        .section-divider {
+            height: 1px;
+            width: 100%;
+            background: linear-gradient(90deg, transparent 0%, #c9a227 50%, transparent 100%);
+        }
+
+        .diamond-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .diamond-line::before, .diamond-line::after {
+            content: '';
+            height: 1px;
+            width: 40px;
+            background-color: #c9a227;
+        }
+
+        .diamond-icon {
+            width: 8px;
+            height: 8px;
+            background-color: #c9a227;
+            transform: rotate(45deg);
+        }
+
+        .review-card:hover {
+            box-shadow: 0px 0px 15px rgba(212, 175, 55, 0.2);
+            transform: translateY(-4px);
+            border-color: #ecc246;
+        }
+
+        .input-gold-focus:focus {
+            outline: none;
+            border-bottom-color: #ecc246;
+            box-shadow: 0 4px 6px -1px rgba(236, 194, 70, 0.1);
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md flex justify-between items-center px-6 md:px-20 h-20 max-w-none mx-auto border-b border-primary/30">
+<div class="flex items-center">
+<a class="font-display-lg text-headline-md text-primary" href="index.html">Sparkle Giftz</a>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors duration-300" href="index.html">HOME</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors duration-300" href="shop.html">SHOP</a>
+<a class="font-label-caps text-label-caps text-primary font-semibold border-b border-primary pb-1" href="reviews.html">REVIEWS</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors duration-300" href="reviews.html#contact-section">CONTACT</a>
+</div>
+<div class="flex items-center gap-6 text-primary">
+<button class="hover:scale-110 transition-transform"><span class="material-symbols-outlined">search</span></button>
+<button class="hover:scale-110 transition-transform"><span class="material-symbols-outlined">person</span></button>
+<a href="cart.html" class="hover:scale-110 transition-transform relative block">
+<span class="material-symbols-outlined text-primary">shopping_cart</span>
+<span class="cart-badge absolute -top-1 -right-1 bg-primary text-on-primary text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">0</span>
+</a>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Hero Atmosphere -->
+<section class="relative h-[409px] flex items-center justify-center overflow-hidden">
+
+<div class="relative z-10 text-center px-margin-mobile">
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-4">Voices of Elegance</h1>
+<p class="font-body-lg text-on-surface-variant max-w-2xl mx-auto">Discover why our patrons choose Sparkle Giftz for their most precious moments.</p>
+<div class="diamond-line">
+<div class="diamond-icon"></div>
+</div>
+</div>
+</section>
+<!-- Reviews Gallery Section -->
+<section class="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Review 1 -->
+<div class="review-card bg-surface-container-low gold-border p-10 transition-all duration-500 flex flex-col justify-between h-full">
+<div>
+<div class="flex gap-1 mb-6 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-display-lg text-headline-md italic mb-8 leading-relaxed">"The unboxing experience was truly cinematic. Every detail from the gold ribbon to the artisan paper felt curated for royalty."</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-primary/40">
+<img class="w-full h-full object-cover" data-alt="A sophisticated professional portrait of a woman in her 30s, wearing high-end minimalist jewelry, soft warm studio lighting, elegant dark background, luxury photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLalNdmN8P-gQdGlCiGjZ6kSsf8KIqn84wfudSW2WR543atqNke39XY3XqVuFUFBKOvprf0Ik8UERWKNCzreq60q5utrjt7Y2AJSMNZzdarL3-szp7N-B4hH8jZ5FGAXQZBWjqNo9RT-vZ9Yy4qk3-yJCV07elnrDH2WP8pzmsOBeBAufrDB7wueW1ZBCeCQm4XYMPBucuSo5NZz-fBsHYNURnEsCj-Asq4VkBoJfxF0_6f6px_nRHDWTqCOfEta9sl4bdpWF9QHk"/>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-primary">ELIZABETH VANCE</p>
+<p class="text-xs text-on-surface-variant">Interior Architect</p>
+</div>
+</div>
+</div>
+<!-- Review 2 -->
+<div class="review-card bg-surface-container-low gold-border p-10 transition-all duration-500 flex flex-col justify-between h-full">
+<div>
+<div class="flex gap-1 mb-6 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-display-lg text-headline-md italic mb-8 leading-relaxed">"The curation is unmatched. I found the perfect gift for a board member that communicated both prestige and personal care."</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-primary/40">
+<img class="w-full h-full object-cover" data-alt="A refined portrait of a man in a bespoke charcoal suit, soft lighting, expensive minimalist aesthetic, elegant dark studio environment, professional and trustworthy mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALM6MgFZyuMDeVpAMpd27rrR00SDtShLl68URqF3sF0j5Mim4-hbZ3KmXMRQqh5UYfy6ht0XtLHS-eesXm2xU-iyiIL-0TQmiqtOtkypaioG6qBgLcwk04mO84X7HiAOptfEmxfmNjElAz5UvOmhaCYT8dkhTSlue_ZhFgkdLDbLlUL5iF-CinQ3K4GmtjKtqaVVn7JejmpxIyshqTlp-IQKt7QMPjQdNlzmZAQ1HJXdl3X1SfgMbdI4MiVsBJbn_YlX69xkwKFwY"/>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-primary">JULIAN ROSS</p>
+<p class="text-xs text-on-surface-variant">Executive Director</p>
+</div>
+</div>
+</div>
+<!-- Review 3 -->
+<div class="review-card bg-surface-container-low gold-border p-10 transition-all duration-500 flex flex-col justify-between h-full">
+<div>
+<div class="flex gap-1 mb-6 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-display-lg text-headline-md italic mb-8 leading-relaxed">"Finally, a gift service that understands minimalist luxury. The monochromatic palette and metallic accents are breathtaking."</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-primary/40">
+<img class="w-full h-full object-cover" data-alt="A high-fashion portrait of a creative professional woman, wearing an elegant black silk blouse, soft golden lighting, deep shadows, luxury boutique atmosphere, editorial photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb5mngD-mUAMlp04POH-ADWWpfC9cuFJf1ko54xjlNssFu-sQnROCa4jPyvaqzkl4qBV2XBT8KuzOV_H3Sm4FnIZgfsusni3NFuOlvP1EJGo-ohV8apDXTWiPniZBPYL5x2c2RwWvtBGuNYrTWxjeMTFnOT_cZK5nw8CWn1PDLjpzUjz0OcFaKljWOT4uO1JaNLqOhmTz8-iLajgBlJAOg0Xr2_LMLpyzBuMLDDSTpUMMvPIUoNUFJhX0p0MRSjO3p-BiGgRM-etc"/>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-primary">SOPHIA CHEN</p>
+<p class="text-xs text-on-surface-variant">Creative Director</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="section-divider"></div>
+<!-- Contact Section -->
+<section id="contact-section" class="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="text-center mb-20">
+<h2 class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-4">Get in Touch</h2>
+<p class="font-body-lg text-on-surface-variant max-w-xl mx-auto">Our concierge is available for personalized curation and corporate inquiries.</p>
+<div class="diamond-line">
+<div class="diamond-icon"></div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Info Cards -->
+<div class="lg:col-span-4 flex flex-col gap-8">
+<div class="bg-surface-container gold-border p-8 hover:border-primary transition-colors duration-300">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 flex items-center justify-center text-primary border border-primary/20 bg-background">
+<span class="material-symbols-outlined">call</span>
+</div>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-1">PHONE</h3>
+<p class="text-on-surface font-semibold">+1 (888) SPARKLE</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container gold-border p-8 hover:border-primary transition-colors duration-300">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 flex items-center justify-center text-primary border border-primary/20 bg-background">
+<span class="material-symbols-outlined">mail</span>
+</div>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-1">EMAIL</h3>
+<p class="text-on-surface font-semibold">concierge@sparklegiftz.com</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container gold-border p-8 hover:border-primary transition-colors duration-300">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 flex items-center justify-center text-primary border border-primary/20 bg-background">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-1">ADDRESS</h3>
+<p class="text-on-surface font-semibold">742 Designer Row, NY 10012</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Contact Form -->
+<div class="lg:col-span-8 bg-surface-container-high gold-border p-10 md:p-16">
+<form class="space-y-12" id="contactForm">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<div class="relative">
+<input class="w-full bg-transparent border-t-0 border-l-0 border-r-0 border-b border-primary/30 p-0 py-3 text-on-surface font-body-md input-gold-focus placeholder:text-on-surface-variant/40" id="name" name="name" placeholder="Full Name" type="text"/>
+<label class="absolute -top-6 left-0 font-label-caps text-[10px] text-primary" for="name">NAME</label>
+</div>
+<div class="relative">
+<input class="w-full bg-transparent border-t-0 border-l-0 border-r-0 border-b border-primary/30 p-0 py-3 text-on-surface font-body-md input-gold-focus placeholder:text-on-surface-variant/40" id="email" name="email" placeholder="Email Address" type="email"/>
+<label class="absolute -top-6 left-0 font-label-caps text-[10px] text-primary" for="email">EMAIL</label>
+</div>
+</div>
+<div class="relative">
+<textarea class="w-full bg-transparent border-t-0 border-l-0 border-r-0 border-b border-primary/30 p-0 py-3 text-on-surface font-body-md input-gold-focus placeholder:text-on-surface-variant/40" id="message" name="message" placeholder="How can we assist you?" rows="4"></textarea>
+<label class="absolute -top-6 left-0 font-label-caps text-[10px] text-primary" for="message">MESSAGE</label>
+</div>
+<div class="flex justify-end">
+<button class="group relative px-12 py-4 bg-surface-container-lowest gold-border overflow-hidden transition-all duration-300 hover:shadow-[0px_0px_15px_rgba(212,175,55,0.3)]" type="submit">
+<span class="relative z-10 font-label-caps text-label-caps text-primary group-hover:text-on-primary transition-colors duration-300">SEND MESSAGE</span>
+<div class="absolute inset-0 gold-gradient-bg translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+</button>
+</div>
+</form>
+</div>
+</div>
+</section>
+<!-- Map Section -->
+<section class="w-full h-[500px] mt-section-gap relative grayscale hover:grayscale-0 transition-all duration-700 overflow-hidden">
+<div class="w-full h-full bg-surface-container-highest flex items-center justify-center group cursor-pointer" data-location="New York City" style="">
+<div class="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors z-10"></div>
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="A luxury aerial architectural view of Manhattan Soho district, golden hour lighting, cinematic film aesthetics, deep contrast, professional photography, high-end real estate mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqy9BqJePDNyNUEtQwvDu5aFvvBvib6vQKGix9TWlF8ui3tC9aaaRlIPI-mkvRChNKnKdguxrWSloUdeM3v4ghssIN59_26-n8nEaxGv1YCM0DGKymKhwtgsZgHywxENG-a2rHFP5vOvnaIzQ5umqhvk8YxaXYPNDAmbMgGdbUMrdeasLkks4Z05XyKCywCbgUyu7NZDmFzxgEtvJfNGuDAoOmc45q2FzJcLgbZ4amYZysl9bYHjMyAkLr8YkxQ2VUSg0OdT4ewSI"/>
+<div class="relative z-20 bg-background/80 backdrop-blur-md p-8 gold-border text-center">
+<span class="material-symbols-outlined text-primary text-4xl mb-2">location_on</span>
+<h3 class="font-display-lg text-headline-md text-primary">Visit Our Atelier</h3>
+<p class="font-label-caps text-label-caps mt-2">PRIVATE SESSIONS BY APPOINTMENT</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap px-margin-desktop grid grid-cols-1 md:grid-cols-4 gap-gutter border-t border-primary/30 bg-background mt-20">
+<div class="col-span-1 flex flex-col gap-6">
+<span class="font-display-lg text-headline-md text-primary">Sparkle Giftz</span>
+<p class="text-on-surface-variant font-body-md">The destination for discerning gift-givers who value craftsmanship and exclusivity above all else.</p>
+<p class="font-label-caps text-[10px] text-primary/50 mt-4">© 2024 Sparkle Giftz. All Rights Reserved.</p>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label-caps text-label-caps text-primary mb-2">BRAND INFO</h4>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Our Story</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Artisans</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Sustainability</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label-caps text-label-caps text-primary mb-2">QUICK LINKS</h4>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Corporate Gifting</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Gift Cards</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Membership</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label-caps text-label-caps text-primary mb-2">WHATSAPP CONTACT</h4>
+<p class="text-on-surface-variant mb-2">Chat with our concierge instantly for priority assistance.</p>
+<a class="flex items-center gap-2 text-primary font-semibold hover:underline" href="#">
+<span class="material-symbols-outlined text-xl">chat</span>
+                Start Conversation
+            </a>
+</div>
+</footer>
+<script>
+        // Micro-interactions for form
+        const form = document.getElementById('contactForm');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="relative z-10 font-label-caps text-label-caps text-on-primary">MESSAGE SENT</span><div class="absolute inset-0 gold-gradient-bg"></div>';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                form.reset();
+            }, 3000);
+        });
+
+        // Simple parallax for the map overlay
+        window.addEventListener('scroll', () => {
+            const scroll = window.pageYOffset;
+            const mapText = document.querySelector('.relative.z-20.bg-background\\/80');
+            if (mapText) {
+                mapText.style.transform = `translateY(${scroll * 0.05}px)`;
+            }
+        });
+    </script>
+<script src="cart.js"></script>
+</body></html>

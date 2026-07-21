@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0d0d0d;
+  --color-charcoal: #1a1a1a;
+  --color-ivory: #f5f0e6;
+  --color-gold: #c9a227;
+  --color-gold-light: #d4af37;
+  --color-gold-dark: #b8860b;
+  --color-text-dark: #1a1a1a;
+  --color-muted: #8a8a8a;
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: Inter, system-ui, sans-serif;
+
+  --shadow-gold-glow: 0 0 15px rgba(201, 162, 39, 0.2);
+  --shadow-gold-glow-hover: 0 0 25px rgba(212, 175, 55, 0.4);
+}
+
+@utility gold-gradient-border {
+  border: 1px solid transparent;
+  background: linear-gradient(#1a1a1a, #1a1a1a) padding-box,
+              linear-gradient(to right, #c9a227, #d4af37, #b8860b) border-box;
+}
+
+@utility gold-text-gradient {
+  background: linear-gradient(to right, #c9a227, #d4af37, #b8860b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility section-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(to right, transparent, #c9a227, transparent);
+}
+
+@utility diamond-divider {
+  position: relative;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(to right, transparent, #c9a227, transparent);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-ivory font-sans antialiased selection:bg-gold selection:text-background;
+  }
+}
+
+/* Custom Scrollbar for Luxury Aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0d0d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c9a227;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+/* Calendar Picker Icon & Dark Scheme Styling for Date Inputs */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(5deg);
+  opacity: 0.9;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  padding: 4px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* Gold Sparkle Text & Letter Reveal Animations */
+@keyframes gold-sparkle-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes letter-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.gold-sparkle-text {
+  background: linear-gradient(
+    90deg,
+    #c9a227 0%,
+    #fbf5b7 20%,
+    #d4af37 40%,
+    #ffffff 50%,
+    #d4af37 60%,
+    #fbf5b7 80%,
+    #c9a227 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gold-sparkle-shimmer 4s linear infinite;
+  display: inline-flex;
+}
+
+.animate-letter-reveal {
+  opacity: 0;
+  animation: letter-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sparkle Giftz | Gifts Worth Remembering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#aaa69d",
+                    "outline-variant": "#4d4635",
+                    "inverse-primary": "#755b00",
+                    "inverse-on-surface": "#313030",
+                    "primary-container": "#c9a227",
+                    "inverse-surface": "#e5e2e1",
+                    "on-primary-container": "#4b3a00",
+                    "on-background": "#e5e2e1",
+                    "on-primary": "#3d2e00",
+                    "error": "#ffb4ab",
+                    "on-primary-fixed": "#241a00",
+                    "surface-container": "#20201f",
+                    "error-container": "#93000a",
+                    "on-tertiary-container": "#3e3c35",
+                    "surface-container-low": "#1c1b1b",
+                    "tertiary": "#cac6bd",
+                    "surface-variant": "#353535",
+                    "on-tertiary-fixed-variant": "#494740",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#0e0e0e",
+                    "background": "#131313",
+                    "surface-container-high": "#2a2a2a",
+                    "primary-fixed": "#ffe08e",
+                    "surface": "#131313",
+                    "surface-dim": "#131313",
+                    "tertiary-fixed-dim": "#cac6bd",
+                    "on-secondary-container": "#bab8b7",
+                    "surface-tint": "#ecc246",
+                    "on-secondary": "#313030",
+                    "on-surface": "#e5e2e1",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-surface-variant": "#d1c5af",
+                    "on-error": "#690005",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-bright": "#393939",
+                    "on-tertiary": "#32302a",
+                    "secondary": "#c9c6c5",
+                    "on-tertiary-fixed": "#1d1c16",
+                    "outline": "#99907b",
+                    "primary-fixed-dim": "#ecc246",
+                    "secondary-container": "#4a4949",
+                    "primary": "#ecc246",
+                    "on-primary-fixed-variant": "#584400",
+                    "surface-container-highest": "#353535",
+                    "on-secondary-fixed-variant": "#474646",
+                    "tertiary-fixed": "#e7e2d8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-mobile": "24px",
+                    "container-max": "1280px",
+                    "gutter": "32px",
+                    "margin-desktop": "80px",
+                    "section-gap": "120px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Playfair Display"],
+                    "label-caps": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg-mobile": ["Playfair Display"],
+                    "headline-md": ["Playfair Display"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.2em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .gold-gradient-border {
+            border: 1px solid transparent;
+            background: linear-gradient(#1a1a1a, #1a1a1a) padding-box,
+                        linear-gradient(to right, #c9a227, #f5e39e, #c9a227) border-box;
+        }
+        .gold-text-gradient {
+            background: linear-gradient(to right, #c9a227, #f5e39e, #c9a227);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .section-divider {
+            height: 1px;
+            width: 100%;
+            background: linear-gradient(to right, transparent, #c9a227, transparent);
+        }
+        .diamond-divider::after {
+            content: '◆';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: #ecc246;
+            font-size: 8px;
+            background: #131313;
+            padding: 0 10px;
+        }
+        .product-card-zoom:hover img {
+            transform: scale(1.05);
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary selection:text-on-primary">
+<!-- Announcement Bar -->
+<div class="bg-surface-container-lowest py-2 px-margin-mobile md:px-margin-desktop border-b border-primary/20 flex justify-center items-center overflow-hidden">
+<p class="font-label-caps text-label-caps text-primary tracking-widest animate-pulse">
+            Complimentary Island-Wide Delivery
+        </p>
+</div>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 glass-nav bg-background/90 h-20 flex justify-between items-center px-margin-mobile md:px-margin-desktop border-b border-primary/30">
+<div class="flex items-center gap-8">
+<h1 class="font-display-lg text-headline-md text-primary">Sparkle Giftz</h1>
+<nav class="hidden md:flex gap-8">
+<a class="font-label-caps text-label-caps text-primary font-semibold border-b border-primary pb-1" href="index.html">HOME</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors duration-300" href="shop.html">SHOP</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors duration-300" href="reviews.html">REVIEWS</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors duration-300" href="reviews.html#contact-section">CONTACT</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="search">search</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="person">person</span>
+<a href="cart.html" class="relative block text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="cart-badge absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+</a>
+<button class="md:hidden material-symbols-outlined text-primary" data-icon="menu">menu</button>
+</div>
+</header>
+<main class="mt-20">
+<!-- Hero Section -->
+<section class="relative h-[921px] w-full flex items-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent z-10"></div>
+<div class="w-full h-full bg-cover bg-center scale-105 transition-transform duration-[10s] ease-linear hover:scale-100" data-alt="A cinematic, high-end lifestyle image featuring a beautifully wrapped, premium black gift box with a textured gold ribbon, resting on a dark marble surface. The lighting is dramatic and low-key, highlighting the exquisite craftsmanship and luxurious textures. The color palette is dominated by deep blacks, charcoal greys, and warm, shimmering gold accents, creating an atmosphere of exclusivity and quiet prestige." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBIPXrUB20kjTnrXbCZKBJ7qUwmzzotK1zCVAu03u2Lb1KFZCo20z_lM2uRjgs0tyzWdZdmIfUjT846A8MY853V4qrJxLitymJuJwUuU-TnPPNQoJ-IOJiMWyoO7FE8gtrLPnsCReL9rQKVnZvj3Vh_yjWtIAnBNewG_MAgaDmiGTK6xm4NoDBMC4G9D9OQo4J2ZlbbhXJf9KFttsc5UKguaDOBiZo5FPPr73zur9jTHc8HuV6Yi-oL_owUXSuJa5Q8m0JIS3isjj0')"></div>
+</div>
+<div class="relative z-20 px-margin-mobile md:px-margin-desktop max-w-3xl">
+<span class="font-label-caps text-label-caps text-primary tracking-[0.3em] block mb-6">PRESTIGE CURATION</span>
+<h2 class="font-display-lg text-display-lg-mobile md:text-display-lg leading-tight mb-8">
+                    GIFTS WORTH <br/>REMEMBERING
+                </h2>
+<p class="font-body-lg text-on-surface-variant mb-12 max-w-xl">
+                    Discover our collection of meticulously handcrafted gift boxes, designed for life's most meaningful milestones. Experience the art of giving.
+                </p>
+<div class="flex flex-wrap gap-6">
+<a class="gold-gradient-border px-10 py-4 font-label-caps text-label-caps text-primary hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 scale-100 active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_25px_rgba(212,175,55,0.3)]" href="shop.html">
+                        SHOP THE COLLECTION
+                    </a>
+</div>
+</div>
+</section>
+<!-- Feature Strip -->
+<div class="bg-surface-container-low border-y border-primary/20 py-10 px-margin-mobile md:px-margin-desktop">
+<div class="max-w-container-max mx-auto grid grid-cols-2 md:grid-cols-4 gap-gutter text-center">
+<div class="flex flex-col items-center gap-3 group">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-caps text-[10px] tracking-widest text-on-surface">FREE ISLAND-WIDE DELIVERY</span>
+</div>
+<div class="flex flex-col items-center gap-3 group">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform" data-icon="payments">payments</span>
+<span class="font-label-caps text-[10px] tracking-widest text-on-surface">CASH ON DELIVERY</span>
+</div>
+<div class="flex flex-col items-center gap-3 group">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform" data-icon="redeem">redeem</span>
+<span class="font-label-caps text-[10px] tracking-widest text-on-surface">PREMIUM HANDCRAFTED BOXES</span>
+</div>
+<div class="flex flex-col items-center gap-3 group">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform" data-icon="verified">verified</span>
+<span class="font-label-caps text-[10px] tracking-widest text-on-surface">TRUSTED BY THOUSANDS</span>
+</div>
+</div>
+</div>
+<!-- New Arrivals -->
+<section class="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="text-center mb-16 relative">
+<h2 class="font-display-lg text-headline-md mb-6">New Arrivals</h2>
+<div class="relative w-40 h-px bg-primary/40 mx-auto diamond-divider"></div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Product Card 1 -->
+<div class="group relative bg-surface-container-low border border-outline-variant/30 hover:border-primary/50 transition-all duration-500">
+<div class="aspect-[4/5] overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110" data-alt="A luxury 'Midnight Celebration' birthday gift box. The box is a deep matte navy with gold foil lettering. Inside, visible items include a premium crystal glass, a small bottle of vintage champagne, and artisanal dark chocolates. The setting is a dimly lit, sophisticated study with warm candlelight reflecting off the gold accents. High-contrast, boutique-style product photography." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBwbgOOkPb3BvgSxJVtvQnanAg50GObVaA2O1w9HoABZREn_4z_HzsICKoxrGQtTvQDfiy22_FEGPvce32FbvkGH7xcHfMV6_hcDMPjdG1sSjf0q8hNKmlElDhDhROYUDnuaSptcI8uh-Du7WIiCqMhBsLCgmomU-2ZvJngKSMTqV2I87LOOEKRAouURBmovhNEy4pFpyZOO7-nlovEpopadqyw09m49gP-HLoB3Bfr6EbP11B5sLpqTJzRuu1oyaGRRiKTMmiX6uk')"></div>
+<div class="absolute top-4 left-4 bg-primary text-on-primary font-label-caps text-[10px] px-3 py-1 shadow-lg">NEW</div>
+</div>
+<div class="p-6 text-center">
+<p class="font-label-caps text-[10px] text-primary mb-2">BIRTHDAY COLLECTION</p>
+<h3 class="font-headline-md text-lg mb-3">The Midnight Noir</h3>
+<p class="text-primary font-semibold">$145.00</p>
+<button class="mt-6 w-full py-3 border border-primary/30 font-label-caps text-[10px] tracking-[0.2em] hover:bg-primary hover:text-on-primary transition-all duration-300">ADD TO CART</button>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="group relative bg-surface-container-low border border-outline-variant/30 hover:border-primary/50 transition-all duration-500">
+<div class="aspect-[4/5] overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110" data-alt="An elegant 'Timeless Love' anniversary gift box presented in a soft ivory textured box with a champagne-colored silk ribbon. The box contains a luxury scented candle, a personalized leather journal, and a set of gold-plated coffee spoons. The aesthetic is bright yet warm, emphasizing high-end materials and romantic sophistication. Soft focus background with ivory textures." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB3bvNHYq4g_D2JofdxYyj5zGV8vxmUO3A2EwZIMZlQD-8hCiCQm5I8J4gL9Owwhv8p8b55NYkN7M3XPm7Fs1Tng8UEdJavTBpUX2swk8zPU0GtOxOobCm0Z7ToxqFNUVTPEmz03GEzWEPDUe9R1Fb0tZ1V6vO6OG9RsDKJYp2rVrcfW3RTV3ZCFZx14di3RzlZ7gsKlsYU5Mfa7zK7XQNgCFcpMW_tu40gQTuls545XgTnm6VT1GGexblWMYKiXhpxmLVEdyLNVbk')"></div>
+<div class="absolute top-4 left-4 bg-error text-on-error font-label-caps text-[10px] px-3 py-1 shadow-lg">SALE</div>
+</div>
+<div class="p-6 text-center">
+<p class="font-label-caps text-[10px] text-primary mb-2">ANNIVERSARY</p>
+<h3 class="font-headline-md text-lg mb-3">Velvet Romance</h3>
+<p class="text-primary font-semibold">$189.00 <span class="text-on-surface-variant line-through ml-2 text-sm">$210.00</span></p>
+<button class="mt-6 w-full py-3 border border-primary/30 font-label-caps text-[10px] tracking-[0.2em] hover:bg-primary hover:text-on-primary transition-all duration-300">ADD TO CART</button>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="group relative bg-surface-container-low border border-outline-variant/30 hover:border-primary/50 transition-all duration-500">
+<div class="aspect-[4/5] overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110" data-alt="A sophisticated 'Executive Choice' corporate gift box. A sleek charcoal grey box with a magnetic lid, featuring a professional embossed logo. Contents include a premium weighted pen, a leather-bound planner, and high-end tech accessories. Modern, minimalist office setting with soft shadows and gold hairline lighting. Sharp, professional, and expensive appearance." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCQ0pV7YracN-NO_UMPDkU77EBnSfRXcAcXw2zseNpciyjw1R3TUgikobnspNwtvaNqkAV__wYfTUzh8SRYaA2y3XMw8ajn6jUE3PwkT6cGuJIUTSBS9TGTwshEbULJ34uIA4CNpbPA47MjOTaD8YVuiKWT0ulsWD2Fku_Ga3x1AKdcHbRK3xnJHsm_c23TSAEQlgR3qvbaSS1ocaH9bZIni6M1gWsTTQRWWvi6OClaKfZKemK3UkB7rHdnkn4ie4bI83W_vmSll9U')"></div>
+</div>
+<div class="p-6 text-center">
+<p class="font-label-caps text-[10px] text-primary mb-2">CORPORATE</p>
+<h3 class="font-headline-md text-lg mb-3">The Executive Suite</h3>
+<p class="text-primary font-semibold">$220.00</p>
+<button class="mt-6 w-full py-3 border border-primary/30 font-label-caps text-[10px] tracking-[0.2em] hover:bg-primary hover:text-on-primary transition-all duration-300">ADD TO CART</button>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="group relative bg-surface-container-low border border-outline-variant/30 hover:border-primary/50 transition-all duration-500">
+<div class="aspect-[4/5] overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110" data-alt="A 'Little Sunshine' newborn gift box in a soft sage green color with silver foil stars. It contains a plush organic cotton toy, a high-quality baby blanket, and gentle skincare products. The background is a soft, warm nursery with natural wooden textures and airy lighting, maintaining the boutique gift aesthetic with a tender touch." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCwvBXr0z4XurXhQ7ZP7GHymIiluZiQy_lrffWznCzzTqDghcCWvYh2Z6_iul9cqssLwgIaSrup_IXbXOhqCxBLUnw3VRoiJdUTX9B6eOHkflGKEznWPkcWTCHeZjIztdECuMUryZA3qPZs_HY222FwLSNYvPIqFy1sJl3IH4wm5cSjMXP8LqsmKp9ErJNRG-1FiKKjoPeLm2FvaE3fg09VsU5I9n2RiV4p_rxgQtmo1KJHV6zNFXZOVLwpIg2OG9dOEBoxmbggE-Y')"></div>
+</div>
+<div class="p-6 text-center">
+<p class="font-label-caps text-[10px] text-primary mb-2">NEWBORN</p>
+<h3 class="font-headline-md text-lg mb-3">Gentle Beginnings</h3>
+<p class="text-primary font-semibold">$120.00</p>
+<button class="mt-6 w-full py-3 border border-primary/30 font-label-caps text-[10px] tracking-[0.2em] hover:bg-primary hover:text-on-primary transition-all duration-300">ADD TO CART</button>
+</div>
+</div>
+</div>
+<div class="mt-16 text-center">
+<a class="inline-block font-label-caps text-label-caps text-primary border-b border-primary/30 hover:border-primary transition-all pb-1 tracking-[0.3em]" href="shop.html">VIEW ALL NEW ARRIVALS</a>
+</div>
+</section>
+<!-- Shop by Occasion -->
+<section class="py-section-gap bg-surface-container-lowest">
+<div class="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="text-center mb-16 relative">
+<h2 class="font-display-lg text-headline-md mb-6">Shop by Occasion</h2>
+<div class="relative w-40 h-px bg-primary/40 mx-auto diamond-divider"></div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+<!-- Occasion Tiles -->
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="A vibrant yet sophisticated birthday-themed aesthetic. Close-up of gold confetti and high-end gift tags on a dark background. The image evokes a sense of celebration and premium festivity, with soft bokeh lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD03QKmeGS3Z5-UdyQ7-cGdYv0_PBxaNOUQSrBP_b3ArofiDfg3ZIqv5wsWxXUg7jMNkhFZh5vUcWbY8LNBaryhFyJaaS-yRPYHwTdfMgW247tHxt7s-9OdHWdZcFOBaxVdQ2oVnhDIkxZ9ObgxtLFwzwNEtC8O9udiGKUcFTcMVRuYSp2_QP9bhF2QlHx4VDRMf-CEKuh9YCAp9vOI7Lny3Rn-OniaFIu1XPlGsh5nHYPKGjmdLbaZEvEGbXSnPcSYu5HryYnaB54')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">BIRTHDAY</span>
+</div>
+</a>
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="Romantic anniversary aesthetic with deep red roses and a fine jewelry box on a velvet surface. Moody, luxurious lighting that emphasizes textures of silk and flower petals. The color palette is rich and intimate." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB7_GMvlXrcSGP7V6GDkvU-rdSLytuq1X3IdA81pHsOSqJlq2PQdopM7ZJlt4kNIBbEQb5_IpFlSBukTITyYdRgHV1YW7156Ksigrhg3lBlPhEivm6aXWOXEvXS8EIz0GlJVVYgBDX-ww4QuyEmyso1lTswrW3EeL7aSPrXc5fm6FEcX2K1Ca3y1YVcyuth6HknpI7ShdwOsmrXOuC5RK8zDgEqG1-Y4FA54-gwpvDp5o6K8dBgRC5B5Fbg-OGrTeCjc6M-a-GbQ_0')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">ANNIVERSARY</span>
+</div>
+</a>
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="Minimalist and clean newborn baby aesthetic. Close up of a soft wool knit and a silver rattle on an ivory linen background. Soft, diffused natural light creating a serene and premium feel." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuANL4fYHtSptvuPhLUzpiW-eyIsbfgBsH4YQGWmsxHc0DuaL0kIcwYZPuPUgAyralAbw88UTCT82cZdkq6ThO81T5qd0JFTKnxja2STACLQA84Kj9OZqpyZPYQrvw5WLt6BUS_TjJUs8RW6ZTqrmxhfibjrhUAzxwNwQfIVOlrMg4DqGcfs53EWWOhXXeOUiT698hemACDkYXlkQfq1Xz1M2OM6_OtkVBjiITxacb5q0GhpSqhbHLxNhlVgYClCLqb38MtFJ4PCWL0')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">NEWBORN</span>
+</div>
+</a>
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="High-end corporate gifting aesthetic. A focused shot of an embossed leather portfolio and a premium fountain pen on a dark wood desk. Sharp lines, professional lighting, and a palette of charcoal and silver." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBy8L8aqBpbjksuUymH338qgXEB8lQlhDCu6VpgzuP_Y_LY5E8JIoFmoT7CQME1NTwIoOctiVmIBye3Y_3V2lV2ITE5Lf2vSCEnSzXnwESddlXOPrDzmfG-oyh1jVy2J3iNManaha6ECbjsAm03WCz-v0-yLr1llCChlxZNubJHeGIbiUWnZ-pjQrHZs7_ZoiGy6RLQ8IukCx7qyC4-B9SjybYOhimGf1_ArTcHwVGa_GyTs3LJqRz8q3rO-1kRktV9xwgDNU0XH1s')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">CORPORATE</span>
+</div>
+</a>
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="Romantic setting with candlelight, champagne flutes, and a single white lily. The lighting is warm and golden, creating a sense of intimate luxury and sophisticated romance." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBq-Bxbf7c02v_G84wP-r3uMrIg9nuY-O-AHxHuzcKqYWuCjab8wJ5eSMSyH93ar0qhoKhmRzEvT7NzZTqFRnyfiYLFuAcS-YhRg1ky_Gno_IYy1mfRr9fztxv9GZlBjlYBdqMgSa4ylvJcIOWP89DZI3y64ZjdanMU_W13Klk9mqVMIYE3J22B2UZo_6ad_xbc-DfFCFo_lcs9IFH-TDiT1XXUhwB-Z4sXTGBiWNg11KVgFmDCAdjC5oZDjdH8ux7qUC98HFJUQ2M')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">ROMANCE</span>
+</div>
+</a>
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="Calming and wellness-focused aesthetic. A stack of soft bamboo towels, a porcelain teapot, and a sprig of dried lavender. Soft, airy lighting that promotes health and recovery." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD-DBYsf-BmW8H7C_yMRSXyGPiuNJ6sHAV6_0WZOg19Ba2DWhnVjs7xQCHulGIEf8Ev6i-HM-swi_zU-uH3XGXfK7-w8fN6uP-C_5JOhB72a5I7GYY58pkvaNJ3sXi1-xRVid2HlTLRtQFcts4VrRKFNj6QwoP51ldbLcknO0vmnNUIknyc0bkIv8CiIUXrbKYqB269aMLVH1nySjKQGOqgsH3Bg-Ac-sbCZLM0T9bCSa_KttvSeQlRrE_aCt_Uz0vAN0OGKtzwf1k')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">GET WELL</span>
+</div>
+</a>
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="Celebratory congratulatory aesthetic. A macro shot of champagne bubbles and a golden tassel on a graduation cap. Bright, high-key lighting that feels triumphant and successful." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCAfJ7H18G7Tkij2FiIMso6tADf0b6Sj4rpLekoW_krZccYLyz5iL1svfNg0jUNzM9dflIFj4ZEHefDzq4ESUE3p-EtLFhzrDYN-VMORrVBaxESOB7LWXdtZALyOE6K4Kw3y9p11XkIlDJXsLRDJD85I5Xhb3B-sSG7VSoSJKPlxsGKEA5X_QlHfl0VC-FOmf2YyMBPlTnosl6xRa0QvYCGf8XLBK3pjEJE9unohyIZ3XotrQIaQi31ibr4vlEexBe98XVRrvlhFxA')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">CONGRATULATIONS</span>
+</div>
+</a>
+<a class="group relative aspect-square overflow-hidden border border-primary/10" href="shop.html">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="Bespoke artisan aesthetic. Close-up of a designer's hands selecting high-quality materials, ribbons, and gift paper in a bright atelier. Focus on detail, craftsmanship, and customization." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBmEBebg6bij-omwxDXpZ2KLK0iV0gnfnw2JJFMEFTL5Sa6ITMRz_xcluFlcMvq7tvo8s54GafbqfoBt60dKKlD1ed9nwcVe7Gq2huT6cQT6kD1nxwsP0s1wrJNlOf928EpeKRg1dsNX3ztkp1RZwP7d8SfnbaLsrUpCEY1pivzJCoAuWfgXvhAYVRs6eJKrCI7_czCQOdzjlhvCyYmhjWeko9gkMm2njKwLAJXNe0U184LAY9tmmGRxEXgj8Trroun3MeJXyzygPE')"></div>
+<div class="absolute inset-0 bg-background/60 group-hover:bg-background/20 transition-all duration-500"></div>
+<div class="absolute inset-0 flex items-center justify-center border border-transparent group-hover:border-primary/50 m-4 transition-all duration-500">
+<span class="font-label-caps text-label-caps text-on-background group-hover:text-primary tracking-widest">BESPOKE</span>
+</div>
+</a>
+</div>
+</div>
+</section>
+<!-- Signature Collection -->
+<section class="py-section-gap bg-[#f5f0e6] text-inverse-on-surface">
+<div class="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="text-center mb-16 relative">
+<h2 class="font-display-lg text-headline-md mb-6 text-on-primary-fixed">Signature Collection</h2>
+<div class="relative w-40 h-px bg-primary/40 mx-auto diamond-divider !bg-[#f5f0e6]"></div>
+<p class="mt-6 font-body-md text-on-surface-variant max-w-2xl mx-auto">Our most celebrated curations, featuring exclusive designer partnerships and limited-edition items.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Signature Item 1 -->
+<div class="group">
+<div class="aspect-square bg-white shadow-xl mb-6 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A top-down view of the 'Gold Standard' gift box on a white linen surface. The box is open, revealing a gold-rimmed ceramic mug, premium coffee beans in a black bag, and a sleek gold stirrer. Minimalist, high-key lighting that emphasizes the warmth and luxury of the contents." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD4_0yCy-ioKokRZ-libEPu7RSZinDD0dkkR_Gjpy0Frpwq2EnV-DZ-HTOmoqzj5DYZD4JqwBoA_bLnb3ybr79rzJMWUbtMgNdsU_eLSueTPbX9VV3IDR1CFxdisvpnsVr6596syf1ojBRZlqJiF7vchP4_joHAw5h8jg9NGPVsbZenTXVLmMyUqFMxT4jaDsO-PsZCc0xHuixCMP844kfWjnAiXH1ffdlLHTACxEXYsvD-11GAY9_MIcY29HI9eRYGAHNJxaW2Evg')"></div>
+<div class="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-500"></div>
+</div>
+<h3 class="font-display-lg text-2xl mb-2 text-on-primary-fixed">The Gilded Morning</h3>
+<p class="font-label-caps text-[11px] text-primary tracking-widest mb-4">LIMITED EDITION</p>
+<p class="font-body-md text-on-surface-variant mb-6">A collection designed for the discerning coffee lover, featuring our signature gold-rimmed porcelain.</p>
+<a class="font-label-caps text-[10px] text-on-primary-fixed border-b border-on-primary-fixed pb-1 hover:text-primary hover:border-primary transition-colors" href="detail.html">DISCOVER PIECE</a>
+</div>
+<!-- Signature Item 2 -->
+<div class="group">
+<div class="aspect-square bg-white shadow-xl mb-6 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A luxurious 'Evening Glow' signature gift set featuring a large handcrafted candle in a black glass jar, an oversized cashmere-blend throw in charcoal, and a bottle of high-end reed diffuser. Soft, warm lighting creating a cozy yet upscale atmosphere. Photographed against an elegant, modern home background." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC9bdU-x6X0H3c_SZwjeTth7aiYgH3QcJ1NSyCIgj21Ci_zT2emAV_U-TIzALWmYrftzF-lAL9CInXJP6Om34JtwxyuvW_aFInSl5Lnk0Lqk-xfv3bMJiftmlJxatE6TQebpMsZTF-ecPFcqctHU7RxrrqmZmXOnYiUy_dcbOSwi_BvuKJ1EAVZtRY-ec6hLZ-ypXI9hr92oIVVDiGSRtEOTZPGZb6_BWRyFAuOGxjn93O7NHVBL3MfvpqjgUYTxm77E7bs_bU2Zr8')"></div>
+</div>
+<h3 class="font-display-lg text-2xl mb-2 text-on-primary-fixed">The Sanctuary Box</h3>
+<p class="font-label-caps text-[11px] text-primary tracking-widest mb-4">BESTSELLER</p>
+<p class="font-body-md text-on-surface-variant mb-6">Create an oasis of calm with our curated wellness essentials and hand-poured candle.</p>
+<a class="font-label-caps text-[10px] text-on-primary-fixed border-b border-on-primary-fixed pb-1 hover:text-primary hover:border-primary transition-colors" href="detail.html">DISCOVER PIECE</a>
+</div>
+<!-- Signature Item 3 -->
+<div class="group">
+<div class="aspect-square bg-white shadow-xl mb-6 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="An artisanal 'Botanical' gift set. A natural wood box containing a small potted succulent in a geometric gold ceramic pot, a bottle of botanical-infused gin, and organic tonic water. The styling is earthy yet luxurious, with crisp green tones and warm metallic accents." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAENWOqXcYMgvoipclT8eHpcGEY73iZS_jVjBIJEoJKnjQherWr7dz-r6u_fSU3rCaCDsUolQdBXIgKAxgu3tcZRbD7fXFrGOO7_zgP73f32SF1VL87B0ihj5-xQmyzNzlCYDZpChdmjUq1WbY8qvhGfweP2dcHSCWz6KjpbfoODXkjNmE4Ye_uIT7RyQweTgcMAP4t7Nq3rU07gTKlM9x8rQ3KLqGgvaLJFi_6VgPUHzakKTJOfmGJpc3E3YM0PaWyGDKqEbC97Aw')"></div>
+</div>
+<h3 class="font-display-lg text-2xl mb-2 text-on-primary-fixed">The Verdant Garden</h3>
+<p class="font-label-caps text-[11px] text-primary tracking-widest mb-4">ARTISAN CRAFTED</p>
+<p class="font-body-md text-on-surface-variant mb-6">Celebrating the beauty of nature with artisanal botanicals and handcrafted ceramic accents.</p>
+<a class="font-label-caps text-[10px] text-on-primary-fixed border-b border-on-primary-fixed pb-1 hover:text-primary hover:border-primary transition-colors" href="detail.html">DISCOVER PIECE</a>
+</div>
+</div>
+</div>
+</section>
+<!-- In Their Words Section -->
+<section class="py-section-gap px-margin-mobile md:px-margin-desktop bg-background overflow-hidden">
+<div class="max-w-container-max mx-auto">
+<div class="text-center mb-16 relative">
+<h2 class="font-display-lg text-headline-md mb-6">In Their Words</h2>
+<div class="relative w-40 h-px bg-primary/40 mx-auto diamond-divider"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Review Card 1 -->
+<div class="bg-surface-container-low p-10 border border-outline-variant/20 relative group">
+<span class="material-symbols-outlined text-primary/30 text-5xl absolute top-6 right-8" data-icon="format_quote">format_quote</span>
+<div class="flex gap-1 mb-6">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md italic mb-10 text-on-surface-variant leading-relaxed">
+                            "The attention to detail is simply unparalleled. I ordered a bespoke corporate box and the recipient was absolutely blown away. Sparkle Giftz is now my go-to for all luxury gifting."
+                        </p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-primary/30">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a sophisticated woman in her 30s, elegant and friendly expression. Soft studio lighting with a neutral, high-end background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqZxhWWeOSDW-MoxTMiKGdfwXd002DMdGGViUxvsxEHTcrlp629oy7N4SflE4vxh1D6tYOWzJkAQJP1aq_s8JnUdJIdkuKi13IolFyF89m5NnbjZ34NA70DL8ZpunAGSTCx_TNjXM3ca-jgr7HPZavOoCqzC1xDHk1d8KvnH3SYxvoQkBApC5kfxK-MJcaX-RwEbfWNCGl7ZFYMqtmCJE_yImIJYH_YXaiJU9xtZ42tOZlBRUJw3xAqdVKIV9eIejvg79xPhBqlYc"/>
+</div>
+<div>
+<p class="font-label-caps text-[11px] text-on-surface">ELEANOR VANCE</p>
+<p class="text-[10px] text-primary uppercase tracking-tighter">Verified Client</p>
+</div>
+</div>
+</div>
+<!-- Review Card 2 -->
+<div class="bg-surface-container-low p-10 border border-outline-variant/20 relative group">
+<span class="material-symbols-outlined text-primary/30 text-5xl absolute top-6 right-8" data-icon="format_quote">format_quote</span>
+<div class="flex gap-1 mb-6">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md italic mb-10 text-on-surface-variant leading-relaxed">
+                            "Exquisite packaging and even better contents. The island-wide delivery was prompt and handled with extreme care. Truly a boutique experience from start to finish."
+                        </p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-primary/30">
+<img class="w-full h-full object-cover" data-alt="A portrait of a well-dressed gentleman in a dark suit, confident and smiling. High-end lifestyle photography style with soft bokeh background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAc9lqTrlooV2BH_aSlKKAyrKuuAzkKkBlHp9MfkyrgtVvHb4qbE3M-JrCRNJd89USiIOl3_sIRQSKzC4j3ITy8XXA4uwGVLj4J76h53a2a-JK5JqDNWODjU3sFTjZs6_50cmJKS2DmUEfkizC_uVOkpDSKXMWNEzGxyOCjnISN34zkgPjdsRf2mSekdySK0K1HufCz4xn9S-n9eNiLoa50Z5Q6fhDh3T7Ur0nw0SgIxNahCVbXBwALL9vEUFUlG3eAWxO93t1VhA"/>
+</div>
+<div>
+<p class="font-label-caps text-[11px] text-on-surface">JULIAN ROSS</p>
+<p class="text-[10px] text-primary uppercase tracking-tighter">Corporate Partner</p>
+</div>
+</div>
+</div>
+<!-- Review Card 3 -->
+<div class="bg-surface-container-low p-10 border border-outline-variant/20 relative group">
+<span class="material-symbols-outlined text-primary/30 text-5xl absolute top-6 right-8" data-icon="format_quote">format_quote</span>
+<div class="flex gap-1 mb-6">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md italic mb-10 text-on-surface-variant leading-relaxed">
+                            "From the birthday boxes to the new arrival sets, every gift I've sent through Sparkle Giftz has been a massive hit. The quality of the boxes themselves is a keepsake."
+                        </p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-primary/30">
+<img class="w-full h-full object-cover" data-alt="A stylish woman with a warm smile, wearing a chic beige sweater. Clean and minimal background with soft, natural morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuComGOuA6BKjb0rmSHm9eWyZJjg1Foiaq4w4MfbjdGLFeWb1IDnJVyCGHVeR2VWx0EgmaovaGOHqLiPvEC__OZxlieOID4s7C2gwnQ_EGM8AFRWUqjPIAsbpGL8HY5SJMcw7EfY4_diEw0yTE7PLEjEWeO2BU1qbbfiaE31n6zvLsdD-OM2N5X-iGxfM1AQo3XbGAOLpzS_5Qa5LrRzfNbr4llIGH9M8H2C6yGM8G0biK9ZFlm0r5WuOZWk3eN_7_NX8CTNCT7gi_g"/>
+</div>
+<div>
+<p class="font-label-caps text-[11px] text-on-surface">SARA JENKINS</p>
+<p class="text-[10px] text-primary uppercase tracking-tighter">Loyal Customer</p>
+</div>
+</div>
+</div>
+</div>
+<!-- CTA Share Experience -->
+<div class="mt-24 text-center">
+<div class="inline-flex flex-col items-center gap-4 group cursor-pointer">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span class="font-label-caps text-label-caps tracking-widest">SHARE YOUR EXPERIENCE</span>
+</div>
+<p class="text-on-surface-variant text-sm">Help others discover the art of gifting. Leave us a Google Review.</p>
+<a class="mt-2 gold-gradient-border px-8 py-3 font-label-caps text-[10px] text-primary hover:bg-primary hover:text-on-primary transition-all duration-300" href="https://google.com" target="_blank">REVIEW US ON GOOGLE</a>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap px-margin-mobile md:px-margin-desktop bg-background border-t border-primary/30">
+<div class="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<div class="flex flex-col gap-8">
+<h2 class="font-display-lg text-headline-md text-primary">Sparkle Giftz</h2>
+<p class="text-on-surface-variant text-sm leading-relaxed pr-8">
+                    Curating premium gift boxes for those who appreciate the finer things in life. Exclusively handcrafted with passion and delivered with care.
+                </p>
+<div class="flex gap-4">
+<a class="w-10 h-10 border border-primary/30 flex items-center justify-center hover:border-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="share">share</span>
+</a>
+<a class="w-10 h-10 border border-primary/30 flex items-center justify-center hover:border-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="camera">camera</span>
+</a>
+</div>
+</div>
+<div class="flex flex-col gap-6">
+<h4 class="font-label-caps text-label-caps text-primary">BRAND INFO</h4>
+<nav class="flex flex-col gap-3">
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="#">Our Story</a>
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="#">Sustainability</a>
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="#">Artisan Partners</a>
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="#">Press &amp; Media</a>
+</nav>
+</div>
+<div class="flex flex-col gap-6">
+<h4 class="font-label-caps text-label-caps text-primary">QUICK LINKS</h4>
+<nav class="flex flex-col gap-3">
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="shop.html">Shop All</a>
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="reviews.html#contact-section">Bespoke Inquiries</a>
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="cart.html">Track Order</a>
+<a class="text-on-surface-variant hover:text-primary text-sm transition-colors" href="#">Gift Cards</a>
+</nav>
+</div>
+<div class="flex flex-col gap-6">
+<h4 class="font-label-caps text-label-caps text-primary">WHATSAPP CONTACT</h4>
+<p class="text-on-surface-variant text-sm mb-4">Concierge Service available Daily 9AM — 10PM</p>
+<a class="flex items-center gap-3 text-primary group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="chat">chat</span>
+<span class="font-body-md font-bold text-lg">+1 (555) SPARKLE</span>
+</a>
+<div class="mt-8">
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-2">NEWSLETTER ACCESS</p>
+<div class="flex border-b border-primary/30 pb-2">
+<input class="bg-transparent border-none text-sm focus:ring-0 w-full placeholder:text-on-surface-variant/40" placeholder="Your Email" type="email"/>
+<button class="material-symbols-outlined text-primary" data-icon="arrow_forward">arrow_forward</button>
+</div>
+</div>
+</div>
+</div>
+<div class="max-w-container-max mx-auto mt-24 flex flex-col md:flex-row justify-between items-center border-t border-outline-variant/10 pt-8 gap-4">
+<p class="text-on-surface-variant text-[11px] font-label-caps">© 2024 Sparkle Giftz. All Rights Reserved.</p>
+<div class="flex gap-8">
+<a class="text-on-surface-variant text-[11px] font-label-caps hover:text-primary transition-colors" href="#">PRIVACY POLICY</a>
+<a class="text-on-surface-variant text-[11px] font-label-caps hover:text-primary transition-colors" href="#">TERMS OF SERVICE</a>
+<a class="text-on-surface-variant text-[11px] font-label-caps hover:text-primary transition-colors" href="#">SHIPPING &amp; RETURNS</a>
+</div>
+</div>
+</footer>
+<script src="cart.js"></script>
+<script>
+        // Micro-interactions and effects
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.querySelector('header');
+            
+            // Header scroll effect
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) {
+                    header.classList.add('shadow-xl', 'bg-background');
+                } else {
+                    header.classList.remove('shadow-xl', 'bg-background');
+                }
+            });
+
+            // Smooth parallax for hero image
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                const heroImage = document.querySelector('[data-alt*="premium black gift box"]');
+                if (heroImage) {
+                    heroImage.style.transform = `translateY(${scrolled * 0.15}px) scale(1.05)`;
+                }
+            });
+        });
+    </script>
+</body></html>
