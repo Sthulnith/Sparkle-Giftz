@@ -9,19 +9,19 @@ RUN apk add --no-cache maven
 WORKDIR /app
 COPY . .
 
-# Build from root or backend directory depending on context
+# Build from root or backend directory and isolate the single output JAR
 RUN if [ -f "pom.xml" ]; then \
-        mvn clean package -DskipTests; \
+        mvn clean package -DskipTests && cp target/store-*.jar /app/app.jar; \
     elif [ -f "backend/pom.xml" ]; then \
-        cd backend && mvn clean package -DskipTests; \
+        cd backend && mvn clean package -DskipTests && cp target/store-*.jar /app/app.jar; \
     fi
 
 # Step 2: Lightweight JRE 21 Runtime image
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Copy the compiled jar
-COPY --from=build /app/**/target/*.jar app.jar
+# Copy the exact compiled app.jar
+COPY --from=build /app/app.jar app.jar
 
 EXPOSE 8080
 
