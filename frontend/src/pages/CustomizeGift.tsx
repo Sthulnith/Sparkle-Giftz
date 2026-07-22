@@ -21,76 +21,17 @@ export interface SelectedCustomItem extends CustomProductItem {
 }
 
 export interface CustomGiftDetails {
-  boxSize: 'Small' | 'Medium' | 'Large';
-  boxColor: string;
-  ribbonColor: string;
-  greetingCard: string;
-  wrapping: string;
   giftMessage: string;
   items: SelectedCustomItem[];
-  boxPrice: number;
   itemsSubtotal: number;
   totalPrice: number;
 }
-
-const BOX_SIZES = [
-  {
-    id: 'Small' as const,
-    name: 'Small Luxury Box',
-    capacity: 'Ideal for 2 - 4 luxury items',
-    price: 1500,
-    dimensions: '20 x 15 x 10 cm',
-    icon: 'package_2',
-  },
-  {
-    id: 'Medium' as const,
-    name: 'Medium Executive Curation',
-    capacity: 'Ideal for 5 - 7 luxury items',
-    price: 2500,
-    dimensions: '30 x 22 x 12 cm',
-    badge: 'MOST POPULAR',
-    icon: 'inventory_2',
-  },
-  {
-    id: 'Large' as const,
-    name: 'Large Grand Keepsake Curation',
-    capacity: 'Ideal for 8 - 12+ luxury items',
-    price: 3800,
-    dimensions: '40 x 30 x 15 cm',
-    icon: 'card_giftcard',
-  },
-];
-
-const BOX_COLORS = [
-  { name: 'Onyx Black', hex: '#111827', bgClass: 'bg-gray-900', borderHex: '#374151' },
-  { name: 'Midnight Navy', hex: '#1e3a8a', bgClass: 'bg-blue-950', borderHex: '#2563eb' },
-  { name: 'Royal Crimson', hex: '#991b1b', bgClass: 'bg-red-950', borderHex: '#dc2626' },
-  { name: 'Charcoal Grey', hex: '#1f2937', bgClass: 'bg-gray-800', borderHex: '#4b5563' },
-  { name: 'Emerald Sage', hex: '#065f46', bgClass: 'bg-emerald-950', borderHex: '#10b981' },
-  { name: 'Champagne Gold', hex: '#d4af37', bgClass: 'bg-amber-700', borderHex: '#f59e0b' },
-];
-
-const WRAPPING_OPTIONS = [
-  'Signature Matte Black & Gold Foil',
-  'Satin Red & Gold Ribbon Curation',
-  'Velvet Emerald & Gold Seal',
-  'Minimalist Parchment & Wax Stamp',
-];
-
-const RIBBON_OPTIONS = ['Sparkle Gold', 'Crimson Velvet', 'Royal Navy', 'Metallic Silver', 'Emerald Green'];
-
-const CARD_OPTIONS = ['Happy Birthday', 'Happy Anniversary', 'With Love & Best Wishes', 'Congratulations', 'Thank You', 'Just For You'];
 
 export const CustomizeGift: React.FC = () => {
   const navigate = useNavigate();
 
   // Customization state
-  const [selectedBoxSize, setSelectedBoxSize] = useState<'Small' | 'Medium' | 'Large'>('Medium');
-  const [selectedBoxColor, setSelectedBoxColor] = useState<string>('Onyx Black');
   const [selectedItems, setSelectedItems] = useState<Record<string | number, SelectedCustomItem>>({});
-  const [selectedWrapping, setSelectedWrapping] = useState<string>(WRAPPING_OPTIONS[0]);
-  const [selectedRibbon, setSelectedRibbon] = useState<string>(RIBBON_OPTIONS[0]);
-  const [selectedCard, setSelectedCard] = useState<string>(CARD_OPTIONS[0]);
   const [customMessage, setCustomMessage] = useState<string>('');
 
   // Catalog filtering
@@ -136,11 +77,10 @@ export const CustomizeGift: React.FC = () => {
   });
 
   // Calculate pricing
-  const currentBoxConfig = BOX_SIZES.find(b => b.id === selectedBoxSize) || BOX_SIZES[1];
   const itemsList = Object.values(selectedItems);
   const itemsSubtotal = itemsList.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalItemCount = itemsList.reduce((sum, item) => sum + item.quantity, 0);
-  const grandTotal = currentBoxConfig.price + itemsSubtotal;
+  const grandTotal = itemsSubtotal;
 
   // Handle adding / quantity modification with stock enforcement
   const handleAddItem = (product: CustomProductItem) => {
@@ -200,35 +140,25 @@ export const CustomizeGift: React.FC = () => {
   // Add to cart & redirect to checkout
   const handleAddToCartAndCheckout = () => {
     if (itemsList.length === 0) {
-      alert('Please add at least one luxury product to your gift box before proceeding.');
+      alert('Please add at least one item to your custom gift package before proceeding.');
       return;
     }
 
-    const boxColorObj = BOX_COLORS.find(c => c.name === selectedBoxColor);
-    const boxColorHex = boxColorObj ? boxColorObj.hex : '#111827';
-    
     // Choose representative image
     const customImage = itemsList[0]?.image || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop';
 
     const customCartItem = {
       productId: `custom-${Date.now()}`,
-      name: `Customized ${selectedBoxSize} Gift Box (${selectedBoxColor})`,
+      name: `Custom Gift Package (${itemsList.length} Items)`,
       slug: 'customized-luxury-gift-box',
       price: grandTotal,
       quantity: 1,
-      wrapping: `${selectedWrapping} · Ribbon: ${selectedRibbon}`,
-      giftMessage: customMessage.trim() || `Card: ${selectedCard}`,
+      wrapping: 'Signature Premium Gift Packaging',
+      giftMessage: customMessage.trim() || 'Personalized Greeting Card Included',
       image: customImage,
       isCustom: true,
       customDetails: {
-        boxSize: selectedBoxSize,
-        boxColor: selectedBoxColor,
-        boxColorHex: boxColorHex,
-        ribbonColor: selectedRibbon,
-        greetingCard: selectedCard,
-        wrapping: selectedWrapping,
         giftMessage: customMessage.trim(),
-        boxPrice: currentBoxConfig.price,
         itemsSubtotal: itemsSubtotal,
         totalPrice: grandTotal,
         items: itemsList.map(item => ({
@@ -273,10 +203,10 @@ export const CustomizeGift: React.FC = () => {
           <span className="text-gold">CUSTOMIZE GIFT</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-serif gold-text-gradient tracking-wide">
-          Craft Your Bespoke Luxury Gift Box
+          Craft Your Customized Gift Package
         </h1>
         <p className="text-xs sm:text-sm text-muted max-w-2xl mx-auto font-sans">
-          Hand-select your box casing, choose artisanal gift items, add bespoke wrapping, and write a personalized greeting card message.
+          Select artisanal gift items and include your personalized greeting card message.
         </p>
       </div>
 
@@ -286,106 +216,16 @@ export const CustomizeGift: React.FC = () => {
         {/* LEFT COLUMN: CUSTOMIZER STEPS */}
         <div className="lg:col-span-8 space-y-8">
 
-          {/* STEP 1: CHOOSE BOX SIZE */}
-          <div className="gold-gradient-border bg-charcoal p-5 sm:p-7 rounded-xl space-y-5 shadow-xl">
-            <div className="flex items-center gap-3 border-b border-gold/15 pb-4">
-              <span className="w-8 h-8 rounded-full bg-gold text-background font-extrabold flex items-center justify-center font-sans text-sm shadow">
-                1
-              </span>
-              <div>
-                <h2 className="text-lg sm:text-xl font-serif text-gold">Choose Gift Box Size</h2>
-                <p className="text-xs text-muted font-sans">Select the physical dimensions and capacity for your curated set</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {BOX_SIZES.map((size) => {
-                const isSelected = selectedBoxSize === size.id;
-                return (
-                  <button
-                    key={size.id}
-                    type="button"
-                    onClick={() => setSelectedBoxSize(size.id)}
-                    className={`relative text-left p-4 rounded-lg border transition-all duration-300 flex flex-col justify-between cursor-pointer ${
-                      isSelected
-                        ? 'border-gold bg-gold/10 shadow-gold-glow scale-[1.02]'
-                        : 'border-gold/20 bg-background/50 hover:border-gold/50 hover:bg-background/80'
-                    }`}
-                  >
-                    {size.badge && (
-                      <span className="absolute -top-2.5 right-3 bg-gold text-background text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
-                        {size.badge}
-                      </span>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`material-symbols-outlined text-xl ${isSelected ? 'text-gold' : 'text-muted'}`}>
-                          {size.icon}
-                        </span>
-                        <h3 className="font-serif text-sm sm:text-base font-bold text-ivory">{size.id} Box</h3>
-                      </div>
-                      <p className="text-xs text-muted mb-2 font-sans">{size.capacity}</p>
-                      <p className="text-[10px] text-muted/70 font-mono mb-3">{size.dimensions}</p>
-                    </div>
-                    <div className="pt-2 border-t border-gold/10 flex justify-between items-baseline font-sans">
-                      <span className="text-[10px] text-muted uppercase">Box Fee</span>
-                      <span className="text-sm font-bold text-gold">Rs. {size.price.toLocaleString()}.00</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* STEP 2: CHOOSE BOX COLOR */}
-          <div className="gold-gradient-border bg-charcoal p-5 sm:p-7 rounded-xl space-y-5 shadow-xl">
-            <div className="flex items-center gap-3 border-b border-gold/15 pb-4">
-              <span className="w-8 h-8 rounded-full bg-gold text-background font-extrabold flex items-center justify-center font-sans text-sm shadow">
-                2
-              </span>
-              <div>
-                <h2 className="text-lg sm:text-xl font-serif text-gold">Select Box Color & Finish</h2>
-                <p className="text-xs text-muted font-sans">Premium rigid magnetic casing wrapped in textured matte linen</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-              {BOX_COLORS.map((color) => {
-                const isSelected = selectedBoxColor === color.name;
-                return (
-                  <button
-                    key={color.name}
-                    type="button"
-                    onClick={() => setSelectedBoxColor(color.name)}
-                    className={`p-3 rounded-lg border text-center transition-all duration-300 flex flex-col items-center gap-2 cursor-pointer ${
-                      isSelected
-                        ? 'border-gold bg-gold/15 shadow-gold-glow scale-[1.05]'
-                        : 'border-gold/20 bg-background/50 hover:border-gold/50'
-                    }`}
-                  >
-                    <span
-                      className="w-8 h-8 rounded-full border-2 border-gold/40 shadow-inner block"
-                      style={{ backgroundColor: color.hex, borderColor: isSelected ? '#d4af37' : color.borderHex }}
-                    />
-                    <span className={`text-[11px] font-sans font-medium ${isSelected ? 'text-gold font-bold' : 'text-ivory'}`}>
-                      {color.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* STEP 3: SELECT INDIVIDUAL PRODUCTS */}
+          {/* STEP 1: SELECT INDIVIDUAL PRODUCTS */}
           <div className="gold-gradient-border bg-charcoal p-5 sm:p-7 rounded-xl space-y-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-gold/15 pb-4 flex-wrap gap-3">
               <div className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-gold text-background font-extrabold flex items-center justify-center font-sans text-sm shadow">
-                  3
+                  1
                 </span>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-serif text-gold">Add Items to Your Box</h2>
-                  <p className="text-xs text-muted font-sans">Select items to include in your customized luxury gift set</p>
+                  <h2 className="text-lg sm:text-xl font-serif text-gold">Choose Items for Your Custom Gift Set</h2>
+                  <p className="text-xs text-muted font-sans">Select luxury artisanal products to build your personalized gift box</p>
                 </div>
               </div>
               <span className="bg-gold/15 border border-gold/30 text-gold text-xs px-3 py-1 rounded-full font-bold font-sans">
@@ -530,83 +370,26 @@ export const CustomizeGift: React.FC = () => {
             </div>
           </div>
 
-          {/* STEP 4: WRAPPING & PERSONALIZATION */}
-          <div className="gold-gradient-border bg-charcoal p-5 sm:p-7 rounded-xl space-y-6 shadow-xl">
+          {/* STEP 2: GREETING CARD MESSAGE */}
+          <div className="gold-gradient-border bg-charcoal p-5 sm:p-7 rounded-xl space-y-5 shadow-xl">
             <div className="flex items-center gap-3 border-b border-gold/15 pb-4">
               <span className="w-8 h-8 rounded-full bg-gold text-background font-extrabold flex items-center justify-center font-sans text-sm shadow">
-                4
+                2
               </span>
               <div>
-                <h2 className="text-lg sm:text-xl font-serif text-gold">Gift Wrapping & Personal Message</h2>
-                <p className="text-xs text-muted font-sans">Tailor the presentation ribbon and add your personal message</p>
+                <h2 className="text-lg sm:text-xl font-serif text-gold">Greeting Card Message (Optional)</h2>
+                <p className="text-xs text-muted font-sans">Add a custom note to be handwritten inside your luxury gift box</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Wrapping Selection */}
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-muted font-semibold mb-2 font-sans">
-                  Gift Wrapping Theme
-                </label>
-                <select
-                  value={selectedWrapping}
-                  onChange={(e) => setSelectedWrapping(e.target.value)}
-                  className="w-full bg-background border border-gold/30 text-xs text-ivory p-3 rounded outline-none focus:border-gold"
-                >
-                  {WRAPPING_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Ribbon Selection */}
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-muted font-semibold mb-2 font-sans">
-                  Ribbon Accent Color
-                </label>
-                <select
-                  value={selectedRibbon}
-                  onChange={(e) => setSelectedRibbon(e.target.value)}
-                  className="w-full bg-background border border-gold/30 text-xs text-ivory p-3 rounded outline-none focus:border-gold"
-                >
-                  {RIBBON_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Greeting Card & Custom Message */}
-            <div className="space-y-4 pt-2 border-t border-gold/10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-muted font-semibold mb-2 font-sans">
-                    Greeting Card Occasion
-                  </label>
-                  <select
-                    value={selectedCard}
-                    onChange={(e) => setSelectedCard(e.target.value)}
-                    className="w-full bg-background border border-gold/30 text-xs text-ivory p-3 rounded outline-none focus:border-gold"
-                  >
-                    {CARD_OPTIONS.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-muted font-semibold mb-2 font-sans">
-                    Greeting Card Message (Optional)
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={customMessage}
-                    onChange={(e) => setCustomMessage(e.target.value)}
-                    placeholder="Type your personal message to be handwritten inside the luxury card..."
-                    className="w-full bg-background border border-gold/30 text-xs text-ivory p-3 rounded outline-none focus:border-gold resize-none placeholder:text-muted/60"
-                  />
-                </div>
-              </div>
+            <div>
+              <textarea
+                rows={4}
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                placeholder="Type your personal greeting message to be handwritten inside the luxury card (e.g. Wishing you a happy birthday!)..."
+                className="w-full bg-background border border-gold/30 text-xs text-ivory p-3.5 rounded-lg outline-none focus:border-gold resize-none placeholder:text-muted/60 font-sans leading-relaxed"
+              />
             </div>
           </div>
 
@@ -619,28 +402,6 @@ export const CustomizeGift: React.FC = () => {
               <span>Order Summary</span>
               <span className="material-symbols-outlined text-2xl text-gold">auto_awesome</span>
             </h2>
-
-            {/* Selected Curation Configuration */}
-            <div className="bg-background/60 p-3.5 rounded border border-gold/15 space-y-2 text-xs text-ivory">
-              <div className="flex justify-between items-center">
-                <span className="text-muted uppercase text-[10px] font-sans">Box Size</span>
-                <span className="font-serif font-bold text-gold">{selectedBoxSize}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted uppercase text-[10px] font-sans">Box Finish</span>
-                <span className="font-bold flex items-center gap-1.5">
-                  <span
-                    className="w-3 h-3 rounded-full border border-gold/50 inline-block"
-                    style={{ backgroundColor: BOX_COLORS.find(c => c.name === selectedBoxColor)?.hex }}
-                  />
-                  {selectedBoxColor}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted uppercase text-[10px] font-sans">Wrapping</span>
-                <span className="text-[11px] text-ivory truncate max-w-[160px]">{selectedWrapping}</span>
-              </div>
-            </div>
 
             {/* Selected Items List */}
             <div className="space-y-3">
@@ -661,7 +422,7 @@ export const CustomizeGift: React.FC = () => {
                 <div className="bg-background/30 p-6 rounded text-center border border-dashed border-gold/15">
                   <span className="material-symbols-outlined text-gold/40 text-3xl mb-1">workspaces</span>
                   <p className="text-xs text-muted font-sans">Your custom gift box is empty.</p>
-                  <p className="text-[10px] text-muted/60 mt-1">Select luxury items from Step 3 above.</p>
+                  <p className="text-[10px] text-muted/60 mt-1">Select items from Step 1 above.</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -699,15 +460,11 @@ export const CustomizeGift: React.FC = () => {
             {/* Financial Breakdown */}
             <div className="border-t border-gold/15 pt-4 space-y-2 font-sans text-xs">
               <div className="flex justify-between text-muted">
-                <span>Box Casing Fee ({selectedBoxSize})</span>
-                <span className="text-ivory">Rs. {currentBoxConfig.price.toLocaleString()}.00</span>
-              </div>
-              <div className="flex justify-between text-muted">
                 <span>Selected Items Subtotal</span>
-                <span className="text-ivory">Rs. {itemsSubtotal.toLocaleString()}.00</span>
+                <span className="text-ivory font-semibold">Rs. {itemsSubtotal.toLocaleString()}.00</span>
               </div>
               <div className="flex justify-between text-muted">
-                <span>Premium Gift Wrapping & Card</span>
+                <span>Premium Gift Packaging & Card</span>
                 <span className="text-green-400 font-bold uppercase tracking-wide">Included</span>
               </div>
               <div className="flex justify-between text-muted">
