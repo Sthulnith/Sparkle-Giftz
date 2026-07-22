@@ -76,11 +76,15 @@ export const CustomizeGift: React.FC = () => {
     return categoryMatch && searchMatch;
   });
 
+  const MIN_CUSTOM_ORDER_VALUE = 1500;
+
   // Calculate pricing
   const itemsList = Object.values(selectedItems);
   const itemsSubtotal = itemsList.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalItemCount = itemsList.reduce((sum, item) => sum + item.quantity, 0);
   const grandTotal = itemsSubtotal;
+  const isMinOrderMet = grandTotal >= MIN_CUSTOM_ORDER_VALUE;
+  const amountNeeded = Math.max(0, MIN_CUSTOM_ORDER_VALUE - grandTotal);
 
   // Handle adding / quantity modification with stock enforcement
   const handleAddItem = (product: CustomProductItem) => {
@@ -141,6 +145,11 @@ export const CustomizeGift: React.FC = () => {
   const handleAddToCartAndCheckout = () => {
     if (itemsList.length === 0) {
       alert('Please add at least one item to your custom gift package before proceeding.');
+      return;
+    }
+
+    if (!isMinOrderMet) {
+      alert(`Minimum custom gift package order value is Rs. ${MIN_CUSTOM_ORDER_VALUE.toLocaleString()}.00. Please add items worth Rs. ${amountNeeded.toLocaleString()}.00 more to proceed.`);
       return;
     }
 
@@ -206,7 +215,7 @@ export const CustomizeGift: React.FC = () => {
           Craft Your Customized Gift Package
         </h1>
         <p className="text-xs sm:text-sm text-muted max-w-2xl mx-auto font-sans">
-          Select artisanal gift items and include your personalized greeting card message.
+          Select artisanal gift items (minimum order value Rs. 1,500.00) and include your personalized greeting card message.
         </p>
       </div>
 
@@ -457,6 +466,19 @@ export const CustomizeGift: React.FC = () => {
               )}
             </div>
 
+            {/* Minimum Order Value Alert Banner */}
+            {itemsList.length > 0 && !isMinOrderMet && (
+              <div className="bg-amber-950/50 border border-amber-500/40 p-3 rounded-lg text-amber-200 text-xs font-sans flex items-start gap-2.5 shadow font-sans">
+                <span className="material-symbols-outlined text-amber-400 text-lg shrink-0 mt-0.5">info</span>
+                <div>
+                  <p className="font-bold text-amber-300">Minimum Order Value: Rs. 1,500.00</p>
+                  <p className="text-[11px] text-amber-200/90 mt-0.5 leading-relaxed">
+                    Please add items worth <strong>Rs. {amountNeeded.toLocaleString()}.00</strong> more to proceed with checkout.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Financial Breakdown */}
             <div className="border-t border-gold/15 pt-4 space-y-2 font-sans text-xs">
               <div className="flex justify-between text-muted">
@@ -484,15 +506,21 @@ export const CustomizeGift: React.FC = () => {
             <button
               type="button"
               onClick={handleAddToCartAndCheckout}
-              disabled={itemsList.length === 0}
+              disabled={itemsList.length === 0 || !isMinOrderMet}
               className={`w-full py-4 rounded font-sans font-bold text-xs uppercase tracking-widest transition duration-300 shadow-gold-glow flex items-center justify-center gap-2 ${
-                itemsList.length > 0
+                itemsList.length > 0 && isMinOrderMet
                   ? 'bg-gold hover:bg-gold-light text-background cursor-pointer'
                   : 'bg-gold/30 text-background/60 cursor-not-allowed'
               }`}
             >
               <span className="material-symbols-outlined text-base">shopping_bag</span>
-              <span>ADD CUSTOMIZED GIFT TO CART</span>
+              <span>
+                {itemsList.length === 0
+                  ? 'ADD CUSTOMIZED GIFT TO CART'
+                  : !isMinOrderMet
+                  ? `ADD RS. ${amountNeeded.toLocaleString()} MORE TO PROCEED`
+                  : 'ADD CUSTOMIZED GIFT TO CART'}
+              </span>
             </button>
 
             <p className="text-[10px] text-muted text-center leading-relaxed">
