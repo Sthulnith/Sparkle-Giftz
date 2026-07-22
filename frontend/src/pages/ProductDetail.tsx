@@ -385,7 +385,7 @@ export const ProductDetail = () => {
           <div className="gold-gradient-border bg-charcoal p-5 rounded-xl space-y-4">
             <h3 className="text-xs uppercase text-gold font-sans tracking-widest font-semibold flex items-center gap-1.5">
               <span className="material-symbols-outlined text-sm">redeem</span>
-              Presentation & Gift Message
+              Personal Greeting Message
             </h3>
 
             {/* Custom greeting card */}
@@ -400,24 +400,6 @@ export const ProductDetail = () => {
                 placeholder="Write your greeting message here to print on our signature gold card..."
                 className="w-full bg-background border border-gold/25 p-2.5 rounded text-xs text-ivory placeholder-muted/50 focus:border-gold outline-none h-20 resize-none font-sans"
               />
-            </div>
-
-            {/* Premium Wrapping Selector */}
-            <div className="space-y-1">
-              <label className="block text-xs text-muted font-medium uppercase font-sans tracking-wide">
-                Presentation Wrapping Style
-              </label>
-              <select
-                value={wrappingOption}
-                onChange={(e) => setWrappingOption(e.target.value)}
-                className="w-full bg-background border border-gold/25 p-2.5 rounded text-xs text-ivory focus:border-gold outline-none cursor-pointer"
-              >
-                <option value="Signature Matte Black & Gold Foil">Signature Matte Black & Gold Foil (Included)</option>
-                <option value="Satin Red & Gold Ribbon Curation">Satin Red & Gold Ribbon Curation (+Rs.500.00)</option>
-                <option value="Velvet Emerald & Gold Seal">Velvet Emerald & Gold Seal (+Rs.1,200.00)</option>
-                <option value="Minimalist Parchment & Wax Stamp">Minimalist Parchment & Wax Stamp (+Rs.600.00)</option>
-                <option value="Midnight Navy Sleek Casing">Midnight Navy Sleek Casing (+Rs.800.00)</option>
-              </select>
             </div>
           </div>
 
