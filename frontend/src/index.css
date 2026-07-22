@@ -43,9 +43,30 @@
 }
 
 @layer base {
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     @apply bg-background text-ivory font-sans antialiased selection:bg-gold selection:text-background;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Scrollbar None Utility for Horizontal Mobile Scrollbars */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom Scrollbar for Luxury Aesthetic */

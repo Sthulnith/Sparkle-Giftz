@@ -1,231 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-
-interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  old_price?: number;
-  category: string;
-  occasion: string;
-  color: string;
-  stock: number;
-  is_variable: boolean;
-  images?: string[];
-}
-
-const DEFAULT_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: 'The Noir Classic',
-    slug: 'the-noir-classic',
-    description: 'A timeless statement of elegance, featuring curated artisanal chocolates, premium tea, and a customized greeting card.',
-    price: 12500,
-    old_price: 14000,
-    category: 'Gift Boxes',
-    occasion: 'Birthday',
-    color: 'Black',
-    stock: 25,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 2,
-    name: 'The Midnight Celebration',
-    slug: 'the-midnight-celebration',
-    description: 'Our signature matte navy box containing vintage champagne, crystal flutes, and hand-selected dark truffles.',
-    price: 18900,
-    category: 'Signature Collection',
-    occasion: 'Anniversary',
-    color: 'Navy',
-    stock: 12,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 3,
-    name: 'Velvet Romance',
-    slug: 'velvet-romance',
-    description: 'A deep crimson box lined with velvet, presenting premium scent diffusers, soy candles, and gold-plated keepsakes.',
-    price: 24500,
-    old_price: 27000,
-    category: 'Signature Collection',
-    occasion: 'Romance',
-    color: 'Crimson',
-    stock: 8,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1575384978132-c68e146747b0?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 4,
-    name: 'The Executive Suite',
-    slug: 'the-executive-suite',
-    description: 'Sleek charcoal magnetic box containing a weighted pen, leather planner, and luxury coffee blend.',
-    price: 28500,
-    category: 'Custom Curations',
-    occasion: 'Corporate Gifts',
-    color: 'Charcoal',
-    stock: 15,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1607344645866-009c320c5ab8?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 5,
-    name: 'Gentle Beginnings',
-    slug: 'gentle-beginnings',
-    description: 'An organic baby blanket, soft rattle, and hypoallergenic skincare products in a pastel sage box.',
-    price: 15600,
-    category: 'Gift Boxes',
-    occasion: 'Newborn & Baby',
-    color: 'Sage',
-    stock: 5,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1512909006721-3d6018887383?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 6,
-    name: 'Golden Heritage Casing',
-    slug: 'golden-heritage-casing',
-    description: 'Gold-embossed keepsake wooden box filled with single-origin teas, honey, and artisanal biscuits.',
-    price: 32000,
-    old_price: 35000,
-    category: 'Signature Collection',
-    occasion: 'Corporate Gifts',
-    color: 'Gold',
-    stock: 10,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1513885535751-8b9238bd47d4?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 7,
-    name: 'Royal Rose & Champagne',
-    slug: 'royal-rose-champagne',
-    description: 'Preserved royal pink roses paired with sparkling wine and Belgian chocolate pralines.',
-    price: 21500,
-    old_price: 23500,
-    category: 'Signature Collection',
-    occasion: 'Romance',
-    color: 'Crimson',
-    stock: 0,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 8,
-    name: 'Artisanal Coffee & Truffles',
-    slug: 'artisanal-coffee-truffles',
-    description: 'Handcrafted ceramic mug, dark roast Arabica coffee, and gourmet dark chocolate truffles.',
-    price: 14200,
-    category: 'Gift Boxes',
-    occasion: 'Birthday',
-    color: 'Black',
-    stock: 18,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 9,
-    name: 'Celestial Harmony Casing',
-    slug: 'celestial-harmony-casing',
-    description: 'Scented aromatherapy oils, crystal candle holder, and relaxing organic herbal tea infusions.',
-    price: 19800,
-    old_price: 22000,
-    category: 'Custom Curations',
-    occasion: 'Anniversary',
-    color: 'Navy',
-    stock: 7,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 10,
-    name: 'Blossom & Candle Keepsake',
-    slug: 'blossom-candle-keepsake',
-    description: 'Hand-poured soy candle with gold accents and everlasting floral arrangement.',
-    price: 16500,
-    category: 'Gift Boxes',
-    occasion: 'Birthday',
-    color: 'Sage',
-    stock: 14,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 11,
-    name: 'Luxe Leather & Watch Curation',
-    slug: 'luxe-leather-watch-curation',
-    description: 'Italian leather watch case, cufflinks, and a gold-accented minimalist timepiece.',
-    price: 34000,
-    old_price: 38000,
-    category: 'Signature Collection',
-    occasion: 'Corporate Gifts',
-    color: 'Black',
-    stock: 4,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 12,
-    name: 'Empress Botanical Velvet',
-    slug: 'empress-botanical-velvet',
-    description: 'Luxury botanical skincare set with silk eye mask inside a plush velvet casing.',
-    price: 26000,
-    category: 'Custom Curations',
-    occasion: 'Romance',
-    color: 'Crimson',
-    stock: 0,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 13,
-    name: 'Vintage Wine & Cheese Set',
-    slug: 'vintage-wine-cheese-set',
-    description: 'Aged red wine, brass wine opener, stainless cheese knives, and gourmet crackers.',
-    price: 29500,
-    old_price: 32000,
-    category: 'Signature Collection',
-    occasion: 'Anniversary',
-    color: 'Charcoal',
-    stock: 9,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 14,
-    name: 'Modern Minimalist Monochrome',
-    slug: 'modern-minimalist-monochrome',
-    description: 'Sleek black thermos tumbler, matte journal, and stainless steel pen in matte box.',
-    price: 13800,
-    category: 'Gift Boxes',
-    occasion: 'Birthday',
-    color: 'Black',
-    stock: 20,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=600&auto=format&fit=crop'],
-  },
-  {
-    id: 15,
-    name: 'Sweet Delight Birthday Box',
-    slug: 'sweet-delight-birthday-box',
-    description: 'Assorted macarons, chocolate bark, sparkling soda, and confetti party poppers.',
-    price: 11500,
-    old_price: 13000,
-    category: 'Gift Boxes',
-    occasion: 'Birthday',
-    color: 'Gold',
-    stock: 11,
-    is_variable: false,
-    images: ['https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=600&auto=format&fit=crop'],
-  }
-];
+import { getProducts, type Product } from '../lib/supabase';
 
 const ITEMS_PER_PAGE = 10;
 
 export const Shop = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('default');
@@ -235,29 +16,36 @@ export const Shop = () => {
   const [showMobileFilter, setShowMobileFilter] = useState<boolean>(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('sparkle_products');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Ensure we have ample products for 10-item pagination testing
-      if (parsed.length < 10) {
-        localStorage.setItem('sparkle_products', JSON.stringify(DEFAULT_PRODUCTS));
-        setProducts(DEFAULT_PRODUCTS);
-      } else {
-        setProducts(parsed);
-      }
-    } else {
-      localStorage.setItem('sparkle_products', JSON.stringify(DEFAULT_PRODUCTS));
-      setProducts(DEFAULT_PRODUCTS);
-    }
-
-    const storedFavs = localStorage.getItem('sparkle_favs');
-    if (storedFavs) {
+    const fetchProducts = async () => {
+      setIsLoading(true);
       try {
-        setFavorites(JSON.parse(storedFavs));
-      } catch (e) {
-        setFavorites([]);
+        const data = await getProducts();
+        setProducts(data);
+      } catch (err) {
+        console.error('[Shop] Error fetching products:', err);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+
+    fetchProducts();
+
+    const loadFavs = () => {
+      const storedFavs = localStorage.getItem('sparkle_favs');
+      if (storedFavs) {
+        try {
+          setFavorites(JSON.parse(storedFavs));
+        } catch (e) {
+          setFavorites([]);
+        }
+      }
+    };
+    loadFavs();
+
+    window.addEventListener('sparkle_products_updated', fetchProducts);
+    return () => {
+      window.removeEventListener('sparkle_products_updated', fetchProducts);
+    };
   }, []);
 
   const toggleFavorite = (e: React.MouseEvent, id: number) => {
@@ -271,8 +59,8 @@ export const Shop = () => {
   };
 
   // Get unique categories and occasions for filter lists
-  const categories = Array.from(new Set(products.map((p) => p.category)));
-  const occasions = Array.from(new Set(products.map((p) => p.occasion)));
+  const categories = Array.from(new Set(products.map((p: any) => p.category).filter((c): c is string => Boolean(c))));
+  const occasions = Array.from(new Set(products.map((p: any) => p.occasion).filter((o): o is string => Boolean(o))));
 
   const handleCategoryChange = (cat: string) => {
     setSelectedCategories(prev =>
@@ -298,12 +86,14 @@ export const Shop = () => {
 
   // Filter & Sort logic
   const filteredProducts = products.filter(p => {
-    const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(p.category);
-    const occasionMatch = selectedOccasions.length === 0 || selectedOccasions.includes(p.occasion);
+    const pCat = (p as any).category;
+    const pOcc = (p as any).occasion;
+    const categoryMatch = selectedCategories.length === 0 || (pCat ? selectedCategories.includes(pCat) : false);
+    const occasionMatch = selectedOccasions.length === 0 || (pOcc ? selectedOccasions.includes(pOcc) : false);
     const searchMatch = !searchQuery || 
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase());
+      (p.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (pCat || '').toLowerCase().includes(searchQuery.toLowerCase());
     return categoryMatch && occasionMatch && searchMatch;
   });
 
@@ -334,82 +124,110 @@ export const Shop = () => {
 
   return (
     <div className="min-h-screen py-6 sm:py-16 px-3 sm:px-6 max-w-7xl mx-auto">
-      {/* Top Header & Breadcrumbs matching Image 1 */}
-      <div className="text-center mb-6 space-y-2">
-        <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs text-muted uppercase font-sans font-semibold tracking-widest">
-          <Link to="/" className="hover:text-gold transition">HOME</Link>
-          <span>/</span>
-          <span className="text-gold">SHOP</span>
+      {/* Top Header & Breadcrumbs */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pb-4 border-b border-gold/15">
+        <div>
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs text-muted uppercase font-sans font-semibold tracking-widest mb-1">
+            <Link to="/" className="hover:text-gold transition">HOME</Link>
+            <span>/</span>
+            <span className="text-gold">SHOP</span>
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-serif gold-text-gradient tracking-wide">The Signature Collection</h1>
         </div>
-        <h1 className="text-2xl sm:text-4xl font-serif gold-text-gradient tracking-wide">The Signature Collection</h1>
+
+        {/* TOP-RIGHT PRODUCT CONTROLS: Customize Gift & Filter Buttons */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto">
+          {/* Prominent "Customize Your Own Gift" Button */}
+          <Link
+            to="/customize-gift"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gold via-amber-300 to-gold text-background hover:brightness-110 font-extrabold font-sans text-xs uppercase tracking-wider rounded-md shadow-gold-glow transition-all duration-300 group shrink-0 min-h-[44px]"
+          >
+            <span className="material-symbols-outlined text-base group-hover:rotate-12 transition-transform">auto_awesome</span>
+            <span>Customize Your Own Gift</span>
+          </Link>
+
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            {/* Small "Filter" Button */}
+            <button
+              type="button"
+              onClick={() => setShowMobileFilter(!showMobileFilter)}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-charcoal border border-gold/40 text-gold hover:border-gold hover:bg-gold/10 transition-all duration-300 rounded-md font-sans text-xs font-bold uppercase tracking-wider group shrink-0 min-h-[44px]"
+            >
+              <span className="material-symbols-outlined text-base group-hover:rotate-180 transition-transform duration-300">tune</span>
+              <span>Filter</span>
+              {(selectedCategories.length > 0 || selectedOccasions.length > 0) && (
+                <span className="bg-gold text-background text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-extrabold shadow ml-0.5">
+                  {selectedCategories.length + selectedOccasions.length}
+                </span>
+              )}
+            </button>
+
+            {/* Sort By Selector */}
+            <div className="flex-1 sm:flex-none">
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value)}
+                className="w-full bg-background border border-gold/30 text-xs text-ivory px-3 py-2.5 rounded-md focus:border-gold outline-none cursor-pointer tracking-wide font-sans shadow-inner min-h-[44px]"
+              >
+                <option value="default">Default Sort</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name">Sort by Name</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Premium Luxury Toolbar for Filter & Sort Controls */}
-      <div className="gold-gradient-border bg-charcoal/90 backdrop-blur-md p-3 rounded-lg mb-8 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Left: Filter Toggle Button */}
-        <button
-          onClick={() => setShowMobileFilter(!showMobileFilter)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-gold/20 via-gold/10 to-transparent border border-gold/40 text-gold hover:border-gold hover:shadow-gold-glow transition-all duration-300 rounded font-sans text-xs font-bold uppercase tracking-widest group"
-        >
-          <span className="material-symbols-outlined text-base group-hover:rotate-180 transition-transform duration-300">tune</span>
-          <span>FILTER</span>
-          {(selectedCategories.length > 0 || selectedOccasions.length > 0) && (
-            <span className="bg-gold text-background text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-extrabold ml-1 shadow">
-              {selectedCategories.length + selectedOccasions.length}
-            </span>
-          )}
-        </button>
-
-        {/* Center: Items Count Info */}
-        <div className="text-xs text-muted font-sans font-medium uppercase tracking-wider text-center">
+      {/* Item Count Banner */}
+      <div className="flex items-center justify-between text-xs text-muted font-sans font-medium uppercase tracking-wider mb-6 bg-charcoal/40 p-2.5 rounded border border-gold/10">
+        <div>
           Showing <span className="text-gold font-bold">{totalItems > 0 ? startIndex + 1 : 0}–{endIndex}</span> of <span className="text-gold font-bold">{totalItems}</span> Luxury Curations
         </div>
-
-        {/* Right: Sort By Dropdown */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <span className="hidden md:inline-block text-[11px] uppercase tracking-wider text-muted font-sans font-medium">SORT BY:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="w-full sm:w-auto bg-background border border-gold/30 text-xs text-ivory px-3.5 py-2.5 rounded focus:border-gold focus:ring-1 focus:ring-gold outline-none cursor-pointer tracking-wide font-sans shadow-inner"
+        {(selectedCategories.length > 0 || selectedOccasions.length > 0) && (
+          <button
+            type="button"
+            onClick={() => { setSelectedCategories([]); setSelectedOccasions([]); setCurrentPage(1); }}
+            className="text-gold hover:underline text-[11px] font-bold"
           >
-            <option value="default">Default sorting</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="name">Sort by name</option>
-          </select>
-        </div>
+            Clear Active Filters ({selectedCategories.length + selectedOccasions.length})
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* FILTERS SIDEBAR */}
-        <aside className={`${showMobileFilter ? 'block' : 'hidden md:block'} md:col-span-1 space-y-6 transition-all duration-300`}>
-          <div className="gold-gradient-border p-5 rounded bg-charcoal">
-            <div className="flex items-center justify-between mb-4 border-b border-gold/10 pb-2">
-              <h2 className="text-base font-serif text-gold uppercase tracking-wider">Filter By</h2>
-              {(selectedCategories.length > 0 || selectedOccasions.length > 0) && (
-                <button
-                  onClick={() => { setSelectedCategories([]); setSelectedOccasions([]); setCurrentPage(1); }}
-                  className="text-[10px] text-muted hover:text-gold uppercase tracking-wider font-sans"
-                >
-                  Clear All
-                </button>
-              )}
+      {/* FILTER PANEL (SLIDE-IN ON MOBILE, DROPDOWN/SIDEBAR ON DESKTOP) */}
+      {showMobileFilter && (
+        <div className="mb-8 gold-gradient-border p-5 rounded-lg bg-charcoal shadow-2xl relative animate-fadeIn">
+          <div className="flex items-center justify-between mb-4 border-b border-gold/15 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-gold">tune</span>
+              <h2 className="text-base font-serif text-gold uppercase tracking-wider">Filter Luxury Curations</h2>
             </div>
-            
+            <button
+              type="button"
+              onClick={() => setShowMobileFilter(false)}
+              className="text-muted hover:text-gold transition p-1 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Category Filter */}
-            <div className="mb-6">
-              <span className="block text-xs uppercase tracking-wider text-muted mb-3 font-semibold">Category</span>
-              <div className="space-y-2 text-sm text-ivory">
+            <div>
+              <span className="block text-xs uppercase tracking-wider text-gold mb-3 font-semibold font-sans">
+                Filter by Category
+              </span>
+              <div className="space-y-2.5 text-sm text-ivory max-h-48 overflow-y-auto pr-2 scrollbar-thin">
                 {categories.map(cat => (
-                  <label key={cat} className="flex items-center gap-2.5 cursor-pointer group">
+                  <label key={cat} className="flex items-center gap-2.5 cursor-pointer group hover:text-gold transition">
                     <input
                       type="checkbox"
                       checked={selectedCategories.includes(cat)}
                       onChange={() => handleCategoryChange(cat)}
-                      className="accent-gold h-4 w-4 bg-background border border-gold/20 rounded cursor-pointer"
+                      className="accent-gold h-4 w-4 bg-background border border-gold/30 rounded cursor-pointer"
                     />
-                    <span className="group-hover:text-gold transition text-xs font-sans font-medium">{cat}</span>
+                    <span className="text-xs font-sans font-medium">{cat}</span>
                   </label>
                 ))}
               </div>
@@ -417,41 +235,73 @@ export const Shop = () => {
 
             {/* Occasion Filter */}
             <div>
-              <span className="block text-xs uppercase tracking-wider text-muted mb-3 font-semibold">Occasion</span>
-              <div className="space-y-2 text-sm text-ivory">
+              <span className="block text-xs uppercase tracking-wider text-gold mb-3 font-semibold font-sans">
+                Filter by Occasion
+              </span>
+              <div className="space-y-2.5 text-sm text-ivory max-h-48 overflow-y-auto pr-2 scrollbar-thin">
                 {occasions.map(occ => (
-                  <label key={occ} className="flex items-center gap-2.5 cursor-pointer group">
+                  <label key={occ} className="flex items-center gap-2.5 cursor-pointer group hover:text-gold transition">
                     <input
                       type="checkbox"
                       checked={selectedOccasions.includes(occ)}
                       onChange={() => handleOccasionChange(occ)}
-                      className="accent-gold h-4 w-4 bg-background border border-gold/20 rounded cursor-pointer"
+                      className="accent-gold h-4 w-4 bg-background border border-gold/30 rounded cursor-pointer"
                     />
-                    <span className="group-hover:text-gold transition text-xs font-sans font-medium">{occ}</span>
+                    <span className="text-xs font-sans font-medium">{occ}</span>
                   </label>
                 ))}
               </div>
             </div>
           </div>
-        </aside>
 
+          <div className="mt-6 pt-4 border-t border-gold/15 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => { setSelectedCategories([]); setSelectedOccasions([]); setCurrentPage(1); }}
+              className="px-4 py-2 text-xs text-muted hover:text-gold uppercase tracking-wider font-sans"
+            >
+              Reset Filters
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMobileFilter(false)}
+              className="px-5 py-2 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider font-sans rounded transition shadow min-h-[44px]"
+            >
+              Apply & Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div>
         {/* PRODUCTS GRID (10 ITEMS PER PAGE) */}
-        <main className={`${showMobileFilter ? 'md:col-span-3' : 'md:col-span-4 lg:col-span-4'}`}>
-          {currentProducts.length === 0 ? (
+        <main className="w-full">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-10 h-10 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+              <p className="text-xs text-muted uppercase tracking-widest font-sans">Loading Gift Boxes…</p>
+            </div>
+          ) : currentProducts.length === 0 ? (
             <div className="gold-gradient-border bg-charcoal p-12 text-center rounded">
-              <span className="material-symbols-outlined text-gold text-4xl mb-2">sentiment_dissatisfied</span>
-              <h3 className="font-serif text-xl text-gold mb-1">No Gift Boxes Found</h3>
-              <p className="text-xs text-muted font-sans">Try selecting a different filter combination.</p>
+              <span className="material-symbols-outlined text-gold text-4xl mb-2">inventory_2</span>
+              <h3 className="font-serif text-xl text-gold mb-1">No Gift Boxes Available Yet</h3>
+              <p className="text-xs text-muted font-sans">Check back soon or create your own custom gift box!</p>
+              <Link
+                to="/customize-gift"
+                className="inline-block mt-4 px-6 py-2.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider font-sans rounded transition shadow"
+              >
+                Customize Your Own Gift
+              </Link>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6">
                 {currentProducts.map((product) => {
                   const isFav = favorites.includes(product.id);
                   const discountPercent = product.old_price && product.old_price > product.price
                     ? Math.round(((product.old_price - product.price) / product.old_price) * 100)
                     : 0;
-                  const swatches = getColorSwatches(product.color || '');
+                  const swatches = getColorSwatches((product as any).color || '');
 
                   return (
                     <div
@@ -461,9 +311,9 @@ export const Shop = () => {
                       <div>
                         {/* Image Frame with Badges */}
                         <div className="aspect-square bg-background overflow-hidden mb-2.5 rounded border border-gold/15 relative">
-                          {product.images && product.images.length > 0 ? (
+                          {(product.image_urls && product.image_urls.length > 0) || (product as any).images?.length > 0 ? (
                             <img
-                              src={product.images[0]}
+                              src={(product.image_urls && product.image_urls[0]) || (product as any).images?.[0]}
                               alt={product.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
                             />
@@ -506,7 +356,7 @@ export const Shop = () => {
 
                         {/* Category */}
                         <span className="text-[9px] sm:text-[10px] text-muted uppercase tracking-wider font-sans font-medium block mb-0.5 truncate">
-                          {product.category}
+                          {(product as any).category || 'Gift Boxes'}
                         </span>
 
                         {/* Product Title */}

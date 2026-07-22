@@ -1,8 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+interface CustomItem {
+  id: number | string;
+  name: string;
+  category: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
+interface CustomGiftDetails {
+  boxSize: string;
+  boxColor: string;
+  boxColorHex?: string;
+  ribbonColor?: string;
+  greetingCard?: string;
+  wrapping?: string;
+  giftMessage?: string;
+  items: CustomItem[];
+}
+
 interface CartItem {
-  productId: number;
+  productId: number | string;
   name: string;
   slug: string;
   price: number;
@@ -10,6 +30,8 @@ interface CartItem {
   wrapping: string;
   giftMessage: string;
   image?: string;
+  isCustom?: boolean;
+  customDetails?: CustomGiftDetails;
 }
 
 export const Cart = () => {
@@ -61,12 +83,20 @@ export const Cart = () => {
         <div className="gold-gradient-border bg-charcoal p-12 rounded text-center w-full max-w-xl">
           <span className="material-symbols-outlined text-gold text-5xl mb-4">shopping_bag</span>
           <p className="text-ivory mb-6 font-sans text-sm font-light">Your luxury cart is currently empty.</p>
-          <Link
-            to="/shop"
-            className="inline-block px-8 py-3 bg-gold hover:bg-gold-light text-background font-semibold font-sans text-xs uppercase tracking-widest transition duration-300"
-          >
-            Continue Curating
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/shop"
+              className="inline-block px-6 py-3 bg-charcoal hover:bg-gold/10 border border-gold/40 text-gold font-semibold font-sans text-xs uppercase tracking-widest transition duration-300 rounded"
+            >
+              Browse Shop Collection
+            </Link>
+            <Link
+              to="/customize-gift"
+              className="inline-block px-6 py-3 bg-gold hover:bg-gold-light text-background font-bold font-sans text-xs uppercase tracking-widest transition duration-300 rounded shadow"
+            >
+              Customize Your Own Gift
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -89,7 +119,7 @@ export const Cart = () => {
               className="gold-gradient-border bg-charcoal p-5 rounded flex flex-col sm:flex-row gap-6 relative group"
             >
               {/* Product Image */}
-              <div className="w-full sm:w-32 h-32 bg-background rounded overflow-hidden border border-gold/10 shrink-0">
+              <div className="w-full sm:w-36 h-36 bg-background rounded overflow-hidden border border-gold/15 shrink-0 relative">
                 {item.image ? (
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
@@ -97,12 +127,25 @@ export const Cart = () => {
                     No Image
                   </div>
                 )}
+                {item.isCustom && (
+                  <span className="absolute top-2 left-2 bg-gold text-background text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow">
+                    BESPOKE
+                  </span>
+                )}
               </div>
 
               {/* Product Info & personalization */}
-              <div className="flex-grow space-y-2">
+              <div className="flex-grow space-y-2.5">
                 <div className="flex justify-between items-start gap-4">
-                  <h3 className="font-serif text-lg text-ivory">{item.name}</h3>
+                  <div>
+                    <h3 className="font-serif text-lg text-ivory">{item.name}</h3>
+                    {item.isCustom && (
+                      <span className="text-[11px] text-gold font-sans font-bold flex items-center gap-1 mt-0.5">
+                        <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                        Custom Curation
+                      </span>
+                    )}
+                  </div>
                   <button
                     onClick={() => handleRemoveItem(idx)}
                     className="text-muted hover:text-red-400 transition"
@@ -112,7 +155,55 @@ export const Cart = () => {
                   </button>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-muted font-sans">
+                {/* Custom Gift Breakdown if custom */}
+                {item.isCustom && item.customDetails && item.customDetails.items && (
+                  <div className="bg-background/60 p-3 rounded border border-gold/15 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-muted border-b border-gold/10 pb-1 text-[11px]">
+                      <span>Box Size: <strong className="text-gold">{item.customDetails.boxSize}</strong></span>
+                      <span>Color: <strong className="text-ivory">{item.customDetails.boxColor}</strong></span>
+                    </div>
+
+                    <p className="text-[10px] uppercase tracking-wider text-gold font-semibold">Included Items ({item.customDetails.items.length}):</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                      {item.customDetails.items.map((cItem, cIdx) => (
+                        <div key={cIdx} className="flex items-center gap-1.5 text-muted">
+                          <span className="text-gold font-bold">•</span>
+                          <span className="truncate text-ivory">{cItem.name}</span>
+                          <span className="text-muted text-[10px]">({cItem.quantity}x)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pre-Made Custom Box Breakdown */}
+                {(item as any).isCustomPreMadeBox && (item as any).preMadeCustomDetails && (
+                  <div className="bg-background/60 p-3 rounded border border-gold/15 space-y-2 text-xs">
+                    <p className="text-[10px] uppercase tracking-wider text-gold font-semibold">Customized Package Manifest:</p>
+                    <div className="space-y-1 text-[11px]">
+                      {(item as any).preMadeCustomDetails.keptItems?.map((kItem: any, kIdx: number) => (
+                        <div key={kIdx} className="flex items-center gap-1.5 text-ivory">
+                          <span className="text-gold font-bold">✓</span>
+                          <span className="truncate">{kItem.quantity}x {kItem.name}</span>
+                        </div>
+                      ))}
+                      {(item as any).preMadeCustomDetails.removedItems?.map((rItem: any, rIdx: number) => (
+                        <div key={rIdx} className="flex items-center gap-1.5 text-red-400/80 line-through">
+                          <span>✗</span>
+                          <span className="truncate">{rItem.quantity}x {rItem.name} (Removed)</span>
+                        </div>
+                      ))}
+                      {(item as any).preMadeCustomDetails.extraAddedItems?.map((eItem: any, eIdx: number) => (
+                        <div key={eIdx} className="flex items-center gap-1.5 text-green-400">
+                          <span>+</span>
+                          <span className="truncate">{eItem.quantity}x {eItem.name} (Extra Added)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1 text-xs text-muted font-sans">
                   <p>
                     <span className="text-gold font-medium">Wrapping:</span> {item.wrapping}
                   </p>
@@ -126,24 +217,24 @@ export const Cart = () => {
                 </div>
 
                 {/* Price & Quantity Controls */}
-                <div className="flex justify-between items-center pt-2">
-                  <p className="text-gold font-sans text-sm font-semibold">
+                <div className="flex justify-between items-center pt-2 border-t border-gold/10">
+                  <p className="text-gold font-sans text-base font-bold">
                     LKR {item.price.toLocaleString()}.00
                   </p>
 
                   <div className="flex border border-gold/25 rounded overflow-hidden">
                     <button
                       onClick={() => handleUpdateQuantity(idx, -1)}
-                      className="px-2.5 py-1 hover:bg-gold/10 text-gold text-xs transition"
+                      className="px-2.5 py-1 hover:bg-gold/10 text-gold text-xs transition font-bold"
                     >
                       -
                     </button>
-                    <span className="bg-transparent w-8 text-center text-ivory text-xs flex items-center justify-center font-sans">
+                    <span className="bg-transparent w-8 text-center text-ivory text-xs flex items-center justify-center font-sans font-bold">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => handleUpdateQuantity(idx, 1)}
-                      className="px-2.5 py-1 hover:bg-gold/10 text-gold text-xs transition"
+                      className="px-2.5 py-1 hover:bg-gold/10 text-gold text-xs transition font-bold"
                     >
                       +
                     </button>

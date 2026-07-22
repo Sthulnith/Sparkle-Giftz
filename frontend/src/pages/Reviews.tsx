@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getClientReviews, type ClientReview } from '../lib/supabase';
 
 interface Review {
   id: number;
@@ -8,13 +9,6 @@ interface Review {
   time: string;
   avatar: string;
   verified: boolean;
-}
-
-interface ClientReview {
-  id: number;
-  image: string;
-  message?: string;
-  time?: string;
 }
 
 const DEFAULT_REVIEWS: Review[] = [
@@ -65,25 +59,6 @@ const DEFAULT_REVIEWS: Review[] = [
   }
 ];
 
-const DEFAULT_CLIENT_SHOWCASE: ClientReview[] = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop',
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=600&auto=format&fit=crop',
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1575384978132-c68e146747b0?q=80&w=600&auto=format&fit=crop',
-  },
-  {
-    id: 4,
-    image: 'https://images.unsplash.com/photo-1607344645866-009c320c5ab8?q=80&w=600&auto=format&fit=crop',
-  }
-];
-
 export const Reviews = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [clientReviews, setClientReviews] = useState<ClientReview[]>([]);
@@ -99,7 +74,8 @@ export const Reviews = () => {
   const [newText, setNewText] = useState('');
 
   useEffect(() => {
-    const loadAllReviews = () => {
+    const loadAllReviews = async () => {
+      // 1. Guest Text Testimonials
       const stored = localStorage.getItem('sparkle_reviews');
       if (stored) {
         setReviews(JSON.parse(stored));
@@ -108,26 +84,18 @@ export const Reviews = () => {
         setReviews(DEFAULT_REVIEWS);
       }
 
-      const storedClientReviews = localStorage.getItem('sparkle_client_reviews');
-      if (storedClientReviews) {
-        try {
-          const parsed = JSON.parse(storedClientReviews);
-          if (parsed.length > 0) {
-            setClientReviews(parsed);
-          } else {
-            setClientReviews(DEFAULT_CLIENT_SHOWCASE);
-          }
-        } catch (e) {
-          setClientReviews(DEFAULT_CLIENT_SHOWCASE);
-        }
+      // 2. Live Supabase Admin Customer Screenshot Reviews
+      const liveReviews = await getClientReviews();
+      if (liveReviews && liveReviews.length > 0) {
+        setClientReviews(liveReviews);
       } else {
-        localStorage.setItem('sparkle_client_reviews', JSON.stringify(DEFAULT_CLIENT_SHOWCASE));
-        setClientReviews(DEFAULT_CLIENT_SHOWCASE);
+        setClientReviews([]);
       }
     };
 
     loadAllReviews();
     window.addEventListener('storage', loadAllReviews);
+    window.addEventListener('sparkle_client_reviews_updated', loadAllReviews);
 
     // Scroll to #client-showcase if URL hash is present
     if (window.location.hash === '#client-showcase') {
@@ -139,7 +107,10 @@ export const Reviews = () => {
       }, 150);
     }
 
-    return () => window.removeEventListener('storage', loadAllReviews);
+    return () => {
+      window.removeEventListener('storage', loadAllReviews);
+      window.removeEventListener('sparkle_client_reviews_updated', loadAllReviews);
+    };
   }, []);
 
   // Shuffle 3 guest reviews every 3 seconds
@@ -233,7 +204,7 @@ export const Reviews = () => {
             >
               <div className="relative overflow-hidden rounded-md">
                 <img
-                  src={review.image}
+                  src={review.image_url || review.image}
                   alt="Customer review screenshot"
                   className="w-full h-auto object-cover rounded-md block transition-transform duration-300 group-hover:scale-102"
                   loading="lazy"
@@ -257,7 +228,7 @@ export const Reviews = () => {
             >
               <div className="relative overflow-hidden rounded-md">
                 <img
-                  src={review.image}
+                  src={review.image_url || review.image}
                   alt="Customer review screenshot"
                   className="w-full h-auto object-cover rounded-md block transition-transform duration-300 group-hover:scale-102"
                   loading="lazy"
@@ -304,7 +275,7 @@ export const Reviews = () => {
             className="relative max-w-3xl max-h-[85vh] flex flex-col items-center justify-center space-y-3"
           >
             <img
-              src={clientReviews[selectedImageIndex].image}
+              src={clientReviews[selectedImageIndex].image_url || clientReviews[selectedImageIndex].image}
               alt="Customer review full view"
               className="max-w-full max-h-[78vh] object-contain rounded-lg shadow-2xl border border-gold/30 bg-black"
             />

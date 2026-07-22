@@ -1,8 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { createOrder } from '../lib/supabase';
+
+interface CustomItem {
+  id: number | string;
+  name: string;
+  category: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
+interface CustomGiftDetails {
+  boxSize: string;
+  boxColor: string;
+  boxColorHex?: string;
+  ribbonColor?: string;
+  greetingCard?: string;
+  wrapping?: string;
+  giftMessage?: string;
+  items: CustomItem[];
+}
 
 interface CartItem {
-  productId: number;
+  productId: number | string;
   name: string;
   slug: string;
   price: number;
@@ -10,22 +31,11 @@ interface CartItem {
   wrapping: string;
   giftMessage: string;
   image?: string;
+  isCustom?: boolean;
+  customDetails?: CustomGiftDetails;
 }
 
-interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  old_price?: number;
-  category: string;
-  occasion: string;
-  color: string;
-  stock: number;
-  is_variable: boolean;
-  images?: string[];
-}
+
 
 interface Order {
   id: number;
@@ -45,6 +55,8 @@ interface Order {
   wrapping?: string;
   createdAt: string;
   deliveryDate?: string;
+  cartItems?: CartItem[];
+  customGiftDetails?: CustomGiftDetails;
 }
 
 // Validation helpers for Phone and Email
@@ -141,7 +153,9 @@ export const Checkout = () => {
   const deliveryFee = 0; // Complimentary
   const total = subtotal + deliveryFee;
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const pErr = validatePhone(phone);
@@ -167,70 +181,64 @@ export const Checkout = () => {
       return;
     }
 
-    // 1. Get existing orders or set empty list
-    const storedOrders = localStorage.getItem('sparkle_orders');
-    const ordersList: Order[] = storedOrders ? JSON.parse(storedOrders) : [];
+    setIsSubmitting(true);
 
-    // 2. Generate unique order ref: SG-YYYYMMDD-XXXX
-    const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const orderRef = `SG-${dateStr}-${randomNum}`;
-    const nextId = ordersList.length > 0 ? Math.max(...ordersList.map(o => o.id)) + 1 : 1;
+    try {
+      const firstItem = cartItems[0];
+      const itemDetailsWrapping = cartItems.map(item => `${item.name} (${item.wrapping})`).join(', ');
+      const itemDetailsMessage = cartItems.map(item => item.giftMessage).filter(Boolean).join(' | ');
+      const customGift = cartItems.find(i => i.isCustom && i.customDetails)?.customDetails;
 
-    // Concatenate wrapping and message details for display
-    const firstItem = cartItems[0];
-    const itemDetailsWrapping = cartItems.map(item => `${item.name} (${item.wrapping})`).join(', ');
-    const itemDetailsMessage = cartItems.map(item => item.giftMessage).filter(Boolean).join(' | ');
+      const createdOrder = await createOrder({
+        customer_name: fullName,
+        phone,
+        email,
+        address,
+        city,
+        subtotal,
+        delivery_fee: deliveryFee,
+        total,
+        payment_method: paymentMethod,
+        payment_status: paymentMethod === 'PAYHERE' ? 'PAID' : 'PENDING',
+        order_status: paymentMethod === 'COD' ? 'CONFIRMED' : 'PENDING',
+        gift_message: itemDetailsMessage || firstItem?.giftMessage || undefined,
+        wrapping: itemDetailsWrapping || firstItem?.wrapping || 'Standard Premium Box',
+        delivery_date: deliveryDate,
+        cart_items: cartItems as any,
+        custom_gift_details: customGift as any,
+      });
 
-    // 3. Create the Order object matching the exact Admin.tsx schema
-    const newOrder: Order = {
-      id: nextId,
-      orderNumber: orderRef,
-      customerName: fullName,
-      phone: phone,
-      email: email,
-      address: address,
-      city: city,
-      subtotal: subtotal,
-      deliveryFee: deliveryFee,
-      total: total,
-      paymentMethod: paymentMethod,
-      paymentStatus: paymentMethod === 'PAYHERE' ? 'PAID' : 'PENDING',
-      orderStatus: paymentMethod === 'COD' ? 'CONFIRMED' : 'PENDING',
-      wrapping: itemDetailsWrapping || firstItem?.wrapping || 'Standard Premium Box',
-      giftMessage: itemDetailsMessage || firstItem?.giftMessage || undefined,
-      createdAt: today.toISOString(),
-      deliveryDate: deliveryDate,
-    };
-
-    // 4. Update order list in localStorage
-    ordersList.unshift(newOrder); // Add to the top of the list
-    localStorage.setItem('sparkle_orders', JSON.stringify(ordersList));
-
-    // 5. Decrement product stock in local storage sparkle_products
-    const storedProducts = localStorage.getItem('sparkle_products');
-    if (storedProducts) {
-      try {
-        const productsList: Product[] = JSON.parse(storedProducts);
-        cartItems.forEach(cartItem => {
-          const product = productsList.find(p => p.id === cartItem.productId);
-          if (product) {
-            product.stock = Math.max(0, product.stock - cartItem.quantity);
-          }
-        });
-        localStorage.setItem('sparkle_products', JSON.stringify(productsList));
-      } catch (err) {
-        console.error('Failed to update stock', err);
+      if (!createdOrder) {
+        alert('Failed to place order. Please try again.');
+        setIsSubmitting(false);
+        return;
       }
+
+      // Notify other windows/components
+      window.dispatchEvent(new Event('sparkle_products_updated'));
+      window.dispatchEvent(new Event('storage'));
+
+      // Clear Cart
+      localStorage.removeItem('sparkle_cart');
+      window.dispatchEvent(new Event('sparkle_cart_updated'));
+
+      // Save confirmation snapshot to sessionStorage for OrderSuccess page
+      sessionStorage.setItem('sparkle_last_order', JSON.stringify({
+        ...createdOrder,
+        orderNumber: createdOrder.order_number,
+        customerName: createdOrder.customer_name,
+        createdAt: createdOrder.created_at,
+        deliveryDate: createdOrder.delivery_date,
+      }));
+
+      // Redirect to Confirmation
+      setPlacedOrder(createdOrder as any);
+    } catch (err) {
+      console.error('[Checkout] Error placing order:', err);
+      alert('An error occurred while placing your order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // 6. Clear cart and notify components
-    localStorage.removeItem('sparkle_cart');
-    window.dispatchEvent(new Event('sparkle_cart_updated'));
-
-    // 7. Render Success State
-    setPlacedOrder(newOrder);
   };
 
   // SUCCESS SCREEN STATE
@@ -493,9 +501,10 @@ export const Checkout = () => {
 
           <button
             type="submit"
-            className="w-full py-3.5 bg-gold hover:bg-gold-light text-background font-semibold font-sans text-xs uppercase tracking-widest transition duration-300 shadow-gold-glow mt-6"
+            disabled={isSubmitting}
+            className="w-full py-3.5 bg-gold hover:bg-gold-light text-background font-semibold font-sans text-xs uppercase tracking-widest transition duration-300 shadow-gold-glow mt-6 disabled:opacity-50"
           >
-            Confirm & Place Order
+            {isSubmitting ? 'Processing Order…' : 'Confirm & Place Order'}
           </button>
         </form>
 

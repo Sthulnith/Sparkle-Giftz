@@ -1,34 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import heroBgVideo from '../assets/hero_bg.mp4';
-
-interface ClientReview {
-  id: number;
-  image: string;
-  message: string;
-  time: string;
-}
-
-const DEFAULT_CLIENT_SHOWCASE: ClientReview[] = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=400&auto=format&fit=crop',
-    message: 'Thank you so much! ❤️ I received the gift before the time. The wrapping looks so premium! He loved it.',
-    time: '10:30 AM',
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=400&auto=format&fit=crop',
-    message: 'Omg he is so happy with the Midnight Box! The champagne glasses are absolutely beautiful. Thanks a lot for the quick delivery! 🥰',
-    time: '02:15 PM',
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1575384978132-c68e146747b0?q=80&w=400&auto=format&fit=crop',
-    message: 'Highly satisfied with the executive curation. Gift boxes are solid wood-like cardboard feel, ribbon detail is neat. 10/10 service.',
-    time: '05:45 PM',
-  },
-];
+import { getClientReviews, type ClientReview } from '../lib/supabase';
 
 export const Home = () => {
   const [chatFeedbacks, setChatFeedbacks] = useState<ClientReview[]>([]);
@@ -36,22 +9,20 @@ export const Home = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedClientReviews = localStorage.getItem('sparkle_client_reviews');
-    if (storedClientReviews) {
-      try {
-        const parsed = JSON.parse(storedClientReviews);
-        if (parsed.length > 0) {
-          setChatFeedbacks(parsed);
-        } else {
-          setChatFeedbacks(DEFAULT_CLIENT_SHOWCASE);
-        }
-      } catch (e) {
-        setChatFeedbacks(DEFAULT_CLIENT_SHOWCASE);
+    const fetchLiveReviews = async () => {
+      const liveReviews = await getClientReviews();
+      if (liveReviews && liveReviews.length > 0) {
+        setChatFeedbacks(liveReviews);
+      } else {
+        setChatFeedbacks([]);
       }
-    } else {
-      localStorage.setItem('sparkle_client_reviews', JSON.stringify(DEFAULT_CLIENT_SHOWCASE));
-      setChatFeedbacks(DEFAULT_CLIENT_SHOWCASE);
-    }
+    };
+
+    fetchLiveReviews();
+    window.addEventListener('sparkle_client_reviews_updated', fetchLiveReviews);
+    return () => {
+      window.removeEventListener('sparkle_client_reviews_updated', fetchLiveReviews);
+    };
   }, []);
 
   // Auto-shuffle client showcase cards on mobile/desktop slider
@@ -231,7 +202,7 @@ export const Home = () => {
                   >
                     <div className="w-full h-72 rounded bg-background overflow-hidden border border-gold/10 relative">
                       <img
-                        src={item.image}
+                        src={item.image_url || item.image}
                         alt="client feedback snapshot"
                         className="w-full h-full object-cover"
                       />

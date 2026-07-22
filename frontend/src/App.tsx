@@ -13,6 +13,7 @@ import { Login } from './pages/Login';
 import { MyOrders } from './pages/MyOrders';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Policies } from './pages/Policies';
+import { CustomizeGift } from './pages/CustomizeGift';
 import logo from './assets/logo.png';
 
 const queryClient = new QueryClient();
@@ -38,19 +39,20 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center">
           
           {/* Mobile Hamburger Menu Icon (☰) matching Image 2 */}
+          {/* Mobile Hamburger Menu Icon */}
           <button
             type="button"
             onClick={() => setIsMenuOpen(true)}
-            className="md:hidden p-1.5 text-ivory hover:text-gold transition duration-200 focus:outline-none"
+            className="md:hidden p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-ivory hover:text-gold transition focus:outline-none"
             aria-label="Open Navigation Menu"
           >
             <span className="material-symbols-outlined text-2xl sm:text-3xl">menu</span>
           </button>
 
           {/* Brand Logo & Title */}
-          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
-            <img src={logo} alt="Sparkle Giftz Logo" className="h-11 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
-            <span className="text-base sm:text-2xl font-serif font-bold tracking-[0.15em] sm:tracking-[0.22em] gold-sparkle-text" style={{ textShadow: '0 0 18px rgba(212,175,55,0.55), 0 1px 4px rgba(0,0,0,0.6)' }}>
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
+            <img src={logo} alt="Sparkle Giftz Logo" className="h-10 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
+            <span className="text-sm sm:text-2xl font-serif font-bold tracking-[0.12em] sm:tracking-[0.22em] gold-sparkle-text truncate" style={{ textShadow: '0 0 18px rgba(212,175,55,0.55), 0 1px 4px rgba(0,0,0,0.6)' }}>
               {["S", "P", "A", "R", "K", "L", "E", "\u00A0", "G", "I", "F", "T", "Z"].map((char, index) => (
                 <span
                   key={index}
@@ -67,29 +69,33 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
           <nav className="hidden md:flex gap-8 text-sm font-medium tracking-wide">
             <Link to="/" className="hover:text-gold transition duration-200">Home</Link>
             <Link to="/shop" className="hover:text-gold transition duration-200">Shop</Link>
+            <Link to="/customize-gift" className="hover:text-gold text-gold font-bold transition duration-200 flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">auto_awesome</span>
+              Customize Gift
+            </Link>
             <Link to="/reviews" className="hover:text-gold transition duration-200">Reviews</Link>
             <Link to="/contact" className="hover:text-gold transition duration-200">Contact</Link>
             <Link to="/policies" className="hover:text-gold transition duration-200">Policies</Link>
           </nav>
 
           {/* Header Action Icons */}
-          <div className="flex items-center gap-4 sm:gap-6">
-            <Link to="/cart" className="relative hover:text-gold transition duration-200 flex items-center">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link to="/cart" className="relative hover:text-gold transition duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">shopping_bag</span>
               {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-gold text-background font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center shadow">
+                <span className="absolute top-0 right-0 bg-gold text-background font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center shadow">
                   {cartCount}
                 </span>
               )}
             </Link>
-            <Link to="/login" className="hover:text-gold transition duration-200 flex items-center">
+            <Link to="/login" className="hover:text-gold transition duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">person</span>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Mobile Slide-Out Side Navigation Drawer matching Image 1 */}
+      {/* Mobile Slide-Out Side Navigation Drawer */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
           {/* Dark Translucent Backdrop */}
@@ -112,37 +118,37 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-1 text-muted hover:text-gold transition"
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted hover:text-gold transition"
                   aria-label="Close menu"
                 >
                   <span className="material-symbols-outlined text-2xl">close</span>
                 </button>
               </div>
 
-              {/* Search Bar matching Image 1 */}
+              {/* Search Bar */}
               <form onSubmit={handleSearchSubmit} className="flex items-center mb-6">
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search gift boxes, watches, perfumes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-grow bg-background border border-gold/30 border-r-0 text-ivory text-xs px-3 py-2.5 rounded-l outline-none focus:border-gold placeholder:text-muted/60"
+                  className="flex-grow bg-background border border-gold/30 border-r-0 text-ivory text-xs px-3 py-2.5 rounded-l outline-none focus:border-gold placeholder:text-muted/60 min-h-[44px]"
                 />
                 <button
                   type="submit"
-                  className="bg-[#e53935] hover:bg-red-600 text-white px-3.5 py-2.5 rounded-r font-bold transition flex items-center justify-center shadow"
+                  className="bg-[#e53935] hover:bg-red-600 text-white px-4 py-2.5 rounded-r font-bold transition flex items-center justify-center shadow min-h-[44px]"
                   aria-label="Search"
                 >
                   <span className="material-symbols-outlined text-base">search</span>
                 </button>
               </form>
 
-              {/* Navigation Links matching Image 1 */}
+              {/* Navigation Links */}
               <nav className="flex flex-col text-xs font-bold uppercase tracking-widest space-y-1">
                 <Link
                   to="/"
                   onClick={() => setIsMenuOpen(false)}
-                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between"
+                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between min-h-[44px]"
                 >
                   <span>HOME</span>
                   <span className="material-symbols-outlined text-xs text-gold/50">chevron_right</span>
@@ -150,15 +156,26 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
                 <Link
                   to="/shop"
                   onClick={() => setIsMenuOpen(false)}
-                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between"
+                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between min-h-[44px]"
                 >
                   <span>SHOP</span>
                   <span className="material-symbols-outlined text-xs text-gold/50">chevron_right</span>
                 </Link>
                 <Link
+                  to="/customize-gift"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="py-3 px-3 border-b border-gold/10 text-gold hover:bg-gold/10 rounded transition flex items-center justify-between min-h-[44px] bg-gold/5"
+                >
+                  <span className="flex items-center gap-1.5 font-extrabold">
+                    <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                    CUSTOMIZE YOUR OWN GIFT
+                  </span>
+                  <span className="material-symbols-outlined text-xs text-gold">chevron_right</span>
+                </Link>
+                <Link
                   to="/reviews"
                   onClick={() => setIsMenuOpen(false)}
-                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between"
+                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between min-h-[44px]"
                 >
                   <span>CUSTOMER REVIEWS</span>
                   <span className="material-symbols-outlined text-xs text-gold/50">chevron_right</span>
@@ -166,7 +183,7 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
                 <Link
                   to="/contact"
                   onClick={() => setIsMenuOpen(false)}
-                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between"
+                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between min-h-[44px]"
                 >
                   <span>CONTACT US</span>
                   <span className="material-symbols-outlined text-xs text-gold/50">chevron_right</span>
@@ -174,7 +191,7 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
                 <Link
                   to="/policies"
                   onClick={() => setIsMenuOpen(false)}
-                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between"
+                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between min-h-[44px]"
                 >
                   <span>POLICIES</span>
                   <span className="material-symbols-outlined text-xs text-gold/50">chevron_right</span>
@@ -182,7 +199,7 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
                 <Link
                   to="/login"
                   onClick={() => setIsMenuOpen(false)}
-                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between"
+                  className="py-3 px-3 border-b border-gold/10 text-ivory hover:text-gold hover:bg-gold/5 rounded transition flex items-center justify-between min-h-[44px]"
                 >
                   <span>LOGIN</span>
                   <span className="material-symbols-outlined text-xs text-gold/50">chevron_right</span>
@@ -261,6 +278,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Shop />} />
+              <Route path="/customize-gift" element={<CustomizeGift />} />
               <Route path="/product/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />

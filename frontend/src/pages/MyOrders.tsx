@@ -1,28 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { getOrdersByEmail, type Order } from '../lib/supabase';
 
-interface Order {
-  id: number;
-  orderNumber: string;
-  customerName: string;
-  phone: string;
-  email: string;
-  address: string;
-  city: string;
-  subtotal: number;
-  deliveryFee: number;
-  total: number;
-  paymentMethod: 'COD' | 'PAYHERE';
-  paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
-  orderStatus: 'PENDING' | 'CONFIRMED' | 'PACKED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-  giftMessage?: string;
-  wrapping?: string;
-  createdAt: string;
-  deliveryDate?: string;
-}
-
-const STATUS_CONFIG: Record<Order['orderStatus'], { label: string; color: string; icon: string; step: number }> = {
+const STATUS_CONFIG: Record<Order['order_status'], { label: string; color: string; icon: string; step: number }> = {
   PENDING:   { label: 'Pending',    color: 'text-yellow-400 border-yellow-400/40 bg-yellow-950/30',  icon: 'schedule',         step: 0 },
   CONFIRMED: { label: 'Confirmed',  color: 'text-blue-400   border-blue-400/40   bg-blue-950/30',    icon: 'check_circle',     step: 1 },
   PACKED:    { label: 'Packed',     color: 'text-purple-400 border-purple-400/40 bg-purple-950/30',  icon: 'inventory_2',      step: 2 },
@@ -42,20 +23,20 @@ export const MyOrders = () => {
   useEffect(() => {
     const email = sessionStorage.getItem('sg_customer_email');
     if (!email) {
-      // Not logged in — redirect to login
       navigate('/login', { replace: true });
       return;
     }
     setCustomerEmail(email);
 
-    const raw = localStorage.getItem('sparkle_orders');
-    if (raw) {
-      const all: Order[] = JSON.parse(raw);
-      const mine = all
-        .filter((o) => o.email.trim().toLowerCase() === email)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setOrders(mine);
-    }
+    const fetchMyOrders = async () => {
+      try {
+        const mine = await getOrdersByEmail(email);
+        setOrders(mine);
+      } catch (err) {
+        console.error('[MyOrders] Error fetching orders:', err);
+      }
+    };
+    fetchMyOrders();
   }, [navigate]);
 
   const handleSignOut = () => {
@@ -63,7 +44,7 @@ export const MyOrders = () => {
     navigate('/login', { replace: true });
   };
 
-  const getStepIndex = (status: Order['orderStatus']) => {
+  const getStepIndex = (status: Order['order_status']) => {
     const map: Record<string, number> = { CONFIRMED: 0, PACKED: 1, SHIPPED: 2, DELIVERED: 3 };
     return map[status] ?? -1;
   };
@@ -114,8 +95,8 @@ export const MyOrders = () => {
             </p>
 
             {orders.map((order) => {
-              const cfg     = STATUS_CONFIG[order.orderStatus];
-              const stepIdx = getStepIndex(order.orderStatus);
+              const cfg     = STATUS_CONFIG[order.order_status];
+              const stepIdx = getStepIndex(order.order_status);
               const isOpen  = expandedId === order.id;
 
               return (
@@ -131,9 +112,9 @@ export const MyOrders = () => {
                         {cfg.icon}
                       </span>
                       <div>
-                        <p className="font-mono text-gold font-bold text-sm tracking-wider">{order.orderNumber}</p>
+                        <p className="font-mono text-gold font-bold text-sm tracking-wider">{order.order_number}</p>
                         <p className="text-xs text-muted mt-0.5">
-                          {new Date(order.createdAt).toLocaleDateString('en-US', {
+                          {new Date(order.created_at).toLocaleDateString('en-US', {
                             day: 'numeric', month: 'long', year: 'numeric'
                           })}
                         </p>
@@ -158,7 +139,7 @@ export const MyOrders = () => {
                     <div className="border-t border-gold/10 px-5 py-5 space-y-5">
 
                       {/* Progress tracker (not cancelled) */}
-                      {order.orderStatus !== 'CANCELLED' && (
+                      {order.order_status !== 'CANCELLED' && (
                         <div className="flex items-center gap-0">
                           {STEPS.map((step, i) => {
                             const done    = stepIdx >= i;
@@ -193,7 +174,7 @@ export const MyOrders = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-muted mb-0.5">Customer</p>
-                          <p className="text-ivory font-medium">{order.customerName}</p>
+                          <p className="text-ivory font-medium">{order.customer_name}</p>
                         </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-muted mb-0.5">Phone</p>
@@ -203,41 +184,102 @@ export const MyOrders = () => {
                           <p className="text-[10px] uppercase tracking-widest text-muted mb-0.5">Delivery Address</p>
                           <p className="text-ivory">{order.address}, {order.city}</p>
                         </div>
-                        {order.deliveryDate && (
+                        {order.delivery_date && (
                           <div>
                             <p className="text-[10px] uppercase tracking-widest text-muted mb-0.5">Required By</p>
                             <p className="text-gold font-semibold">
-                              {new Date(order.deliveryDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}
+                              {new Date(order.delivery_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long' })}
                             </p>
                           </div>
                         )}
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-muted mb-0.5">Payment</p>
                           <p className="text-ivory">
-                            {order.paymentMethod}{' '}
+                            {order.payment_method}{' '}
                             <span className={`text-[10px] font-bold uppercase ${
-                              order.paymentStatus === 'PAID' ? 'text-green-400' : 'text-yellow-400'
+                              order.payment_status === 'PAID' ? 'text-green-400' : 'text-yellow-400'
                             }`}>
-                              · {order.paymentStatus}
+                              · {order.payment_status}
                             </span>
                           </p>
                         </div>
                       </div>
 
+                      {/* Custom Gift Breakdown */}
+                      {(order.custom_gift_details || order.cart_items?.some(i => i.isCustom || (i as any).isCustomPreMadeBox)) && (
+                        <div className="bg-background/80 rounded-lg border border-gold/20 p-4 space-y-3 font-sans">
+                          <p className="text-[11px] uppercase tracking-wider text-gold font-bold flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                            Custom Gift Box Curation Manifest
+                          </p>
+                          {order.custom_gift_details && (
+                            <div className="space-y-2 text-xs">
+                              <div className="flex items-center gap-4 text-muted border-b border-gold/10 pb-2">
+                                <span>Box Size: <strong className="text-gold">{order.custom_gift_details.boxSize}</strong></span>
+                                <span>Box Color: <strong className="text-ivory">{order.custom_gift_details.boxColor}</strong></span>
+                              </div>
+                              {order.custom_gift_details.items && order.custom_gift_details.items.length > 0 && (
+                                <div>
+                                  <p className="text-[10px] uppercase text-muted tracking-wider mb-1">Chosen Products:</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px]">
+                                    {order.custom_gift_details.items.map((item, iIdx) => (
+                                      <div key={iIdx} className="flex items-center gap-1.5 text-ivory">
+                                        <span className="text-gold font-bold">•</span>
+                                        <span>{item.name}</span>
+                                        <span className="text-muted text-[10px]">({item.quantity}x)</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {order.cart_items?.filter(i => (i as any).isCustomPreMadeBox && (i as any).preMadeCustomDetails).map((pmItem, pmIdx) => {
+                            const pmDetails = (pmItem as any).preMadeCustomDetails;
+                            return (
+                              <div key={pmIdx} className="space-y-2 text-xs border-t border-gold/10 pt-2">
+                                <p className="font-bold text-ivory text-xs">{pmItem.name}</p>
+                                <div className="space-y-1 text-[11px]">
+                                  {pmDetails.keptItems?.map((kItem: any, kIdx: number) => (
+                                    <div key={kIdx} className="flex items-center gap-1.5 text-ivory">
+                                      <span className="text-gold font-bold">✓</span>
+                                      <span>{kItem.quantity}x {kItem.name}</span>
+                                    </div>
+                                  ))}
+                                  {pmDetails.removedItems?.map((rItem: any, rIdx: number) => (
+                                    <div key={rIdx} className="flex items-center gap-1.5 text-red-400/80 line-through">
+                                      <span>✗</span>
+                                      <span>{rItem.quantity}x {rItem.name} (Removed)</span>
+                                    </div>
+                                  ))}
+                                  {pmDetails.extraAddedItems?.map((eItem: any, eIdx: number) => (
+                                    <div key={eIdx} className="flex items-center gap-1.5 text-green-400">
+                                      <span>+</span>
+                                      <span>{eItem.quantity}x {eItem.name} (Extra Added)</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       {/* Gift details */}
-                      {(order.giftMessage || order.wrapping) && (
+                      {(order.gift_message || order.wrapping) && (
                         <div className="bg-background/50 rounded-lg border border-gold/10 p-4 space-y-2">
-                          <p className="text-[10px] uppercase tracking-widest text-gold/70 mb-2">Gift Details</p>
+                          <p className="text-[10px] uppercase tracking-widest text-gold/70 mb-2">Presentation & Message</p>
                           {order.wrapping && (
                             <p className="text-xs text-muted flex items-center gap-2">
                               <span className="material-symbols-outlined text-sm text-gold/60">redeem</span>
                               {order.wrapping}
                             </p>
                           )}
-                          {order.giftMessage && (
+                          {order.gift_message && (
                             <p className="text-xs text-muted italic flex items-start gap-2">
                               <span className="material-symbols-outlined text-sm text-gold/60 mt-0.5">message</span>
-                              "{order.giftMessage}"
+                              "{order.gift_message}"
                             </p>
                           )}
                         </div>
@@ -251,7 +293,7 @@ export const MyOrders = () => {
                         </div>
                         <div className="flex justify-between text-muted">
                           <span>Delivery</span>
-                          <span>{order.deliveryFee === 0 ? 'Free' : `Rs.${order.deliveryFee.toLocaleString()}.00`}</span>
+                          <span>{order.delivery_fee === 0 ? 'Free' : `Rs.${order.delivery_fee.toLocaleString()}.00`}</span>
                         </div>
                         <div className="flex justify-between text-gold font-semibold text-base border-t border-gold/10 pt-2 mt-2">
                           <span>Total</span>
