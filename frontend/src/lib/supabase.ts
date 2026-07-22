@@ -481,7 +481,7 @@ export async function getStockLogs(): Promise<StockLog[]> {
 export async function getOrders(): Promise<Order[]> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -495,7 +495,7 @@ export async function getOrders(): Promise<Order[]> {
 export async function getOrdersByEmail(email: string): Promise<Order[]> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*')
     .eq('email', email.toLowerCase().trim())
     .order('created_at', { ascending: false });
 
@@ -561,21 +561,6 @@ export async function createOrder(input: {
   }
 
   const order = data as Order;
-
-  // Insert order_items from cart
-  const orderItemRows = input.cart_items.map(ci => ({
-    order_id: order.id,
-    product_id: typeof ci.productId === 'number' ? ci.productId : null,
-    product_name: ci.name,
-    unit_price: ci.price,
-    qty: ci.quantity,
-    line_total: ci.price * ci.quantity,
-  }));
-
-  if (orderItemRows.length > 0) {
-    const { error: itemErr } = await supabase.from('order_items').insert(orderItemRows);
-    if (itemErr) console.error('[supabase] order_items insert error:', itemErr.message);
-  }
 
   // Deduct product stock for regular gift boxes
   for (const ci of input.cart_items) {
