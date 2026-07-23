@@ -4,15 +4,12 @@ import logo from '../assets/logo.png';
 import { getOrdersByEmail, type Order } from '../lib/supabase';
 
 const STATUS_CONFIG: Record<Order['order_status'], { label: string; color: string; icon: string; step: number }> = {
-  PENDING:   { label: 'Pending',    color: 'text-yellow-400 border-yellow-400/40 bg-yellow-950/30',  icon: 'schedule',         step: 0 },
-  CONFIRMED: { label: 'Confirmed',  color: 'text-blue-400   border-blue-400/40   bg-blue-950/30',    icon: 'check_circle',     step: 1 },
-  PACKED:    { label: 'Packed',     color: 'text-purple-400 border-purple-400/40 bg-purple-950/30',  icon: 'inventory_2',      step: 2 },
-  SHIPPED:   { label: 'Shipped',    color: 'text-gold       border-gold/40       bg-gold/10',         icon: 'local_shipping',   step: 3 },
-  DELIVERED: { label: 'Delivered',  color: 'text-green-400  border-green-400/40  bg-green-950/30',   icon: 'celebration',      step: 4 },
-  CANCELLED: { label: 'Cancelled',  color: 'text-red-400    border-red-400/40    bg-red-950/30',      icon: 'cancel',           step: -1 },
+  PENDING:   { label: 'Pending',    color: 'text-yellow-400 border-yellow-400/40 bg-yellow-950/30',  icon: 'schedule',     step: 0 },
+  CONFIRMED: { label: 'Confirmed',  color: 'text-green-400 border-green-400/40 bg-green-950/30',   icon: 'check_circle', step: 1 },
+  CANCELLED: { label: 'Cancelled',  color: 'text-red-400    border-red-400/40    bg-red-950/30',      icon: 'cancel',       step: -1 },
 };
 
-const STEPS = ['Confirmed', 'Packed', 'Shipped', 'Delivered'];
+const STEPS = ['Pending', 'Confirmed'];
 
 export const MyOrders = () => {
   const navigate = useNavigate();
@@ -45,7 +42,7 @@ export const MyOrders = () => {
   };
 
   const getStepIndex = (status: Order['order_status']) => {
-    const map: Record<string, number> = { CONFIRMED: 0, PACKED: 1, SHIPPED: 2, DELIVERED: 3 };
+    const map: Record<string, number> = { PENDING: 0, CONFIRMED: 1 };
     return map[status] ?? -1;
   };
 
@@ -194,8 +191,8 @@ export const MyOrders = () => {
                         )}
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-muted mb-0.5">Payment</p>
-                          <p className="text-ivory">
-                            {order.payment_method}{' '}
+                          <p className="text-gold font-bold">
+                            {order.payment_method === 'PAYHERE' ? 'Bank Transfer' : 'Cash on Delivery (COD)'}{' '}
                             <span className={`text-[10px] font-bold uppercase ${
                               order.payment_status === 'PAID' ? 'text-green-400' : 'text-yellow-400'
                             }`}>
@@ -204,6 +201,48 @@ export const MyOrders = () => {
                           </p>
                         </div>
                       </div>
+
+                      {/* Bank Details & WhatsApp Slip Upload Callout for PAYHERE orders */}
+                      {order.payment_method === 'PAYHERE' && (
+                        <div className="bg-background/90 rounded-lg border border-gold/30 p-4 space-y-3 font-sans text-xs">
+                          <div className="flex items-center gap-2 text-gold border-b border-gold/15 pb-2">
+                            <span className="material-symbols-outlined text-base">account_balance</span>
+                            <span className="font-serif font-bold text-xs uppercase tracking-wider">Bank Transfer Details</span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-charcoal p-3 rounded border border-gold/10">
+                            <div>
+                              <p className="text-[9px] text-muted uppercase">Bank</p>
+                              <p className="font-semibold text-ivory">Bank of Ceylon</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-muted uppercase">Branch</p>
+                              <p className="font-semibold text-ivory">Makola</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-muted uppercase">Account No</p>
+                              <p className="font-bold font-mono text-gold">95939553</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-muted uppercase">Account Name</p>
+                              <p className="font-semibold text-ivory">N V S Sathsarani</p>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-amber-300 italic">
+                            * Please send your bank transfer slip via WhatsApp to verify your payment.
+                          </p>
+                          <a
+                            href={`https://wa.me/94723487062?text=${encodeURIComponent(
+                              `Hi Sparkle Giftz! I am sending my bank transfer slip for Order [${order.order_number || order.id}] (Total: LKR ${order.total.toLocaleString()}.00).`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs uppercase tracking-wider rounded transition shadow cursor-pointer min-h-[40px]"
+                          >
+                            <span className="material-symbols-outlined text-sm">chat</span>
+                            <span>Send Bank Slip on WhatsApp (+94 72 348 7062)</span>
+                          </a>
+                        </div>
+                      )}
 
                       {/* Custom Gift Breakdown */}
                       {(order.custom_gift_details || order.cart_items?.some(i => i.isCustom || (i as any).isCustomPreMadeBox)) && (

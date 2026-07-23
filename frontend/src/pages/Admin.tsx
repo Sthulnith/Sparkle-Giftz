@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { clearSession, isAuthenticated } from '../lib/auth';
@@ -15,8 +15,9 @@ import {
   getStockLogs,
   getOrders,
   updateOrderStatus,
+  deleteOrder,
   getClientReviews,
-  createClientReview,
+  createMultipleClientReviews,
   deleteClientReview,
   uploadProductImage,
   uploadReviewPhoto,
@@ -48,8 +49,33 @@ export interface GiftBoxIncludedItem {
 
 
 
-// Admin component begins below
+const ColorVariantUrlInput = ({ colorName, onAdd }: { colorName: string; onAdd: (url: string) => void }) => {
+  const [val, setVal] = useState('');
+  return (
+    <div className="flex gap-1.5 font-sans">
+      <input
+        type="text"
+        placeholder={`Paste ${colorName} photo URL...`}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        className="flex-1 bg-charcoal border border-gold/25 p-2 rounded text-xs text-ivory outline-none focus:border-gold min-h-[36px]"
+      />
+      <button
+        type="button"
+        onClick={() => {
+          if (!val.trim()) return;
+          onAdd(val.trim());
+          setVal('');
+        }}
+        className="px-3.5 py-1.5 bg-gold/15 hover:bg-gold hover:text-background border border-gold/30 text-gold font-bold text-xs uppercase tracking-wider rounded transition min-h-[36px] shrink-0"
+      >
+        Add URL
+      </button>
+    </div>
+  );
+};
 
+// Admin component begins below
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -89,13 +115,23 @@ export const Admin = () => {
   const [invCategoryFilter, setInvCategoryFilter] = useState<string>('All');
   const [invStockFilter, setInvStockFilter] = useState<string>('All');
 
-  // New review form states
-  const [newReviewImage, setNewReviewImage] = useState<string>('');
+  // New review form states — supports MULTIPLE review images upload
+  const [newReviewImages, setNewReviewImages] = useState<string[]>([]);
+  const [reviewUrlInput, setReviewUrlInput] = useState<string>('');
+  const [reviewProgress, setReviewProgress] = useState<{ current: number; total: number } | null>(null);
 
   // New Image inputs helper
   const [urlInput, setUrlInput] = useState<string>('');
 
   const [boxBuilderSearch, setBoxBuilderSearch] = useState<string>('');
+  const [boxBuilderCategory, setBoxBuilderCategory] = useState<string>('All');
+
+  // Order Filtering state
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'ALL' | 'PENDING' | 'CONFIRMED' | 'CANCELLED'>('ALL');
+  const [orderDateFilter, setOrderDateFilter] = useState<string>('');
+
+  // Stock Log View Tab state
+  const [stockLogTab, setStockLogTab] = useState<'BY_ORDER' | 'BY_ITEM_SUMMARY' | 'DETAILED_LOGS'>('BY_ORDER');
 
 
   // ── Loading state
@@ -127,7 +163,159 @@ export const Admin = () => {
     low_stock_threshold: 3,
     enabled: true,
     image_url: '',
+    image_urls: [],
+    colors: [],
   });
+
+  const [invUrlInput, setInvUrlInput] = useState<string>('');
+  const [colorNameInput, setColorNameInput] = useState<string>('');
+  const [colorHexInput, setColorHexInput] = useState<string>('#000000');
+
+  const handleAddColorOption = (isEdit: boolean) => {
+    if (!colorNameInput.trim()) return;
+    const names = colorNameInput.split(',').map(n => n.trim()).filter(Boolean);
+    const newColors = names.map(name => ({
+      name,
+      hex: colorHexInput || '#000000',
+    }));
+
+    if (isEdit && editingInvItem) {
+      setEditingInvItem(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          colors: [...(prev.colors || []), ...newColors],
+        };
+      });
+    } else {
+      setNewInvItem(prev => ({
+        ...prev,
+        colors: [...(prev.colors || []), ...newColors],
+      }));
+    }
+    setColorNameInput('');
+  };
+
+  // Upload image file specifically for a color variant
+  const handleColorVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean, colorIdx: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    setIsUploadingInvImage(true);
+    const url = await uploadProductImage(file);
+    setIsUploadingInvImage(false);
+
+    if (!url) {
+      alert('Failed to upload variant image to Supabase Storage. Please try again.');
+      return;
+    }
+
+    if (isEdit && editingInvItem) {
+      setEditingInvItem(prev => {
+        if (!prev) return null;
+        const colors = [...(prev.colors || [])];
+        if (!colors[colorIdx]) return prev;
+        const currentUrls = colors[colorIdx].image_urls || (colors[colorIdx].image_url ? [colors[colorIdx].image_url!] : []);
+        const nextUrls = [...currentUrls, url];
+        colors[colorIdx] = {
+          ...colors[colorIdx],
+          image_url: colors[colorIdx].image_url || url,
+          image_urls: nextUrls,
+        };
+        return { ...prev, colors };
+      });
+    } else {
+      setNewInvItem(prev => {
+        const colors = [...(prev.colors || [])];
+        if (!colors[colorIdx]) return prev;
+        const currentUrls = colors[colorIdx].image_urls || (colors[colorIdx].image_url ? [colors[colorIdx].image_url!] : []);
+        const nextUrls = [...currentUrls, url];
+        colors[colorIdx] = {
+          ...colors[colorIdx],
+          image_url: colors[colorIdx].image_url || url,
+          image_urls: nextUrls,
+        };
+        return { ...prev, colors };
+      });
+    }
+  };
+
+  // Add Image URL for a color variant
+  const handleAddColorVariantImageUrl = (isEdit: boolean, colorIdx: number, urlInput: string) => {
+    if (!urlInput.trim()) return;
+    const url = urlInput.trim();
+
+    if (isEdit && editingInvItem) {
+      setEditingInvItem(prev => {
+        if (!prev) return null;
+        const colors = [...(prev.colors || [])];
+        if (!colors[colorIdx]) return prev;
+        const currentUrls = colors[colorIdx].image_urls || (colors[colorIdx].image_url ? [colors[colorIdx].image_url!] : []);
+        const nextUrls = [...currentUrls, url];
+        colors[colorIdx] = {
+          ...colors[colorIdx],
+          image_url: colors[colorIdx].image_url || url,
+          image_urls: nextUrls,
+        };
+        return { ...prev, colors };
+      });
+    } else {
+      setNewInvItem(prev => {
+        const colors = [...(prev.colors || [])];
+        if (!colors[colorIdx]) return prev;
+        const currentUrls = colors[colorIdx].image_urls || (colors[colorIdx].image_url ? [colors[colorIdx].image_url!] : []);
+        const nextUrls = [...currentUrls, url];
+        colors[colorIdx] = {
+          ...colors[colorIdx],
+          image_url: colors[colorIdx].image_url || url,
+          image_urls: nextUrls,
+        };
+        return { ...prev, colors };
+      });
+    }
+  };
+
+  // Remove photo from a color variant
+  const handleRemoveColorVariantPhoto = (isEdit: boolean, colorIdx: number, photoIdx: number) => {
+    const updater = (prevColors: import('../lib/supabase').InventoryColorOption[]) => {
+      const colors = [...prevColors];
+      if (!colors[colorIdx]) return colors;
+      const currentUrls = [...(colors[colorIdx].image_urls || [])];
+      currentUrls.splice(photoIdx, 1);
+      colors[colorIdx] = {
+        ...colors[colorIdx],
+        image_url: currentUrls[0] || '',
+        image_urls: currentUrls,
+      };
+      return colors;
+    };
+
+    if (isEdit && editingInvItem) {
+      setEditingInvItem(prev => prev ? { ...prev, colors: updater(prev.colors || []) } : null);
+    } else {
+      setNewInvItem(prev => ({ ...prev, colors: updater(prev.colors || []) }));
+    }
+  };
+
+  // Set primary thumbnail for a color variant
+  const handleSetPrimaryColorVariantPhoto = (isEdit: boolean, colorIdx: number, url: string) => {
+    const updater = (prevColors: import('../lib/supabase').InventoryColorOption[]) => {
+      const colors = [...prevColors];
+      if (!colors[colorIdx]) return colors;
+      colors[colorIdx] = {
+        ...colors[colorIdx],
+        image_url: url,
+      };
+      return colors;
+    };
+
+    if (isEdit && editingInvItem) {
+      setEditingInvItem(prev => prev ? { ...prev, colors: updater(prev.colors || []) } : null);
+    } else {
+      setNewInvItem(prev => ({ ...prev, colors: updater(prev.colors || []) }));
+    }
+  };
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -180,21 +368,49 @@ export const Admin = () => {
   const [isUploadingInvImage, setIsUploadingInvImage] = useState(false);
   const [isUploadingProductImage, setIsUploadingProductImage] = useState(false);
 
-  // Review Image Upload Handler — uploads directly to Supabase Storage ('review-photos' bucket)
-  const handleReviewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Review Image Upload Handler — supports uploading MULTIPLE files at once (e.g. 5, 8, 10 images)
+  const handleReviewImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     e.target.value = '';
 
     setIsUploadingReviewImage(true);
-    const url = await uploadReviewPhoto(file);
-    setIsUploadingReviewImage(false);
+    setReviewProgress({ current: 0, total: files.length });
 
-    if (url) {
-      setNewReviewImage(url);
-    } else {
-      alert('Failed to upload image to Supabase Storage bucket "review-photos". Please verify your connection or file format.');
+    const uploadedUrls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      setReviewProgress({ current: i + 1, total: files.length });
+      const url = await uploadReviewPhoto(files[i]);
+      if (url) {
+        uploadedUrls.push(url);
+      }
     }
+
+    setIsUploadingReviewImage(false);
+    setReviewProgress(null);
+
+    if (uploadedUrls.length > 0) {
+      setNewReviewImages(prev => [...prev, ...uploadedUrls]);
+    } else {
+      alert('Failed to upload image(s) to Supabase Storage bucket "review-photos". Please verify your connection or file format.');
+    }
+  };
+
+  const handleAddReviewUrl = () => {
+    if (!reviewUrlInput || !reviewUrlInput.trim()) return;
+    const urls = reviewUrlInput
+      .split(/[\n,]+/)
+      .map(u => u.trim())
+      .filter(u => u.length > 0);
+
+    if (urls.length > 0) {
+      setNewReviewImages(prev => [...prev, ...urls]);
+      setReviewUrlInput('');
+    }
+  };
+
+  const handleRemoveQueuedReviewImage = (idx: number) => {
+    setNewReviewImages(prev => prev.filter((_, i) => i !== idx));
   };
 
   // Custom Inventory Item Image Upload Handler — uploads directly to Supabase Storage ('product-images' bucket)
@@ -220,18 +436,29 @@ export const Admin = () => {
 
   const handleReviewSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault();
-    if (!newReviewImage) {
-      alert('Please upload or enter a review image first.');
+    let finalUrls = [...newReviewImages];
+    if (reviewUrlInput && reviewUrlInput.trim()) {
+      const extra = reviewUrlInput.split(/[\n,]+/).map(u => u.trim()).filter(Boolean);
+      finalUrls = [...finalUrls, ...extra];
+    }
+
+    if (finalUrls.length === 0) {
+      alert('Please upload or enter at least one review image first.');
       return;
     }
-    const result = await createClientReview(newReviewImage, '');
-    if (result) {
+
+    setIsUploadingReviewImage(true);
+    const ok = await createMultipleClientReviews(finalUrls, '');
+    setIsUploadingReviewImage(false);
+
+    if (ok) {
       await loadData();
       window.dispatchEvent(new CustomEvent('sparkle_client_reviews_updated'));
       setIsAddingReview(false);
-      setNewReviewImage('');
+      setNewReviewImages([]);
+      setReviewUrlInput('');
     } else {
-      alert('Failed to save review. Please try again.');
+      alert('Failed to save review images. Please try again.');
     }
   };
 
@@ -410,7 +637,12 @@ export const Admin = () => {
       low_stock_threshold: 3,
       enabled: true,
       image_url: '',
+      image_urls: [],
+      colors: [],
     });
+    setInvUrlInput('');
+    setColorNameInput('');
+    setColorHexInput('#000000');
     setIsAddingInvItem(true);
   };
 
@@ -427,7 +659,12 @@ export const Admin = () => {
       low_stock_threshold: 3,
       enabled: true,
       image_url: '',
+      image_urls: [],
+      colors: [],
     });
+    setInvUrlInput('');
+    setColorNameInput('');
+    setColorHexInput('#000000');
   };
 
   const openAddProductModal = () => {
@@ -543,10 +780,18 @@ export const Admin = () => {
       alert('Please enter an Item Name before saving.');
       return;
     }
+    const finalImgUrls = newInvItem.image_urls || [];
+    if (newInvItem.image_url && !finalImgUrls.includes(newInvItem.image_url)) {
+      finalImgUrls.unshift(newInvItem.image_url);
+    }
+    const primaryImg = newInvItem.image_url?.trim() || finalImgUrls[0] || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop';
+
     const result = await createInventoryItem({
       ...newInvItem,
       name: newInvItem.name.trim(),
-      image_url: newInvItem.image_url?.trim() || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop',
+      image_url: primaryImg,
+      image_urls: finalImgUrls,
+      colors: newInvItem.colors || [],
     });
     if (result) {
       await loadData();
@@ -563,10 +808,18 @@ export const Admin = () => {
       alert('Please enter an Item Name before saving.');
       return;
     }
+    const currentImgUrls = editingInvItem.image_urls || (editingInvItem.image_url ? [editingInvItem.image_url] : []);
+    if (editingInvItem.image_url && !currentImgUrls.includes(editingInvItem.image_url)) {
+      currentImgUrls.unshift(editingInvItem.image_url);
+    }
+    const primaryImg = editingInvItem.image_url?.trim() || currentImgUrls[0] || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop';
+
     const ok = await updateInventoryItem(editingInvItem.id as number, {
       ...editingInvItem,
       name: editingInvItem.name.trim(),
-      image_url: (editingInvItem as unknown as {image_url: string}).image_url?.trim() || editingInvItem.image_url || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop',
+      image_url: primaryImg,
+      image_urls: currentImgUrls,
+      colors: editingInvItem.colors || [],
     } as unknown as InventoryItem);
     if (ok) {
       await loadData();
@@ -617,7 +870,7 @@ export const Admin = () => {
 
   // Order Status Handler — Supabase backed
   const handleOrderStatusChange = async (orderId: number, status: Order['order_status']) => {
-    const paymentStatus = status === 'DELIVERED' ? 'PAID' as const : undefined;
+    const paymentStatus = status === 'CONFIRMED' ? 'PAID' as const : undefined;
     const ok = await updateOrderStatus(orderId, status, paymentStatus);
     if (ok) {
       await loadData();
@@ -625,11 +878,46 @@ export const Admin = () => {
         setSelectedOrder(prev => prev ? {
           ...prev,
           order_status: status,
-          payment_status: status === 'DELIVERED' ? 'PAID' as const : prev.payment_status
+          payment_status: status === 'CONFIRMED' ? 'PAID' as const : prev.payment_status
         } : null);
       }
     } else {
       alert('Failed to update order status. Please try again.');
+    }
+  };
+
+  // Long press timer ref for order deletion
+  const orderLongPressTimerRef = useRef<any>(null);
+
+  // Order Delete Handler (triggered on long press or delete button click)
+  const handleDeleteOrder = async (order: Order) => {
+    const confirmMsg = `Are you sure you want to delete transaction/order "${order.order_number || order.id}" (${order.customer_name})?\n\nThis action will permanently delete this order record.`;
+    if (window.confirm(confirmMsg)) {
+      const ok = await deleteOrder(order.id);
+      if (ok) {
+        setOrders(prev => prev.filter(o => o.id !== order.id));
+        if (selectedOrder && selectedOrder.id === order.id) {
+          setSelectedOrder(null);
+        }
+      } else {
+        alert('Failed to delete order. Please try again.');
+      }
+    }
+  };
+
+  const handleOrderPressStart = (order: Order) => {
+    if (orderLongPressTimerRef.current) {
+      clearTimeout(orderLongPressTimerRef.current);
+    }
+    orderLongPressTimerRef.current = setTimeout(() => {
+      handleDeleteOrder(order);
+    }, 500); // 500ms long press threshold
+  };
+
+  const handleOrderPressEnd = () => {
+    if (orderLongPressTimerRef.current) {
+      clearTimeout(orderLongPressTimerRef.current);
+      orderLongPressTimerRef.current = null;
     }
   };
 
@@ -756,10 +1044,8 @@ export const Admin = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-between border-t border-gold/10 pt-2 text-xs">
-                    <span className={`px-2 py-0.5 font-semibold rounded ${
-                      product.stock <= 5 ? 'bg-red-950/40 text-red-200 border border-red-500/20' : 'bg-green-950/40 text-green-200 border border-green-500/20'
-                    }`}>
-                      {product.stock} units left
+                    <span className="px-2 py-0.5 font-semibold rounded bg-gold/15 text-gold border border-gold/30">
+                      Active Package
                     </span>
                     <div className="flex gap-2">
                       <button
@@ -815,10 +1101,8 @@ export const Admin = () => {
                         <td className="p-4 text-xs text-muted">Gift Boxes</td>
                         <td className="p-4 text-xs text-muted">All Occasions</td>
                         <td className="p-4">
-                          <span className={`px-2.5 py-1 text-xs font-semibold rounded ${
-                            product.stock <= 5 ? 'bg-red-950/40 text-red-200 border border-red-500/20' : 'bg-green-950/40 text-green-200 border border-green-500/20'
-                          }`}>
-                            {product.stock} units
+                          <span className="px-2.5 py-1 text-xs font-semibold rounded bg-gold/15 text-gold border border-gold/30">
+                            Active Package
                           </span>
                         </td>
                         <td className="p-4 text-gold font-medium">Rs.{product.price.toLocaleString()}.00</td>
@@ -850,119 +1134,250 @@ export const Admin = () => {
         )}
 
         {/* ORDERS TAB CONTENT */}
-        {activeTab === 'orders' && (
-          <div className="space-y-6">
-            <h2 className="font-serif text-2xl text-gold">Recent Transactions</h2>
+        {activeTab === 'orders' && (() => {
+          const sortedAndFilteredOrders = orders
+            .filter(order => {
+              const matchStatus = orderStatusFilter === 'ALL' || order.order_status === orderStatusFilter;
+              const createdDate = order.created_at ? new Date(order.created_at).toISOString().slice(0, 10) : '';
+              const matchDate = !orderDateFilter || createdDate === orderDateFilter;
+              return matchStatus && matchDate;
+            })
+            .sort((a, b) => {
+              // PENDING orders always shown at the top of the list first
+              if (a.order_status === 'PENDING' && b.order_status !== 'PENDING') return -1;
+              if (a.order_status !== 'PENDING' && b.order_status === 'PENDING') return 1;
+              // Secondary sort by date descending
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
 
-            {/* Orders Mobile Card View */}
-            <div className="grid grid-cols-1 gap-4 md:hidden">
-              {orders.map((order) => (
-                <div key={order.id} className="gold-gradient-border bg-charcoal p-4 rounded-lg space-y-3 font-sans">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-xs font-mono font-bold text-gold">{order.order_number}</span>
-                      <h3 className="font-semibold text-ivory text-sm mt-0.5">{order.customer_name}</h3>
-                      <p className="text-xs text-muted">{order.city} • {new Date(order.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <select
-                      value={order.order_status}
-                      onChange={(e) => handleOrderStatusChange(order.id, e.target.value as any)}
-                      className="bg-background border border-gold/25 text-[11px] font-bold text-gold p-1 rounded focus:border-gold outline-none cursor-pointer"
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="CONFIRMED">CONFIRMED</option>
-                      <option value="PACKED">PACKED</option>
-                      <option value="SHIPPED">SHIPPED</option>
-                      <option value="DELIVERED">DELIVERED</option>
-                      <option value="CANCELLED">CANCELLED</option>
-                    </select>
+          return (
+            <div className="space-y-6">
+              {/* Header & Filter Controls Bar */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gold/15 pb-4">
+                <div>
+                  <h2 className="font-serif text-2xl text-gold">Recent Transactions</h2>
+                  <p className="text-xs text-muted font-sans mt-0.5">
+                    Pending orders appear at top. Confirming an order reduces stock for included box items.
+                  </p>
+                </div>
+
+                {/* Filter Controls: Date Filter + Status Tabs */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Date Filter input */}
+                  <div className="flex items-center gap-2 bg-background border border-gold/25 px-3 py-1.5 rounded">
+                    <span className="material-symbols-outlined text-gold text-base">calendar_month</span>
+                    <span className="text-xs text-muted font-sans uppercase font-bold">Filter Date:</span>
+                    <input
+                      type="date"
+                      value={orderDateFilter}
+                      onChange={(e) => setOrderDateFilter(e.target.value)}
+                      className="bg-transparent text-ivory text-xs font-sans outline-none cursor-pointer"
+                    />
+                    {orderDateFilter && (
+                      <button
+                        type="button"
+                        onClick={() => setOrderDateFilter('')}
+                        className="text-muted hover:text-gold text-xs material-symbols-outlined ml-1"
+                        title="Clear date filter"
+                      >
+                        close
+                      </button>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-gold/10 pt-2 text-xs">
-                    <div>
-                      <span className="text-gold font-bold">Rs. {order.total.toLocaleString()}.00</span>
-                      <span className="text-muted text-[10px] block">{order.payment_method} • {order.payment_status}</span>
-                    </div>
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      className="px-3.5 py-1.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider rounded transition shadow min-h-[44px]"
-                    >
-                      Details
-                    </button>
+                  {/* Status Filter Tabs */}
+                  <div className="flex items-center gap-1 bg-background/60 p-1 border border-gold/20 rounded">
+                    {(['ALL', 'PENDING', 'CONFIRMED', 'CANCELLED'] as const).map((st) => {
+                      const isActive = orderStatusFilter === st;
+                      const count = st === 'ALL'
+                        ? orders.length
+                        : orders.filter(o => o.order_status === st).length;
+
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setOrderStatusFilter(st)}
+                          className={`px-3 py-1 text-[11px] font-sans font-bold uppercase tracking-wider rounded transition flex items-center gap-1 cursor-pointer ${
+                            isActive
+                              ? 'bg-gold text-background shadow-gold-glow'
+                              : 'text-ivory/80 hover:text-gold hover:bg-gold/10'
+                          }`}
+                        >
+                          <span>{st}</span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                            isActive ? 'bg-background/25 text-background' : 'bg-gold/15 text-gold'
+                          }`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {/* Orders Desktop Table View */}
-            <div className="hidden md:block gold-gradient-border bg-charcoal overflow-hidden rounded-lg shadow-xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-gold/15 text-gold text-xs uppercase tracking-wider font-sans bg-background/45">
-                      <th className="p-4">Order Ref</th>
-                      <th className="p-4">Client</th>
-                      <th className="p-4">Placed Date</th>
-                      <th className="p-4">Required Date</th>
-                      <th className="p-4">Total</th>
-                      <th className="p-4">Payment</th>
-                      <th className="p-4">Status</th>
-                      <th className="p-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gold/10">
-                    {orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gold/5 transition duration-150 text-ivory">
-                        <td className="p-4 font-mono font-bold text-gold text-xs">{order.order_number}</td>
-                        <td className="p-4">
-                          <p className="font-semibold">{order.customer_name}</p>
-                          <p className="text-[11px] text-muted">{order.city}</p>
-                        </td>
-                        <td className="p-4 text-xs text-muted">
-                          {new Date(order.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="p-4 text-xs text-gold font-semibold">
-                          {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : 'Standard'}
-                        </td>
-                        <td className="p-4 text-gold font-medium">Rs.{order.total.toLocaleString()}.00</td>
-                        <td className="p-4 text-xs">
-                          <span className="block font-medium">{order.payment_method}</span>
-                          <span className={`text-[10px] uppercase font-bold tracking-wider ${
-                            order.payment_status === 'PAID' ? 'text-green-400' : 'text-yellow-400'
-                          }`}>
-                            {order.payment_status}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <select
-                            value={order.order_status}
-                            onChange={(e) => handleOrderStatusChange(order.id, e.target.value as any)}
-                            className="bg-background border border-gold/25 text-xs text-ivory p-1.5 rounded focus:border-gold outline-none cursor-pointer"
-                          >
-                            <option value="PENDING">PENDING</option>
-                            <option value="CONFIRMED">CONFIRMED</option>
-                            <option value="PACKED">PACKED</option>
-                            <option value="SHIPPED">SHIPPED</option>
-                            <option value="DELIVERED">DELIVERED</option>
-                            <option value="CANCELLED">CANCELLED</option>
-                          </select>
-                        </td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => setSelectedOrder(order)}
-                            className="px-3.5 py-1.5 border border-gold/30 hover:border-gold hover:text-gold text-xs font-sans uppercase tracking-wider transition-all duration-300"
-                          >
-                            Details
-                          </button>
-                        </td>
+              {/* Orders Mobile Card View */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {sortedAndFilteredOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    onTouchStart={() => handleOrderPressStart(order)}
+                    onTouchEnd={handleOrderPressEnd}
+                    onTouchCancel={handleOrderPressEnd}
+                    onMouseDown={() => handleOrderPressStart(order)}
+                    onMouseUp={handleOrderPressEnd}
+                    onMouseLeave={handleOrderPressEnd}
+                    className="gold-gradient-border bg-charcoal p-4 rounded-lg space-y-3 font-sans relative transition-all active:scale-[0.99] select-none cursor-pointer"
+                  >
+                    {order.order_status === 'PENDING' && (
+                      <div className="absolute -top-2 -right-2 bg-yellow-400 text-background font-extrabold text-[9px] uppercase px-2 py-0.5 rounded-full shadow-lg border border-yellow-300 animate-pulse">
+                        PENDING APPROVAL
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-xs font-mono font-bold text-gold">{order.order_number}</span>
+                        <h3 className="font-semibold text-ivory text-sm mt-0.5">{order.customer_name}</h3>
+                        <p className="text-xs text-muted">{order.city} • {new Date(order.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <select
+                        value={order.order_status}
+                        onChange={(e) => handleOrderStatusChange(order.id, e.target.value as any)}
+                        className={`border text-[11px] font-bold p-1 rounded outline-none cursor-pointer ${
+                          order.order_status === 'PENDING'
+                            ? 'bg-yellow-950/60 text-yellow-300 border-yellow-500/40'
+                            : order.order_status === 'CONFIRMED'
+                            ? 'bg-green-950/60 text-green-300 border-green-500/40'
+                            : 'bg-red-950/60 text-red-300 border-red-500/40'
+                        }`}
+                      >
+                        <option value="PENDING">PENDING</option>
+                        <option value="CONFIRMED">CONFIRMED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-gold/10 pt-2 text-xs">
+                      <div>
+                        <span className="text-gold font-bold">Rs. {order.total.toLocaleString()}.00</span>
+                        <span className="text-muted text-[10px] block">{order.payment_method} • {order.payment_status}</span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="px-3.5 py-1.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider rounded transition shadow min-h-[44px] cursor-pointer"
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {sortedAndFilteredOrders.length === 0 && (
+                  <div className="py-12 text-center border border-dashed border-gold/20 rounded-lg">
+                    <span className="material-symbols-outlined text-gold/40 text-4xl mb-2">inbox</span>
+                    <p className="text-sm font-sans text-muted">No orders match the selected filters.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Orders Desktop Table View */}
+              <div className="hidden md:block gold-gradient-border bg-charcoal overflow-hidden rounded-lg shadow-xl">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-gold/15 text-gold text-xs uppercase tracking-wider font-sans bg-background/45">
+                        <th className="p-4">Order Ref</th>
+                        <th className="p-4">Client</th>
+                        <th className="p-4">Placed Date</th>
+                        <th className="p-4">Required Date</th>
+                        <th className="p-4">Total</th>
+                        <th className="p-4">Payment</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gold/10">
+                      {sortedAndFilteredOrders.map((order) => (
+                        <tr
+                          key={order.id}
+                          onTouchStart={() => handleOrderPressStart(order)}
+                          onTouchEnd={handleOrderPressEnd}
+                          onTouchCancel={handleOrderPressEnd}
+                          onMouseDown={() => handleOrderPressStart(order)}
+                          onMouseUp={handleOrderPressEnd}
+                          onMouseLeave={handleOrderPressEnd}
+                          className={`transition duration-150 text-ivory ${order.order_status === 'PENDING' ? 'bg-yellow-950/20 hover:bg-yellow-950/30' : 'hover:bg-gold/5'}`}
+                        >
+                          <td className="p-4 font-mono font-bold text-gold text-xs">
+                            <div className="flex items-center gap-2">
+                              {order.order_status === 'PENDING' && (
+                                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-ping shrink-0" title="Pending approval" />
+                              )}
+                              <span>{order.order_number}</span>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <p className="font-semibold">{order.customer_name}</p>
+                            <p className="text-[11px] text-muted">{order.city}</p>
+                          </td>
+                          <td className="p-4 text-xs text-muted">
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="p-4 text-xs text-gold font-semibold">
+                            {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString() : 'Standard'}
+                          </td>
+                          <td className="p-4 text-gold font-medium">Rs.{order.total.toLocaleString()}.00</td>
+                          <td className="p-4 text-xs">
+                            <span className="block font-medium">{order.payment_method}</span>
+                            <span className={`text-[10px] uppercase font-bold tracking-wider ${
+                              order.payment_status === 'PAID' ? 'text-green-400' : 'text-yellow-400'
+                            }`}>
+                              {order.payment_status}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={order.order_status}
+                              onChange={(e) => handleOrderStatusChange(order.id, e.target.value as any)}
+                              className={`border text-xs font-bold p-1.5 rounded focus:border-gold outline-none cursor-pointer ${
+                                order.order_status === 'PENDING'
+                                  ? 'bg-yellow-950/60 text-yellow-300 border-yellow-500/40'
+                                  : order.order_status === 'CONFIRMED'
+                                  ? 'bg-green-950/60 text-green-300 border-green-500/40'
+                                  : 'bg-red-950/60 text-red-300 border-red-500/40'
+                              }`}
+                            >
+                              <option value="PENDING">PENDING</option>
+                              <option value="CONFIRMED">CONFIRMED</option>
+                              <option value="CANCELLED">CANCELLED</option>
+                            </select>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="px-3.5 py-1.5 border border-gold/30 hover:border-gold hover:text-gold text-xs font-sans uppercase tracking-wider transition-all duration-300 cursor-pointer"
+                            >
+                              Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {sortedAndFilteredOrders.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="p-12 text-center text-muted text-sm font-sans">
+                            No orders found matching the selected filters.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* REVIEWS TAB CONTENT */}
         {activeTab === 'reviews' && (
@@ -1444,64 +1859,271 @@ export const Admin = () => {
                   />
                 </div>
 
-                {/* INVENTORY ITEM IMAGE SELECTION */}
-                <div className="border-t border-gold/15 pt-4 space-y-3">
-                  <label className="block text-xs uppercase text-gold tracking-wider font-sans font-bold flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm">photo_camera</span>
-                    Item Photo / Presentation Image
-                  </label>
+                {/* MULTIPLE ITEM PHOTOS / GALLERY */}
+                <div className="border-t border-gold/15 pt-4 space-y-3 font-sans">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs uppercase text-gold font-bold tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm">photo_camera</span>
+                      Item Photo Gallery ({ (newInvItem.image_urls || []).length })
+                    </label>
+                    <span className="text-[10px] text-muted">First image is set as primary cover</span>
+                  </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    {/* Live Preview */}
-                    {newInvItem.image_url ? (
-                      <div className="relative w-20 h-20 rounded border border-gold/40 bg-background overflow-hidden shrink-0 shadow-md">
-                        <img src={newInvItem.image_url} alt="Preview" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => setNewInvItem({ ...newInvItem, image_url: '' })}
-                          className="absolute top-1 right-1 bg-black/70 hover:bg-red-950 text-gold hover:text-red-300 p-1 rounded-full text-xs"
-                          title="Remove photo"
-                        >
-                          <span className="material-symbols-outlined text-xs block">close</span>
-                        </button>
+                  {/* Gallery Grid */}
+                  <div className="flex flex-wrap gap-2.5">
+                    {(newInvItem.image_urls || []).map((imgUrl, imgIdx) => (
+                      <div key={imgIdx} className="relative w-20 h-20 rounded border border-gold/30 bg-background overflow-hidden group shadow">
+                        <img src={imgUrl} alt={`Gallery ${imgIdx}`} className="w-full h-full object-cover" />
+                        {newInvItem.image_url === imgUrl && (
+                          <span className="absolute bottom-0 inset-x-0 bg-gold text-background font-extrabold text-[9px] uppercase text-center py-0.5 font-sans">
+                            Primary
+                          </span>
+                        )}
+                        <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition duration-200">
+                          <button
+                            type="button"
+                            onClick={() => setNewInvItem(prev => ({ ...prev, image_url: imgUrl }))}
+                            className="p-1 text-gold hover:text-white"
+                            title="Set as Primary Cover"
+                          >
+                            <span className="material-symbols-outlined text-sm">star</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...(newInvItem.image_urls || [])];
+                              updated.splice(imgIdx, 1);
+                              setNewInvItem(prev => ({
+                                ...prev,
+                                image_urls: updated,
+                                image_url: prev.image_url === imgUrl ? (updated[0] || '') : prev.image_url
+                              }));
+                            }}
+                            className="p-1 text-red-400 hover:text-red-300"
+                            title="Remove Photo"
+                          >
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                          </button>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="w-20 h-20 rounded border border-dashed border-gold/20 bg-background/50 flex flex-col items-center justify-center text-muted text-[10px] uppercase font-sans shrink-0">
-                        <span className="material-symbols-outlined text-base mb-0.5 text-muted/60">image</span>
-                        No Photo
+                    ))}
+
+                    {(newInvItem.image_urls || []).length === 0 && newInvItem.image_url && (
+                      <div className="relative w-20 h-20 rounded border border-gold/30 bg-background overflow-hidden shadow">
+                        <img src={newInvItem.image_url} alt="Cover" className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 inset-x-0 bg-gold text-background font-extrabold text-[9px] uppercase text-center py-0.5 font-sans">
+                          Primary
+                        </span>
                       </div>
                     )}
+                  </div>
 
-                    <div className="flex-1 space-y-2 w-full">
-                      {/* Upload from Gallery Button */}
-                      <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-background border border-dashed border-gold/40 hover:border-gold hover:bg-gold/10 text-gold text-xs font-sans uppercase font-bold tracking-wider rounded cursor-pointer transition min-h-[44px]">
-                        <span className="material-symbols-outlined text-base">
-                          {isUploadingInvImage ? 'sync' : 'cloud_upload'}
-                        </span>
-                        <span>{isUploadingInvImage ? 'Uploading to Supabase Storage (product-images)…' : 'Upload Photo to Supabase Storage (product-images)'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={isUploadingInvImage}
-                          onChange={(e) => handleInvItemImageUpload(e, false)}
-                          className="hidden"
-                        />
-                      </label>
+                  {/* Upload File & URL Controls */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label className="flex items-center justify-center gap-2 px-3 py-2.5 bg-background border border-dashed border-gold/40 hover:border-gold hover:bg-gold/10 text-gold text-xs uppercase font-bold tracking-wider rounded cursor-pointer transition min-h-[44px]">
+                      <span className="material-symbols-outlined text-base">{isUploadingInvImage ? 'sync' : 'cloud_upload'}</span>
+                      <span>{isUploadingInvImage ? 'Uploading…' : 'Upload Image File'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingInvImage}
+                        onChange={(e) => handleInvItemImageUpload(e, false)}
+                        className="hidden"
+                      />
+                    </label>
 
-                      <div className="flex items-center gap-2 text-[10px] text-muted uppercase font-sans">
-                        <span className="h-px bg-gold/15 flex-1" />
-                        <span>OR ENTER IMAGE URL</span>
-                        <span className="h-px bg-gold/15 flex-1" />
-                      </div>
-
-                      {/* URL Input */}
+                    <div className="flex gap-1.5">
                       <input
                         type="text"
-                        placeholder="https://images.unsplash.com/photo-..."
-                        value={newInvItem.image_url}
-                        onChange={(e) => setNewInvItem({ ...newInvItem, image_url: e.target.value })}
-                        className="w-full bg-background border border-gold/25 p-3 rounded text-sm text-ivory focus:border-gold outline-none font-sans min-h-[44px]"
+                        placeholder="Paste Image URL..."
+                        value={invUrlInput}
+                        onChange={(e) => setInvUrlInput(e.target.value)}
+                        className="flex-1 bg-background border border-gold/25 p-2.5 rounded text-xs text-ivory outline-none focus:border-gold min-h-[44px]"
                       />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!invUrlInput.trim()) return;
+                          const url = invUrlInput.trim();
+                          setNewInvItem(prev => {
+                            const current = prev.image_urls || [];
+                            return {
+                              ...prev,
+                              image_url: prev.image_url || url,
+                              image_urls: [...current, url],
+                            };
+                          });
+                          setInvUrlInput('');
+                        }}
+                        className="px-4 py-2.5 bg-gold/15 hover:bg-gold hover:text-background border border-gold/30 text-gold text-xs font-bold uppercase rounded transition min-h-[44px]"
+                      >
+                        Add Photo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AVAILABLE ITEM COLOR VARIANTS (WITH PER-VARIANT IMAGES) */}
+                <div className="border-t border-gold/15 pt-4 space-y-3.5 font-sans">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <label className="block text-xs uppercase text-gold font-bold tracking-wider flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm">palette</span>
+                        Available Color Variants ({ (newInvItem.colors || []).length })
+                      </label>
+                      <p className="text-[11px] text-muted">Add color variants (e.g. Black, Brown, Red) and upload specific photos for each color.</p>
+                    </div>
+                  </div>
+
+                  {/* List of Configured Color Variants Cards */}
+                  <div className="space-y-3">
+                    {(newInvItem.colors || []).map((color, colorIdx) => {
+                      const variantPhotos = color.image_urls || (color.image_url ? [color.image_url] : []);
+                      const currentPrimary = color.image_url || variantPhotos[0] || '';
+
+                      return (
+                        <div key={colorIdx} className="bg-background/80 border border-gold/25 rounded-lg p-3.5 space-y-3 shadow-md">
+                          {/* Variant Header: Color Name, Hex Dot & Remove */}
+                          <div className="flex items-center justify-between border-b border-gold/15 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-4 h-4 rounded-full border border-white/30 shrink-0 shadow"
+                                style={{ backgroundColor: color.hex || '#000000' }}
+                              />
+                              <span className="font-bold text-sm text-ivory">{color.name}</span>
+                              <span className="text-[10px] font-mono text-muted uppercase bg-charcoal px-2 py-0.5 rounded border border-gold/10">
+                                {color.hex || '#000000'}
+                              </span>
+                              <span className="text-[10px] font-sans text-gold/80 bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20 font-bold">
+                                {variantPhotos.length} Photo{variantPhotos.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...(newInvItem.colors || [])];
+                                updated.splice(colorIdx, 1);
+                                setNewInvItem(prev => ({ ...prev, colors: updated }));
+                              }}
+                              className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded transition flex items-center gap-1 text-xs"
+                              title="Remove Color Variant"
+                            >
+                              <span className="material-symbols-outlined text-sm">delete</span>
+                              <span className="text-[10px] uppercase font-bold">Remove</span>
+                            </button>
+                          </div>
+
+                          {/* Per-Variant Photos Gallery */}
+                          <div>
+                            <p className="text-[10px] uppercase text-muted tracking-wider font-semibold mb-2 flex items-center justify-between">
+                              <span>Photos for <strong className="text-gold">{color.name}</strong> Variant:</span>
+                              <span className="text-[9px] text-gold/70">First photo automatically becomes thumbnail for this color</span>
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 mb-2.5">
+                              {variantPhotos.map((photoUrl, pIdx) => {
+                                const isCover = currentPrimary === photoUrl;
+                                return (
+                                  <div key={pIdx} className="relative w-16 h-16 rounded border border-gold/30 bg-charcoal overflow-hidden group shadow">
+                                    <img src={photoUrl} alt={`${color.name} ${pIdx}`} className="w-full h-full object-cover" />
+                                    {isCover && (
+                                      <span className="absolute bottom-0 inset-x-0 bg-gold text-background font-extrabold text-[8px] uppercase text-center py-0.2 font-sans">
+                                        COVER
+                                      </span>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition duration-200">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSetPrimaryColorVariantPhoto(false, colorIdx, photoUrl)}
+                                        className="p-1 text-gold hover:text-white"
+                                        title="Set as Thumbnail Cover for this Color"
+                                      >
+                                        <span className="material-symbols-outlined text-xs">star</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveColorVariantPhoto(false, colorIdx, pIdx)}
+                                        className="p-1 text-red-400 hover:text-red-300"
+                                        title="Delete Photo"
+                                      >
+                                        <span className="material-symbols-outlined text-xs">delete</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+
+                              {variantPhotos.length === 0 && (
+                                <p className="text-xs text-amber-300/80 italic py-1">No photos added for {color.name} yet. Upload or paste image URL below.</p>
+                              )}
+                            </div>
+
+                            {/* Upload Controls for this specific Color Variant */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <label className="flex items-center justify-center gap-1.5 px-3 py-2 bg-charcoal border border-dashed border-gold/40 hover:border-gold hover:bg-gold/10 text-gold text-xs uppercase font-bold tracking-wider rounded cursor-pointer transition min-h-[36px]">
+                                <span className="material-symbols-outlined text-sm">{isUploadingInvImage ? 'sync' : 'add_a_photo'}</span>
+                                <span className="text-[11px]">Upload Photo for {color.name}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  disabled={isUploadingInvImage}
+                                  onChange={(e) => handleColorVariantImageUpload(e, false, colorIdx)}
+                                  className="hidden"
+                                />
+                              </label>
+
+                              <ColorVariantUrlInput
+                                colorName={color.name}
+                                onAdd={(url) => handleAddColorVariantImageUrl(false, colorIdx, url)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {(newInvItem.colors || []).length === 0 && (
+                      <p className="text-xs text-muted/60 italic p-3 bg-background/50 rounded border border-dashed border-gold/15 text-center">
+                        No color variants added yet. Add a color variant below.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Add New Color Variant Row */}
+                  <div className="bg-background/40 p-3 rounded-lg border border-gold/20 space-y-2">
+                    <p className="text-xs font-bold text-gold uppercase tracking-wider">Add New Color Variant</p>
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                      <input
+                        type="text"
+                        placeholder="Color Name (e.g. NY White, Black, Brown, Red)"
+                        value={colorNameInput}
+                        onChange={(e) => setColorNameInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddColorOption(false);
+                          }
+                        }}
+                        className="flex-1 bg-background border border-gold/25 p-2.5 rounded text-xs text-ivory outline-none focus:border-gold min-h-[40px]"
+                      />
+                      <div className="flex items-center gap-1.5 bg-background border border-gold/25 p-1 rounded min-h-[40px] shrink-0">
+                        <input
+                          type="color"
+                          value={colorHexInput || '#000000'}
+                          onChange={(e) => setColorHexInput(e.target.value)}
+                          className="w-7 h-7 rounded border-0 cursor-pointer bg-transparent"
+                          title="Pick Color Swatch"
+                        />
+                        <span className="text-[10px] font-mono text-muted uppercase pr-2">{colorHexInput || '#000000'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddColorOption(false)}
+                        className="px-4 py-2.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider rounded transition cursor-pointer min-h-[40px] shrink-0"
+                      >
+                        Add Variant
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1670,64 +2292,272 @@ export const Admin = () => {
                   />
                 </div>
 
-                {/* EDIT INVENTORY ITEM IMAGE SELECTION */}
-                <div className="border-t border-gold/15 pt-4 space-y-3">
-                  <label className="block text-xs uppercase text-gold tracking-wider font-sans font-bold flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm">photo_camera</span>
-                    Item Photo / Presentation Image
-                  </label>
+                {/* MULTIPLE ITEM PHOTOS / GALLERY */}
+                <div className="border-t border-gold/15 pt-4 space-y-3 font-sans">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs uppercase text-gold font-bold tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm">photo_camera</span>
+                      Item Photo Gallery ({ (editingInvItem.image_urls || []).length })
+                    </label>
+                    <span className="text-[10px] text-muted">First image is set as primary cover</span>
+                  </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    {/* Live Preview */}
-                    {editingInvItem.image_url ? (
-                      <div className="relative w-20 h-20 rounded border border-gold/40 bg-background overflow-hidden shrink-0 shadow-md">
-                        <img src={editingInvItem.image_url} alt="Preview" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => setEditingInvItem({ ...editingInvItem, image_url: '' })}
-                          className="absolute top-1 right-1 bg-black/70 hover:bg-red-950 text-gold hover:text-red-300 p-1 rounded-full text-xs"
-                          title="Remove photo"
-                        >
-                          <span className="material-symbols-outlined text-xs block">close</span>
-                        </button>
+                  {/* Gallery Grid */}
+                  <div className="flex flex-wrap gap-2.5">
+                    {(editingInvItem.image_urls || []).map((imgUrl, imgIdx) => (
+                      <div key={imgIdx} className="relative w-20 h-20 rounded border border-gold/30 bg-background overflow-hidden group shadow">
+                        <img src={imgUrl} alt={`Gallery ${imgIdx}`} className="w-full h-full object-cover" />
+                        {editingInvItem.image_url === imgUrl && (
+                          <span className="absolute bottom-0 inset-x-0 bg-gold text-background font-extrabold text-[9px] uppercase text-center py-0.5 font-sans">
+                            Primary
+                          </span>
+                        )}
+                        <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition duration-200">
+                          <button
+                            type="button"
+                            onClick={() => setEditingInvItem(prev => prev ? { ...prev, image_url: imgUrl } : null)}
+                            className="p-1 text-gold hover:text-white"
+                            title="Set as Primary Cover"
+                          >
+                            <span className="material-symbols-outlined text-sm">star</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...(editingInvItem.image_urls || [])];
+                              updated.splice(imgIdx, 1);
+                              setEditingInvItem(prev => prev ? {
+                                ...prev,
+                                image_urls: updated,
+                                image_url: prev.image_url === imgUrl ? (updated[0] || '') : prev.image_url
+                              } : null);
+                            }}
+                            className="p-1 text-red-400 hover:text-red-300"
+                            title="Remove Photo"
+                          >
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                          </button>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="w-20 h-20 rounded border border-dashed border-gold/20 bg-background/50 flex flex-col items-center justify-center text-muted text-[10px] uppercase font-sans shrink-0">
-                        <span className="material-symbols-outlined text-base mb-0.5 text-muted/60">image</span>
-                        No Photo
+                    ))}
+
+                    {(editingInvItem.image_urls || []).length === 0 && editingInvItem.image_url && (
+                      <div className="relative w-20 h-20 rounded border border-gold/30 bg-background overflow-hidden shadow">
+                        <img src={editingInvItem.image_url} alt="Cover" className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 inset-x-0 bg-gold text-background font-extrabold text-[9px] uppercase text-center py-0.5 font-sans">
+                          Primary
+                        </span>
                       </div>
                     )}
+                  </div>
 
-                    <div className="flex-1 space-y-2 w-full">
-                      {/* Upload from Gallery Button */}
-                      <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-background border border-dashed border-gold/40 hover:border-gold hover:bg-gold/10 text-gold text-xs font-sans uppercase font-bold tracking-wider rounded cursor-pointer transition min-h-[44px]">
-                        <span className="material-symbols-outlined text-base">
-                          {isUploadingInvImage ? 'sync' : 'cloud_upload'}
-                        </span>
-                        <span>{isUploadingInvImage ? 'Uploading to Supabase Storage (product-images)…' : 'Upload Photo to Supabase Storage (product-images)'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={isUploadingInvImage}
-                          onChange={(e) => handleInvItemImageUpload(e, true)}
-                          className="hidden"
-                        />
-                      </label>
+                  {/* Upload File & URL Controls */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label className="flex items-center justify-center gap-2 px-3 py-2.5 bg-background border border-dashed border-gold/40 hover:border-gold hover:bg-gold/10 text-gold text-xs uppercase font-bold tracking-wider rounded cursor-pointer transition min-h-[44px]">
+                      <span className="material-symbols-outlined text-base">{isUploadingInvImage ? 'sync' : 'cloud_upload'}</span>
+                      <span>{isUploadingInvImage ? 'Uploading…' : 'Upload Image File'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingInvImage}
+                        onChange={(e) => handleInvItemImageUpload(e, true)}
+                        className="hidden"
+                      />
+                    </label>
 
-                      <div className="flex items-center gap-2 text-[10px] text-muted uppercase font-sans">
-                        <span className="h-px bg-gold/15 flex-1" />
-                        <span>OR ENTER IMAGE URL</span>
-                        <span className="h-px bg-gold/15 flex-1" />
-                      </div>
-
-                      {/* URL Input */}
+                    <div className="flex gap-1.5">
                       <input
                         type="text"
-                        placeholder="https://images.unsplash.com/photo-..."
-                        value={editingInvItem.image_url}
-                        onChange={(e) => setEditingInvItem({ ...editingInvItem, image_url: e.target.value })}
-                        className="w-full bg-background border border-gold/25 p-3 rounded text-sm text-ivory focus:border-gold outline-none font-sans min-h-[44px]"
+                        placeholder="Paste Image URL..."
+                        value={invUrlInput}
+                        onChange={(e) => setInvUrlInput(e.target.value)}
+                        className="flex-1 bg-background border border-gold/25 p-2.5 rounded text-xs text-ivory outline-none focus:border-gold min-h-[44px]"
                       />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!invUrlInput.trim()) return;
+                          const url = invUrlInput.trim();
+                          setEditingInvItem(prev => {
+                            if (!prev) return null;
+                            const current = prev.image_urls || [];
+                            return {
+                              ...prev,
+                              image_url: prev.image_url || url,
+                              image_urls: [...current, url],
+                            };
+                          });
+                          setInvUrlInput('');
+                        }}
+                        className="px-4 py-2.5 bg-gold/15 hover:bg-gold hover:text-background border border-gold/30 text-gold text-xs font-bold uppercase rounded transition min-h-[44px]"
+                      >
+                        Add Photo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AVAILABLE ITEM COLOR VARIANTS (WITH PER-VARIANT IMAGES) */}
+                <div className="border-t border-gold/15 pt-4 space-y-3.5 font-sans">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <label className="block text-xs uppercase text-gold font-bold tracking-wider flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm">palette</span>
+                        Available Color Variants ({ (editingInvItem.colors || []).length })
+                      </label>
+                      <p className="text-[11px] text-muted">Add color variants (e.g. Black, Brown, Red) and upload specific photos for each color.</p>
+                    </div>
+                  </div>
+
+                  {/* List of Configured Color Variants Cards */}
+                  <div className="space-y-3">
+                    {(editingInvItem.colors || []).map((color, colorIdx) => {
+                      const variantPhotos = color.image_urls || (color.image_url ? [color.image_url] : []);
+                      const currentPrimary = color.image_url || variantPhotos[0] || '';
+
+                      return (
+                        <div key={colorIdx} className="bg-background/80 border border-gold/25 rounded-lg p-3.5 space-y-3 shadow-md">
+                          {/* Variant Header: Color Name, Hex Dot & Remove */}
+                          <div className="flex items-center justify-between border-b border-gold/15 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-4 h-4 rounded-full border border-white/30 shrink-0 shadow"
+                                style={{ backgroundColor: color.hex || '#000000' }}
+                              />
+                              <span className="font-bold text-sm text-ivory">{color.name}</span>
+                              <span className="text-[10px] font-mono text-muted uppercase bg-charcoal px-2 py-0.5 rounded border border-gold/10">
+                                {color.hex || '#000000'}
+                              </span>
+                              <span className="text-[10px] font-sans text-gold/80 bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20 font-bold">
+                                {variantPhotos.length} Photo{variantPhotos.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...(editingInvItem.colors || [])];
+                                updated.splice(colorIdx, 1);
+                                setEditingInvItem(prev => prev ? { ...prev, colors: updated } : null);
+                              }}
+                              className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded transition flex items-center gap-1 text-xs"
+                              title="Remove Color Variant"
+                            >
+                              <span className="material-symbols-outlined text-sm">delete</span>
+                              <span className="text-[10px] uppercase font-bold">Remove</span>
+                            </button>
+                          </div>
+
+                          {/* Per-Variant Photos Gallery */}
+                          <div>
+                            <p className="text-[10px] uppercase text-muted tracking-wider font-semibold mb-2 flex items-center justify-between">
+                              <span>Photos for <strong className="text-gold">{color.name}</strong> Variant:</span>
+                              <span className="text-[9px] text-gold/70">First photo automatically becomes thumbnail for this color</span>
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 mb-2.5">
+                              {variantPhotos.map((photoUrl, pIdx) => {
+                                const isCover = currentPrimary === photoUrl;
+                                return (
+                                  <div key={pIdx} className="relative w-16 h-16 rounded border border-gold/30 bg-charcoal overflow-hidden group shadow">
+                                    <img src={photoUrl} alt={`${color.name} ${pIdx}`} className="w-full h-full object-cover" />
+                                    {isCover && (
+                                      <span className="absolute bottom-0 inset-x-0 bg-gold text-background font-extrabold text-[8px] uppercase text-center py-0.2 font-sans">
+                                        COVER
+                                      </span>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition duration-200">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSetPrimaryColorVariantPhoto(true, colorIdx, photoUrl)}
+                                        className="p-1 text-gold hover:text-white"
+                                        title="Set as Thumbnail Cover for this Color"
+                                      >
+                                        <span className="material-symbols-outlined text-xs">star</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveColorVariantPhoto(true, colorIdx, pIdx)}
+                                        className="p-1 text-red-400 hover:text-red-300"
+                                        title="Delete Photo"
+                                      >
+                                        <span className="material-symbols-outlined text-xs">delete</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+
+                              {variantPhotos.length === 0 && (
+                                <p className="text-xs text-amber-300/80 italic py-1">No photos added for {color.name} yet. Upload or paste image URL below.</p>
+                              )}
+                            </div>
+
+                            {/* Upload Controls for this specific Color Variant */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <label className="flex items-center justify-center gap-1.5 px-3 py-2 bg-charcoal border border-dashed border-gold/40 hover:border-gold hover:bg-gold/10 text-gold text-xs uppercase font-bold tracking-wider rounded cursor-pointer transition min-h-[36px]">
+                                <span className="material-symbols-outlined text-sm">{isUploadingInvImage ? 'sync' : 'add_a_photo'}</span>
+                                <span className="text-[11px]">Upload Photo for {color.name}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  disabled={isUploadingInvImage}
+                                  onChange={(e) => handleColorVariantImageUpload(e, true, colorIdx)}
+                                  className="hidden"
+                                />
+                              </label>
+
+                              <ColorVariantUrlInput
+                                colorName={color.name}
+                                onAdd={(url) => handleAddColorVariantImageUrl(true, colorIdx, url)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {(editingInvItem.colors || []).length === 0 && (
+                      <p className="text-xs text-muted/60 italic p-3 bg-background/50 rounded border border-dashed border-gold/15 text-center">
+                        No color variants added yet. Add a color variant below.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Add New Color Variant Row */}
+                  <div className="bg-background/40 p-3 rounded-lg border border-gold/20 space-y-2">
+                    <p className="text-xs font-bold text-gold uppercase tracking-wider">Add New Color Variant</p>
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                      <input
+                        type="text"
+                        placeholder="Color Name (e.g. NY White, Black, Brown, Red)"
+                        value={colorNameInput}
+                        onChange={(e) => setColorNameInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddColorOption(true);
+                          }
+                        }}
+                        className="flex-1 bg-background border border-gold/25 p-2.5 rounded text-xs text-ivory outline-none focus:border-gold min-h-[40px]"
+                      />
+                      <div className="flex items-center gap-1.5 bg-background border border-gold/25 p-1 rounded min-h-[40px] shrink-0">
+                        <input
+                          type="color"
+                          value={colorHexInput || '#000000'}
+                          onChange={(e) => setColorHexInput(e.target.value)}
+                          className="w-7 h-7 rounded border-0 cursor-pointer bg-transparent"
+                          title="Pick Color Swatch"
+                        />
+                        <span className="text-[10px] font-mono text-muted uppercase pr-2">{colorHexInput || '#000000'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddColorOption(true)}
+                        className="px-4 py-2.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider rounded transition cursor-pointer min-h-[40px] shrink-0"
+                      >
+                        Add Variant
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1850,90 +2680,367 @@ export const Admin = () => {
         )}
 
         {/* MODAL / DRAWER: STOCK HISTORY AUDIT LOG */}
-        {showStockHistoryDrawer && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-hidden">
-            <div className="gold-gradient-border bg-charcoal rounded-xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
-              <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b border-gold/15 shrink-0 bg-charcoal z-10">
-                <div>
-                  <h3 className="font-serif text-lg sm:text-2xl text-gold truncate">Stock Audit Movement Logs</h3>
-                  <p className="text-[11px] sm:text-xs text-muted font-sans mt-0.5">Chronological record of stock deductions, restorations, and manual updates</p>
+        {showStockHistoryDrawer && (() => {
+          // Group stockLogs by Order (Order Ref + Customer Name)
+          const groupedByOrder = (() => {
+            const map = new Map<string, {
+              orderRef: string;
+              customerName: string;
+              timestamp: string;
+              type: string;
+              isAddition: boolean;
+              items: { itemName: string; sku: string; quantity: number }[];
+              totalQuantity: number;
+            }>();
+
+            for (const log of stockLogs) {
+              const refStr = log.reference_order || log.notes || 'Manual Adjustment';
+
+              let orderNum = log.reference_order || '';
+              let custName = '';
+
+              const matchCust = refStr.match(/(SG-\d+-\d+)\s*\(([^)]+)\)/);
+              if (matchCust) {
+                orderNum = matchCust[1];
+                custName = matchCust[2];
+              } else {
+                const matchingOrder = orders.find(o => refStr.includes(o.order_number) || o.order_number === refStr);
+                if (matchingOrder) {
+                  orderNum = matchingOrder.order_number;
+                  custName = matchingOrder.customer_name;
+                } else if (refStr.startsWith('SG-')) {
+                  orderNum = refStr.split(' ')[0];
+                } else {
+                  orderNum = refStr;
+                }
+              }
+
+              const isAddition = log.change_amount > 0 || log.type === 'MANUAL_ADD' || log.type === 'ORDER_RESTORE';
+              const groupKey = `${orderNum}_${log.type}_${new Date(log.created_at).toISOString().slice(0, 16)}`;
+              const qty = Math.abs(log.change_amount);
+              const existing = map.get(groupKey);
+
+              // Resolve human readable item name with multi-stage fallback
+              const rawName = log.item_name || (log as any).itemName;
+              const invMatch = customInventory.find(i => String(i.id) === String(log.item_id) || (log.sku && i.sku === log.sku));
+              const resolvedName = (rawName && rawName.trim() !== '') 
+                ? rawName 
+                : (invMatch ? invMatch.name : (log.sku ? `Item (${log.sku})` : 'Inventory Item'));
+
+              if (existing) {
+                const itemExist = existing.items.find(i => i.itemName === resolvedName || (log.sku && i.sku === log.sku));
+                if (itemExist) {
+                  itemExist.quantity += qty;
+                } else {
+                  existing.items.push({ itemName: resolvedName, sku: log.sku, quantity: qty });
+                }
+                existing.totalQuantity += qty;
+              } else {
+                map.set(groupKey, {
+                  orderRef: orderNum,
+                  customerName: custName,
+                  timestamp: log.created_at,
+                  type: log.type,
+                  isAddition,
+                  items: [{ itemName: resolvedName, sku: log.sku, quantity: qty }],
+                  totalQuantity: qty,
+                });
+              }
+            }
+
+            return Array.from(map.values()).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          })();
+
+          // Aggregate total inventory reduced across all orders
+          const totalReducedSummary = (() => {
+            const map = new Map<string, { itemName: string; sku: string; totalDeducted: number; totalRestored: number; netReduced: number }>();
+
+            for (const log of stockLogs) {
+              if (log.type !== 'ORDER_DEDUCT' && log.type !== 'ORDER_RESTORE') continue;
+              const rawName = log.item_name || (log as any).itemName;
+              const invMatch = customInventory.find(i => String(i.id) === String(log.item_id) || (log.sku && i.sku === log.sku));
+              const resolvedName = (rawName && rawName.trim() !== '') 
+                ? rawName 
+                : (invMatch ? invMatch.name : (log.sku ? `Item (${log.sku})` : 'Inventory Item'));
+
+              const key = resolvedName;
+              const existing = map.get(key) || { itemName: resolvedName, sku: log.sku || '', totalDeducted: 0, totalRestored: 0, netReduced: 0 };
+              if (log.type === 'ORDER_DEDUCT') {
+                existing.totalDeducted += Math.abs(log.change_amount);
+              } else if (log.type === 'ORDER_RESTORE') {
+                existing.totalRestored += Math.abs(log.change_amount);
+              }
+              existing.netReduced = existing.totalDeducted - existing.totalRestored;
+              map.set(key, existing);
+            }
+
+            return Array.from(map.values()).filter(i => i.totalDeducted > 0);
+          })();
+
+          const totalItemsDeductedOverall = totalReducedSummary.reduce((acc, curr) => acc + curr.netReduced, 0);
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-hidden font-sans">
+              <div className="gold-gradient-border bg-charcoal rounded-xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+                {/* Header & Close Button */}
+                <div className="flex justify-between items-start px-4 py-3 sm:px-6 sm:py-4 border-b border-gold/15 shrink-0 bg-charcoal z-10">
+                  <div>
+                    <h3 className="font-serif text-lg sm:text-2xl text-gold truncate">Stock Audit Movement Logs</h3>
+                    <p className="text-[11px] sm:text-xs text-muted font-sans mt-0.5">Order inventory reduction manifest & stock audit log</p>
+                  </div>
+                  <button
+                    onClick={() => setShowStockHistoryDrawer(false)}
+                    className="text-muted hover:text-gold transition p-1.5 rounded-full hover:bg-gold/10 material-symbols-outlined"
+                  >
+                    close
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowStockHistoryDrawer(false)}
-                  className="text-muted hover:text-gold transition p-1.5 rounded-full hover:bg-gold/10 material-symbols-outlined"
-                >
-                  close
-                </button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 custom-scrollbar">
-                {stockLogs.length === 0 ? (
-                  <div className="bg-background/40 p-8 rounded text-center border border-dashed border-gold/15 text-xs text-muted">
-                    No stock adjustment movements recorded yet.
+                {/* View Switcher Tabs & Overview Banner */}
+                <div className="px-4 sm:px-6 py-3 border-b border-gold/15 bg-background/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+                  <div className="flex items-center gap-1 bg-charcoal p-1 border border-gold/20 rounded">
+                    <button
+                      type="button"
+                      onClick={() => setStockLogTab('BY_ORDER')}
+                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition flex items-center gap-1.5 ${
+                        stockLogTab === 'BY_ORDER'
+                          ? 'bg-gold text-background shadow'
+                          : 'text-ivory/80 hover:text-gold hover:bg-gold/10'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">receipt_long</span>
+                      <span>By Order & Customer</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStockLogTab('BY_ITEM_SUMMARY')}
+                      className={`px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition flex items-center gap-1.5 ${
+                        stockLogTab === 'BY_ITEM_SUMMARY'
+                          ? 'bg-gold text-background shadow'
+                          : 'text-ivory/80 hover:text-gold hover:bg-gold/10'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">inventory_2</span>
+                      <span>Total Reduced Summary</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStockLogTab('DETAILED_LOGS')}
+                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition flex items-center gap-1.5 ${
+                        stockLogTab === 'DETAILED_LOGS'
+                          ? 'bg-gold text-background shadow'
+                          : 'text-ivory/80 hover:text-gold hover:bg-gold/10'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">list</span>
+                      <span>Raw Item Logs</span>
+                    </button>
                   </div>
-                ) : (
-                  <div className="overflow-x-auto border border-gold/15 rounded">
-                    <table className="w-full text-left border-collapse text-xs min-w-[600px]">
-                      <thead>
-                        <tr className="border-b border-gold/15 text-gold uppercase tracking-wider bg-background/50">
-                          <th className="p-3">Timestamp</th>
-                          <th className="p-3">Item / SKU</th>
-                          <th className="p-3">Movement Type</th>
-                          <th className="p-3">Change</th>
-                          <th className="p-3">Stock Before → After</th>
-                          <th className="p-3">Notes / Ref Order</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gold/10 font-sans">
-                        {stockLogs.map((log) => (
-                          <tr key={log.id} className="hover:bg-gold/5 text-ivory">
-                            <td className="p-3 text-muted text-[11px] font-mono">
-                              {new Date(log.created_at).toLocaleString()}
-                            </td>
-                            <td className="p-3 font-semibold">
-                              <p className="text-ivory">{log.itemName}</p>
-                              <p className="text-[10px] font-mono text-gold/80">{log.sku}</p>
-                            </td>
-                            <td className="p-3">
-                              <span className={`px-2 py-0.5 text-[10px] font-extrabold uppercase rounded border ${
-                                log.type === 'ORDER_DEDUCT'
-                                  ? 'bg-red-950/50 text-red-300 border-red-500/30'
-                                  : log.type === 'ORDER_RESTORE'
-                                  ? 'bg-green-950/50 text-green-300 border-green-500/30'
-                                  : 'bg-blue-950/50 text-blue-300 border-blue-500/30'
+
+                  {/* Summary Metric Badge */}
+                  <div className="text-[11px] font-sans font-semibold text-gold bg-gold/10 px-3 py-1.5 border border-gold/30 rounded flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">analytics</span>
+                    <span>Total Reduced Across Orders: <strong className="text-ivory font-mono text-xs">{totalItemsDeductedOverall} units</strong></span>
+                  </div>
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 custom-scrollbar">
+                  {stockLogs.length === 0 ? (
+                    <div className="bg-background/40 p-8 rounded text-center border border-dashed border-gold/15 text-xs text-muted">
+                      No stock adjustment movements recorded yet.
+                    </div>
+                  ) : stockLogTab === 'BY_ORDER' ? (
+                    /* TAB 1: GROUPED BY ORDER & CUSTOMER NAME */
+                    <div className="space-y-3">
+                      {groupedByOrder.map((group, idx) => (
+                        <div key={idx} className="gold-gradient-border bg-charcoal p-4 rounded-lg space-y-2.5 font-sans">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gold/10 pb-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono font-bold text-gold">{group.orderRef}</span>
+                                {group.customerName && (
+                                  <span className="text-xs font-bold text-ivory">
+                                    — {group.customerName}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted font-mono mt-0.5">
+                                Logged: {new Date(group.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <span className={`px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded border ${
+                                group.type === 'ORDER_DEDUCT' || group.type === 'MANUAL_SUBTRACT' || (!group.isAddition && group.type === 'MANUAL_SET')
+                                  ? 'bg-red-950/60 text-red-300 border-red-500/40'
+                                  : group.type === 'ORDER_RESTORE' || group.type === 'MANUAL_ADD' || (group.isAddition && group.type === 'MANUAL_SET')
+                                  ? 'bg-green-950/60 text-green-300 border-green-500/40'
+                                  : 'bg-blue-950/60 text-blue-300 border-blue-500/40'
                               }`}>
-                                {log.type.replace('_', ' ')}
+                                {group.type.replace('_', ' ')}
                               </span>
-                            </td>
-                            <td className={`p-3 font-bold font-mono ${log.change_amount > 0 ? 'text-green-400' : log.change_amount < 0 ? 'text-red-400' : 'text-ivory'}`}>
-                              {log.change_amount > 0 ? `+${log.change_amount}` : log.change_amount}
-                            </td>
-                            <td className="p-3 font-mono text-muted text-[11px]">
-                              {log.previous_stock} → <strong className="text-gold">{log.new_stock}</strong>
-                            </td>
-                            <td className="p-3 text-muted text-[11px] italic">
-                              {log.reference_order ? `Order: ${log.reference_order}` : log.notes || '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
 
-              <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gold/15 flex justify-end shrink-0 bg-charcoal z-10">
-                <button
-                  type="button"
-                  onClick={() => setShowStockHistoryDrawer(false)}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider rounded min-h-[44px]"
-                >
-                  Close Log History
-                </button>
+                              <span className={`text-xs font-bold font-mono px-2 py-0.5 rounded border ${
+                                group.isAddition
+                                  ? 'text-green-400 bg-green-950/30 border-green-500/20'
+                                  : 'text-red-400 bg-red-950/30 border-red-500/20'
+                              }`}>
+                                {group.isAddition ? '+' : '-'}{group.totalQuantity} item{group.totalQuantity !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Items List */}
+                          <div>
+                            <p className="text-[10px] uppercase text-gold/80 font-bold tracking-wider mb-1.5">
+                              {group.isAddition ? 'Items Added / Stocked to Inventory:' : 'Items Purchased & Reduced from Inventory:'}
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 bg-background/60 p-2.5 rounded border border-gold/15 text-xs">
+                              {group.items.map((it, itIdx) => (
+                                <div key={itIdx} className="flex items-center justify-between gap-2 text-ivory">
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <span className="text-gold font-bold text-xs">•</span>
+                                    <span className="font-semibold text-ivory truncate">{it.itemName}</span>
+                                    {it.sku && <span className="text-[10px] font-mono text-muted">({it.sku})</span>}
+                                  </div>
+                                  <span className="font-bold text-gold font-mono shrink-0 px-2 py-0.5 bg-gold/10 rounded border border-gold/20">
+                                    {it.quantity}x
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {groupedByOrder.length === 0 && (
+                        <div className="p-8 text-center text-xs text-muted border border-dashed border-gold/20 rounded">
+                          No stock audit movements found in logs.
+                        </div>
+                      )}
+                    </div>
+                  ) : stockLogTab === 'BY_ITEM_SUMMARY' ? (
+                    /* TAB 2: TOTAL INVENTORY REDUCED SUMMARY */
+                    <div className="space-y-4">
+                      <div className="bg-gold/10 p-3 rounded-lg border border-gold/25 text-xs text-ivory leading-relaxed">
+                        <p className="font-bold text-gold flex items-center gap-1.5 mb-0.5">
+                          <span className="material-symbols-outlined text-sm">info</span>
+                          Total Inventory Reduced Summary:
+                        </p>
+                        Shows total quantity deducted across all confirmed orders for each item in stock.
+                      </div>
+
+                      <div className="overflow-x-auto border border-gold/15 rounded">
+                        <table className="w-full text-left border-collapse text-xs min-w-[500px]">
+                          <thead>
+                            <tr className="border-b border-gold/15 text-gold uppercase tracking-wider bg-background/50">
+                              <th className="p-3">Item Name</th>
+                              <th className="p-3">SKU</th>
+                              <th className="p-3">Total Deducted</th>
+                              <th className="p-3">Total Restored</th>
+                              <th className="p-3 text-right">Net Inventory Reduced</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gold/10 font-sans">
+                            {totalReducedSummary.map((item, idx) => (
+                              <tr key={idx} className="hover:bg-gold/5 text-ivory">
+                                <td className="p-3 font-semibold text-ivory">{item.itemName}</td>
+                                <td className="p-3 font-mono text-gold/80">{item.sku}</td>
+                                <td className="p-3 font-mono text-red-400 font-bold">-{item.totalDeducted} units</td>
+                                <td className="p-3 font-mono text-green-400">+{item.totalRestored} units</td>
+                                <td className="p-3 text-right font-mono font-extrabold text-gold text-sm">
+                                  -{item.netReduced} {item.netReduced === 1 ? 'unit' : 'units'}
+                                </td>
+                              </tr>
+                            ))}
+
+                            {totalReducedSummary.length === 0 && (
+                              <tr>
+                                <td colSpan={5} className="p-8 text-center text-muted text-xs font-sans">
+                                  No item deductions recorded yet.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    /* TAB 3: RAW ITEM LOGS TABLE */
+                    <div className="overflow-x-auto border border-gold/15 rounded">
+                      <table className="w-full text-left border-collapse text-xs min-w-[600px]">
+                        <thead>
+                          <tr className="border-b border-gold/15 text-gold uppercase tracking-wider bg-background/50">
+                            <th className="p-3">Timestamp</th>
+                            <th className="p-3">Item / SKU</th>
+                            <th className="p-3">Movement Type</th>
+                            <th className="p-3">Change</th>
+                            <th className="p-3">Stock Before → After</th>
+                            <th className="p-3">Notes / Ref Order</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gold/10 font-sans">
+                          {stockLogs.map((log) => {
+                            const rawName = log.item_name || (log as any).itemName;
+                            const invMatch = customInventory.find(i => String(i.id) === String(log.item_id) || (log.sku && i.sku === log.sku));
+                            const resolvedName = (rawName && rawName.trim() !== '')
+                              ? rawName
+                              : (invMatch ? invMatch.name : (log.sku ? `Item (${log.sku})` : 'Inventory Item'));
+
+                            return (
+                              <tr key={log.id} className="hover:bg-gold/5 text-ivory">
+                                <td className="p-3 text-muted text-[11px] font-mono">
+                                  {new Date(log.created_at).toLocaleString()}
+                                </td>
+                                <td className="p-3 font-semibold">
+                                  <p className="text-ivory font-bold">{resolvedName}</p>
+                                  <p className="text-[10px] font-mono text-gold/80">{log.sku}</p>
+                                </td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-0.5 text-[10px] font-extrabold uppercase rounded border ${
+                                    log.type === 'ORDER_DEDUCT'
+                                      ? 'bg-red-950/50 text-red-300 border-red-500/30'
+                                      : log.type === 'ORDER_RESTORE'
+                                      ? 'bg-green-950/50 text-green-300 border-green-500/30'
+                                      : 'bg-blue-950/50 text-blue-300 border-blue-500/30'
+                                  }`}>
+                                    {log.type.replace('_', ' ')}
+                                  </span>
+                                </td>
+                                <td className={`p-3 font-bold font-mono ${log.change_amount > 0 ? 'text-green-400' : log.change_amount < 0 ? 'text-red-400' : 'text-ivory'}`}>
+                                  {log.change_amount > 0 ? `+${log.change_amount}` : log.change_amount}
+                                </td>
+                                <td className="p-3 font-mono text-muted text-[11px]">
+                                  {log.previous_stock} → <strong className="text-gold">{log.new_stock}</strong>
+                                </td>
+                                <td className="p-3 text-muted text-[11px] italic">
+                                  {log.reference_order ? `Order: ${log.reference_order}` : log.notes || '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gold/15 flex justify-end shrink-0 bg-charcoal z-10">
+                  <button
+                    type="button"
+                    onClick={() => setShowStockHistoryDrawer(false)}
+                    className="w-full sm:w-auto px-5 py-2.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider rounded min-h-[44px] cursor-pointer"
+                  >
+                    Close Log History
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
         {/* MODAL: ADD PRODUCT (INVENTORY-BASED BUILDER) */}
         {isAddingProduct && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-hidden">
@@ -1965,7 +3072,7 @@ export const Admin = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs uppercase tracking-wider text-muted mb-1 font-semibold">Base Price (Rs.)</label>
                     <input
@@ -1973,7 +3080,7 @@ export const Admin = () => {
                       required
                       min="0"
                       value={newProduct.price || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0, stock: 9999 })}
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none font-semibold text-gold"
                     />
                   </div>
@@ -1987,32 +3094,6 @@ export const Admin = () => {
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider text-muted mb-1 font-semibold">Stock Quantity</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={newProduct.stock}
-                      onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-muted mb-1 font-semibold">Default Gift Wrapping Style</label>
-                  <select
-                    value={newProduct.default_wrapping || 'Signature Matte Black & Gold Foil'}
-                    onChange={(e) => setNewProduct({ ...newProduct, default_wrapping: e.target.value })}
-                    className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
-                  >
-                    <option value="Signature Matte Black & Gold Foil">Signature Matte Black & Gold Foil</option>
-                    <option value="Satin Red & Gold Ribbon Curation">Satin Red & Gold Ribbon Curation</option>
-                    <option value="Velvet Emerald & Gold Seal">Velvet Emerald & Gold Seal</option>
-                    <option value="Minimalist Parchment & Wax Stamp">Minimalist Parchment & Wax Stamp</option>
-                    <option value="Midnight Navy Sleek Casing">Midnight Navy Sleek Casing</option>
-                  </select>
                 </div>
 
                 {/* GIFT BOX ITEMS (INVENTORY BUILDER) */}
@@ -2030,10 +3111,40 @@ export const Admin = () => {
                     </span>
                   </div>
 
+                  {/* Category Filter Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gold/30">
+                    {['All', ...Array.from(new Set(customInventory.map(i => i.category).filter(Boolean)))].map((cat) => {
+                      const isActive = boxBuilderCategory === cat;
+                      const count = cat === 'All'
+                        ? customInventory.filter(i => i.enabled !== false).length
+                        : customInventory.filter(i => i.enabled !== false && i.category === cat).length;
+
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setBoxBuilderCategory(cat)}
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-sans font-semibold transition-all duration-200 shrink-0 border flex items-center gap-1 cursor-pointer ${
+                            isActive
+                              ? 'bg-gold text-background border-gold shadow-xs font-bold'
+                              : 'bg-background/70 text-ivory/80 border-gold/25 hover:border-gold/50 hover:text-gold'
+                          }`}
+                        >
+                          <span>{cat}</span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                            isActive ? 'bg-background/25 text-background' : 'bg-gold/15 text-gold'
+                          }`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Search inventory items (wallets, perfumes, watches, chocolates, flowers...)..."
+                      placeholder={`Search ${boxBuilderCategory === 'All' ? 'inventory items' : boxBuilderCategory.toLowerCase()}...`}
                       value={boxBuilderSearch}
                       onChange={(e) => setBoxBuilderSearch(e.target.value)}
                       className="w-full bg-background border border-gold/25 text-xs text-ivory pl-8 pr-3 py-2 rounded outline-none focus:border-gold"
@@ -2044,7 +3155,15 @@ export const Admin = () => {
                   {/* Scrollable Inventory Selector */}
                   <div className="max-h-56 overflow-y-auto border border-gold/15 rounded bg-background/40 divide-y divide-gold/10 pr-1">
                     {customInventory
-                      .filter(item => item.enabled !== false && (!boxBuilderSearch || item.name.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || item.sku.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || item.category.toLowerCase().includes(boxBuilderSearch.toLowerCase())))
+                      .filter(item => {
+                        if (item.enabled === false) return false;
+                        const matchCat = boxBuilderCategory === 'All' || (item.category && item.category.toLowerCase() === boxBuilderCategory.toLowerCase());
+                        const matchSearch = !boxBuilderSearch || 
+                          item.name.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || 
+                          item.sku.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || 
+                          item.category.toLowerCase().includes(boxBuilderSearch.toLowerCase());
+                        return matchCat && matchSearch;
+                      })
                       .map(item => {
                         const isChecked = (newProduct.gift_box_items || []).some(i => String(i.inventory_item_id) === String(item.id));
                         const selectedObj = (newProduct.gift_box_items || []).find(i => String(i.inventory_item_id) === String(item.id));
@@ -2220,7 +3339,7 @@ export const Admin = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs uppercase tracking-wider text-muted mb-1 font-semibold">Base Price (Rs.)</label>
                     <input
@@ -2228,7 +3347,7 @@ export const Admin = () => {
                       required
                       min="0"
                       value={editingProduct.price}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0, stock: 9999 })}
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none font-semibold text-gold"
                     />
                   </div>
@@ -2242,32 +3361,6 @@ export const Admin = () => {
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider text-muted mb-1 font-semibold">Stock Quantity</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={editingProduct.stock}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs uppercase tracking-wider text-muted mb-1 font-semibold">Default Gift Wrapping Style</label>
-                  <select
-                    value={editingProduct.default_wrapping || 'Signature Matte Black & Gold Foil'}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, default_wrapping: e.target.value })}
-                    className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
-                  >
-                    <option value="Signature Matte Black & Gold Foil">Signature Matte Black & Gold Foil</option>
-                    <option value="Satin Red & Gold Ribbon Curation">Satin Red & Gold Ribbon Curation</option>
-                    <option value="Velvet Emerald & Gold Seal">Velvet Emerald & Gold Seal</option>
-                    <option value="Minimalist Parchment & Wax Stamp">Minimalist Parchment & Wax Stamp</option>
-                    <option value="Midnight Navy Sleek Casing">Midnight Navy Sleek Casing</option>
-                  </select>
                 </div>
 
                 {/* GIFT BOX ITEMS (INVENTORY BUILDER) */}
@@ -2285,10 +3378,40 @@ export const Admin = () => {
                     </span>
                   </div>
 
+                  {/* Category Filter Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gold/30">
+                    {['All', ...Array.from(new Set(customInventory.map(i => i.category).filter(Boolean)))].map((cat) => {
+                      const isActive = boxBuilderCategory === cat;
+                      const count = cat === 'All'
+                        ? customInventory.filter(i => i.enabled !== false).length
+                        : customInventory.filter(i => i.enabled !== false && i.category === cat).length;
+
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setBoxBuilderCategory(cat)}
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-sans font-semibold transition-all duration-200 shrink-0 border flex items-center gap-1 cursor-pointer ${
+                            isActive
+                              ? 'bg-gold text-background border-gold shadow-xs font-bold'
+                              : 'bg-background/70 text-ivory/80 border-gold/25 hover:border-gold/50 hover:text-gold'
+                          }`}
+                        >
+                          <span>{cat}</span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                            isActive ? 'bg-background/25 text-background' : 'bg-gold/15 text-gold'
+                          }`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Search inventory items..."
+                      placeholder={`Search ${boxBuilderCategory === 'All' ? 'inventory items' : boxBuilderCategory.toLowerCase()}...`}
                       value={boxBuilderSearch}
                       onChange={(e) => setBoxBuilderSearch(e.target.value)}
                       className="w-full bg-background border border-gold/25 text-xs text-ivory pl-8 pr-3 py-2 rounded outline-none focus:border-gold"
@@ -2298,7 +3421,15 @@ export const Admin = () => {
 
                   <div className="max-h-56 overflow-y-auto border border-gold/15 rounded bg-background/40 divide-y divide-gold/10 pr-1">
                     {customInventory
-                      .filter(item => item.enabled !== false && (!boxBuilderSearch || item.name.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || item.sku.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || item.category.toLowerCase().includes(boxBuilderSearch.toLowerCase())))
+                      .filter(item => {
+                        if (item.enabled === false) return false;
+                        const matchCat = boxBuilderCategory === 'All' || (item.category && item.category.toLowerCase() === boxBuilderCategory.toLowerCase());
+                        const matchSearch = !boxBuilderSearch || 
+                          item.name.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || 
+                          item.sku.toLowerCase().includes(boxBuilderSearch.toLowerCase()) || 
+                          item.category.toLowerCase().includes(boxBuilderSearch.toLowerCase());
+                        return matchCat && matchSearch;
+                      })
                       .map(item => {
                         const isChecked = (editingProduct.gift_box_items || []).some(i => String(i.inventory_item_id) === String(item.id));
                         const selectedObj = (editingProduct.gift_box_items || []).find(i => String(i.inventory_item_id) === String(item.id));
@@ -2597,18 +3728,25 @@ export const Admin = () => {
                   >
                     <option value="PENDING">PENDING</option>
                     <option value="CONFIRMED">CONFIRMED</option>
-                    <option value="PACKED">PACKED</option>
-                    <option value="SHIPPED">SHIPPED</option>
-                    <option value="DELIVERED">DELIVERED</option>
                     <option value="CANCELLED">CANCELLED</option>
                   </select>
                 </div>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-gold hover:bg-gold-light text-background font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px]"
-                >
-                  Close Summary
-                </button>
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteOrder(selectedOrder)}
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px] flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm font-bold">delete</span>
+                    Delete Order
+                  </button>
+                  <button
+                    onClick={() => setSelectedOrder(null)}
+                    className="flex-1 sm:flex-none px-5 py-2.5 bg-gold hover:bg-gold-light text-background font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px] cursor-pointer"
+                  >
+                    Close Summary
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2616,77 +3754,150 @@ export const Admin = () => {
 
       </div>
 
-      {/* MODAL: ADD CLIENT REVIEW */}
+      {/* MODAL: ADD CLIENT REVIEWS (MULTI-IMAGE BATCH UPLOAD) */}
       {isAddingReview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-hidden">
-          <div className="gold-gradient-border bg-charcoal rounded-xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="gold-gradient-border bg-charcoal rounded-xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Header */}
             <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b border-gold/15 shrink-0 bg-charcoal z-10">
-              <h3 className="font-serif text-lg sm:text-2xl text-gold truncate">Add Client Review Image</h3>
+              <div>
+                <h3 className="font-serif text-lg sm:text-2xl text-gold truncate">Add Client Review Images</h3>
+                <p className="text-[11px] sm:text-xs text-muted font-sans mt-0.5">Upload multiple review screenshots at once</p>
+              </div>
               <button
-                onClick={() => setIsAddingReview(false)}
+                onClick={() => { setIsAddingReview(false); setNewReviewImages([]); setReviewUrlInput(''); }}
                 className="text-muted hover:text-gold transition p-1.5 rounded-full hover:bg-gold/10 material-symbols-outlined"
               >
                 close
               </button>
             </div>
 
-            <form onSubmit={handleReviewSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-sm text-ivory custom-scrollbar">
-              <div className="space-y-1">
-                <label className="block text-xs uppercase tracking-wider text-muted mb-1 font-sans font-semibold">Image URL</label>
-                <input
-                  type="text"
-                  value={newReviewImage}
-                  onChange={(e) => setNewReviewImage(e.target.value)}
-                  placeholder="https://example.com/screenshot.jpg"
-                  className="w-full bg-background border border-gold/25 p-3 rounded text-sm text-ivory focus:border-gold outline-none min-h-[44px]"
-                />
-              </div>
-
-              <div className="relative flex items-center justify-center py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gold/10"></div>
-                </div>
-                <span className="relative px-3 bg-charcoal text-[10px] uppercase text-muted tracking-widest font-sans">Or Upload File</span>
-              </div>
-
+            <form onSubmit={handleReviewSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-sm text-ivory custom-scrollbar">
+              {/* Main Upload Dropzone / Button */}
               <div>
-                <label className="flex flex-col items-center justify-center border border-dashed border-gold/25 hover:border-gold bg-background/30 h-16 rounded cursor-pointer transition min-h-[44px]">
-                  <span className="text-xs text-gold uppercase font-sans tracking-wider flex items-center gap-1.5 font-bold">
-                    <span className="material-symbols-outlined text-base">
-                      {isUploadingReviewImage ? 'sync' : 'cloud_upload'}
-                    </span>
-                    {isUploadingReviewImage ? 'Uploading to Supabase Storage (review-photos)…' : 'Choose Screenshot Image'}
+                <label className="block text-xs uppercase tracking-wider text-gold font-sans font-bold mb-2 flex items-center justify-between">
+                  <span>Choose Screenshot Images (Select Multiple Files)</span>
+                  <span className="text-[10px] text-muted font-normal font-sans">Multi-file picker active</span>
+                </label>
+                
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gold/30 hover:border-gold bg-background/50 p-6 rounded-lg cursor-pointer transition-all duration-200 group min-h-[110px] text-center">
+                  <span className="material-symbols-outlined text-3xl text-gold group-hover:scale-110 transition-transform mb-1">
+                    {isUploadingReviewImage ? 'sync' : 'add_photo_alternate'}
                   </span>
-                  {newReviewImage && newReviewImage.includes('supabase.co/storage') && (
-                    <span className="text-[10px] text-green-400 mt-1 font-mono flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">check_circle</span>
-                      Stored in Supabase bucket: review-photos
-                    </span>
-                  )}
+                  
+                  <span className="text-xs text-gold uppercase font-sans tracking-wider font-extrabold">
+                    {isUploadingReviewImage 
+                      ? `Uploading Image ${reviewProgress?.current || 1} of ${reviewProgress?.total || 1}…` 
+                      : 'CLICK TO SELECT MULTIPLE REVIEW SCREENSHOTS'}
+                  </span>
+
+                  <span className="text-[11px] text-muted font-sans mt-1">
+                    Hold <kbd className="px-1 bg-gold/10 border border-gold/30 rounded text-[10px] text-gold font-mono">Ctrl</kbd> or <kbd className="px-1 bg-gold/10 border border-gold/30 rounded text-[10px] text-gold font-mono">Shift</kbd> in file window to select multiple photos at once
+                  </span>
+
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     disabled={isUploadingReviewImage}
-                    onChange={handleReviewImageUpload}
+                    onChange={handleReviewImagesUpload}
                     className="hidden"
                   />
                 </label>
               </div>
 
+              {/* Progress Bar while uploading */}
+              {isUploadingReviewImage && reviewProgress && (
+                <div className="bg-background/80 p-3 rounded-lg border border-gold/25 space-y-2 font-sans">
+                  <div className="flex justify-between text-xs font-mono text-gold">
+                    <span>Uploading reviews to Supabase Storage…</span>
+                    <span>{reviewProgress.current} / {reviewProgress.total} ({Math.round((reviewProgress.current / reviewProgress.total) * 100)}%)</span>
+                  </div>
+                  <div className="w-full bg-charcoal h-2 rounded-full overflow-hidden border border-gold/20">
+                    <div 
+                      className="bg-gold h-full transition-all duration-300 rounded-full"
+                      style={{ width: `${(reviewProgress.current / reviewProgress.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Queued Images Gallery Preview */}
+              {newReviewImages.length > 0 && (
+                <div className="space-y-2.5 border-t border-gold/15 pt-4 font-sans">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-gold uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm">collections</span>
+                      Queued Reviews ({newReviewImages.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setNewReviewImages([])}
+                      className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-wider"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto p-2 bg-background/50 rounded-lg border border-gold/15 custom-scrollbar">
+                    {newReviewImages.map((imgUrl, imgIdx) => (
+                      <div key={imgIdx} className="relative group aspect-square rounded border border-gold/20 overflow-hidden bg-charcoal shadow">
+                        <img src={imgUrl} alt={`Review Preview ${imgIdx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveQueuedReviewImage(imgIdx)}
+                          className="absolute top-1 right-1 p-1 bg-black/80 text-red-400 hover:text-red-200 rounded-full transition opacity-90 group-hover:opacity-100"
+                          title="Remove Image"
+                        >
+                          <span className="material-symbols-outlined text-xs block">close</span>
+                        </button>
+                        <span className="absolute bottom-1 left-1 px-1 bg-black/70 text-gold font-mono text-[9px] rounded">
+                          #{imgIdx + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Or Paste Image URLs */}
+              <div className="space-y-2 border-t border-gold/15 pt-4 font-sans">
+                <label className="block text-xs uppercase tracking-wider text-muted font-semibold">Or Paste Image URL(s)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={reviewUrlInput}
+                    onChange={(e) => setReviewUrlInput(e.target.value)}
+                    placeholder="https://example.com/screenshot.jpg (separate multiple with commas)"
+                    className="flex-1 bg-background border border-gold/25 p-2.5 rounded text-xs text-ivory focus:border-gold outline-none min-h-[44px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddReviewUrl}
+                    className="px-3.5 py-2.5 bg-gold/15 hover:bg-gold hover:text-background border border-gold/30 text-gold font-bold text-xs uppercase tracking-wider rounded transition min-h-[44px] shrink-0"
+                  >
+                    Add URL
+                  </button>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
               <div className="pt-4 border-t border-gold/15 flex flex-col-reverse sm:flex-row justify-end gap-2.5 sm:gap-3 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setIsAddingReview(false)}
+                  onClick={() => { setIsAddingReview(false); setNewReviewImages([]); setReviewUrlInput(''); }}
                   className="w-full sm:w-auto px-5 py-3 border border-gold/30 hover:border-gold hover:text-gold text-xs font-sans uppercase tracking-wider transition rounded min-h-[44px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
+                  disabled={isUploadingReviewImage || (newReviewImages.length === 0 && !reviewUrlInput.trim())}
                   onClick={(e) => handleReviewSubmit(e)}
-                  className="w-full sm:w-auto px-6 py-3 bg-gold hover:bg-gold-light text-background font-semibold text-xs font-sans uppercase tracking-wider transition cursor-pointer min-h-[44px] flex items-center justify-center"
+                  className="w-full sm:w-auto px-6 py-3 bg-gold hover:bg-gold-light disabled:opacity-50 text-background font-bold text-xs font-sans uppercase tracking-wider transition cursor-pointer min-h-[44px] flex items-center justify-center gap-2 shadow-gold-glow"
                 >
-                  Save Review
+                  <span className="material-symbols-outlined text-base font-bold">done_all</span>
+                  Save {newReviewImages.length > 0 ? `${newReviewImages.length} ` : ''}Review{newReviewImages.length > 1 ? 's' : ''}
                 </button>
               </div>
             </form>

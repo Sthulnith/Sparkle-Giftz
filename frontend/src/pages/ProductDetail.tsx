@@ -27,7 +27,9 @@ export const ProductDetail = () => {
   const [extraAddedItems, setExtraAddedItems] = useState<GiftBoxIncludedItem[]>([]);
   const [showAddExtraModal, setShowAddExtraModal] = useState<boolean>(false);
   const [extraSearchQuery, setExtraSearchQuery] = useState<string>('');
+  const [extraCategoryFilter, setExtraCategoryFilter] = useState<string>('All');
   const [availableInventory, setAvailableInventory] = useState<InventoryItem[]>([]);
+  const [selectedExtraColors, setSelectedExtraColors] = useState<Record<number | string, string>>({});
 
   // Gift options
   const [giftMessage, setGiftMessage] = useState<string>('');
@@ -118,6 +120,17 @@ export const ProductDetail = () => {
 
   const finalCalculatedPrice = Math.max(0, product.price - removedItemsTotal + extraItemsTotal);
 
+  const keptCount = keptIncludedItems.reduce((acc, i) => acc + i.quantity, 0);
+  const extraCount = extraAddedItems.reduce((acc, i) => acc + i.quantity, 0);
+  const totalBoxItemCount = keptCount + extraCount;
+
+  const MIN_BOX_ITEMS_COUNT = 3;
+  const MIN_BOX_TOTAL_VALUE = 1500;
+
+  const isMinCountMet = totalBoxItemCount >= MIN_BOX_ITEMS_COUNT;
+  const isMinPriceMet = finalCalculatedPrice >= MIN_BOX_TOTAL_VALUE;
+  const canCheckoutBox = isMinCountMet && isMinPriceMet;
+
   const handleToggleIncludedItem = (itemId: string | number) => {
     setCheckedItems(prev => ({
       ...prev,
@@ -126,20 +139,26 @@ export const ProductDetail = () => {
   };
 
   const handleAddExtraItem = (item: InventoryItem) => {
+    const selectedColorName = selectedExtraColors[item.id] || (item.colors && item.colors.length > 0 ? item.colors[0].name : undefined);
+    const selectedColorOpt = item.colors?.find(c => c.name === selectedColorName);
+    const imgToUse = selectedColorOpt?.image_url || selectedColorOpt?.image_urls?.[0] || item.image_url || (item as any).image;
+    const finalItemName = selectedColorName ? `${item.name} (${selectedColorName})` : item.name;
+
     setExtraAddedItems(prev => {
-      const existing = prev.find(i => String(i.itemId) === String(item.id));
+      const existing = prev.find(i => String(i.itemId) === String(item.id) && (i as any).selectedColor === selectedColorName);
       if (existing) {
-        return prev.map(i => String(i.itemId) === String(item.id) ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map(i => String(i.itemId) === String(item.id) && (i as any).selectedColor === selectedColorName ? { ...i, quantity: i.quantity + 1 } : i);
       }
       return [...prev, {
         itemId: item.id,
         sku: item.sku,
-        name: item.name,
+        name: finalItemName,
         category: item.category,
         price: item.price,
         quantity: 1,
-        image: item.image_url || (item as any).image
-      }];
+        image: imgToUse,
+        selectedColor: selectedColorName,
+      } as any];
     });
   };
 
@@ -156,6 +175,17 @@ export const ProductDetail = () => {
   };
 
   const handleAddToCart = () => {
+    if (!isMinCountMet) {
+      alert(`Gift box package must contain at least ${MIN_BOX_ITEMS_COUNT} items to checkout (currently: ${totalBoxItemCount} item${totalBoxItemCount !== 1 ? 's' : ''}). Please select or add at least ${MIN_BOX_ITEMS_COUNT - totalBoxItemCount} more item(s) to your box.`);
+      return;
+    }
+
+    if (!isMinPriceMet) {
+      const needed = MIN_BOX_TOTAL_VALUE - finalCalculatedPrice;
+      alert(`Gift box package total value must be at least Rs. ${MIN_BOX_TOTAL_VALUE.toLocaleString()}.00 to checkout (currently: Rs. ${finalCalculatedPrice.toLocaleString()}.00). Please add items worth Rs. ${needed.toLocaleString()}.00 more.`);
+      return;
+    }
+
     const cartStr = localStorage.getItem('sparkle_cart');
     const cart = cartStr ? JSON.parse(cartStr) : [];
 
@@ -403,6 +433,75 @@ export const ProductDetail = () => {
             </div>
           </div>
 
+          {/* LUXURY PACKAGE REQUIREMENTS STATUS PANEL (Appears ONLY when requirements are NOT succeeded) */}
+          {!canCheckoutBox && (
+            <div className="gold-gradient-border bg-[#14171f] p-4 rounded-xl space-y-3 font-sans shadow-xl animate-fadeIn">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-gold/15 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-gold text-lg">verified</span>
+                  <span className="font-serif text-sm font-bold text-gold tracking-wide">Package Requirements</span>
+                </div>
+                <span className="text-[10px] font-sans font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-amber-950/60 text-amber-300 border border-amber-500/30">
+                  Customization Incomplete
+                </span>
+              </div>
+
+              {/* Status Items */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {/* Item 1: Box Items Count */}
+                <div className={`p-2.5 rounded-lg border transition-all flex items-center justify-between ${
+                  isMinCountMet
+                    ? 'bg-gold/5 border-gold/30 text-ivory'
+                    : 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+                }`}>
+                  <div className="flex items-center gap-2.5 truncate">
+                    <span className={`material-symbols-outlined text-base ${isMinCountMet ? 'text-gold' : 'text-amber-400/80'}`}>
+                      {isMinCountMet ? 'check_circle' : 'inventory_2'}
+                    </span>
+                    <span className="font-sans text-xs">Included Items</span>
+                  </div>
+                  <div className="flex items-center gap-1 font-mono text-xs">
+                    <span className={isMinCountMet ? 'text-gold font-bold' : 'text-amber-300 font-bold'}>{totalBoxItemCount}</span>
+                    <span className="text-muted text-[11px]">/ 3 Min</span>
+                  </div>
+                </div>
+
+                {/* Item 2: Minimum Package Value */}
+                <div className={`p-2.5 rounded-lg border transition-all flex items-center justify-between ${
+                  isMinPriceMet
+                    ? 'bg-gold/5 border-gold/30 text-ivory'
+                    : 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+                }`}>
+                  <div className="flex items-center gap-2.5 truncate">
+                    <span className={`material-symbols-outlined text-base ${isMinPriceMet ? 'text-gold' : 'text-amber-400/80'}`}>
+                      {isMinPriceMet ? 'check_circle' : 'payments'}
+                    </span>
+                    <span className="font-sans text-xs">Package Value</span>
+                  </div>
+                  <div className="flex items-center gap-1 font-mono text-xs">
+                    <span className={isMinPriceMet ? 'text-gold font-bold' : 'text-amber-300 font-bold'}>
+                      Rs. {finalCalculatedPrice.toLocaleString()}
+                    </span>
+                    <span className="text-muted text-[11px]">/ Rs. 1,500</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Helper Guidance Text */}
+              <div className="text-[11px] text-muted font-sans flex items-center gap-1.5 pt-1.5 border-t border-gold/10">
+                <span className="material-symbols-outlined text-gold text-sm shrink-0">info</span>
+                <span>
+                  {!isMinCountMet && !isMinPriceMet
+                    ? 'Add at least 3 items totaling Rs. 1,500.00 or more to proceed.'
+                    : !isMinCountMet
+                    ? `Add ${3 - totalBoxItemCount} more item${(3 - totalBoxItemCount) !== 1 ? 's' : ''} to meet the 3-item requirement.`
+                    : `Add items worth Rs. ${(1500 - finalCalculatedPrice).toLocaleString()}.00 more to unlock checkout.`}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* QUANTITY & ACTIONS */}
           {product.stock > 0 && (
             <div className="flex flex-col sm:flex-row items-stretch gap-4 pt-2">
@@ -410,7 +509,7 @@ export const ProductDetail = () => {
                 <button
                   type="button"
                   onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  className="px-4 py-2 hover:bg-gold/10 text-gold transition"
+                  className="px-4 py-2 hover:bg-gold/10 text-gold transition cursor-pointer"
                 >
                   -
                 </button>
@@ -423,7 +522,7 @@ export const ProductDetail = () => {
                 <button
                   type="button"
                   onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
-                  className="px-4 py-2 hover:bg-gold/10 text-gold transition"
+                  className="px-4 py-2 hover:bg-gold/10 text-gold transition cursor-pointer"
                 >
                   +
                 </button>
@@ -431,9 +530,18 @@ export const ProductDetail = () => {
 
               <button
                 onClick={handleAddToCart}
-                className="flex-1 py-3 bg-gold hover:bg-gold-light text-background font-bold font-sans uppercase tracking-widest text-xs transition duration-300 shadow-gold-glow cursor-pointer"
+                disabled={!canCheckoutBox}
+                className={`flex-1 py-3 font-bold font-sans uppercase tracking-widest text-xs transition duration-300 rounded shadow-gold-glow cursor-pointer ${
+                  canCheckoutBox
+                    ? 'bg-gold hover:bg-gold-light text-background'
+                    : 'bg-gold/30 text-background/60 cursor-not-allowed'
+                }`}
               >
-                Add Customized Package to Cart • Rs. {(finalCalculatedPrice * quantity).toLocaleString()}
+                {canCheckoutBox
+                  ? `Add Customized Package to Cart • Rs. ${(finalCalculatedPrice * quantity).toLocaleString()}`
+                  : !isMinCountMet
+                  ? `ADD AT LEAST ${3 - totalBoxItemCount} MORE ITEM(S) TO CHECKOUT`
+                  : `ADD RS. ${(1500 - finalCalculatedPrice).toLocaleString()} MORE TO CHECKOUT`}
               </button>
             </div>
           )}
@@ -443,7 +551,7 @@ export const ProductDetail = () => {
       {/* MODAL: ADD EXTRA STORE ITEMS TO PACKAGE */}
       {showAddExtraModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="gold-gradient-border bg-charcoal p-6 rounded-xl max-w-2xl w-full my-8 space-y-4">
+          <div className="gold-gradient-border bg-charcoal p-6 rounded-xl max-w-2xl w-full my-8 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-gold/15 pb-3">
               <div>
                 <h3 className="font-serif text-xl text-gold">Browse & Add Extra Items</h3>
@@ -452,51 +560,162 @@ export const ProductDetail = () => {
               <button
                 type="button"
                 onClick={() => setShowAddExtraModal(false)}
-                className="text-muted hover:text-gold transition material-symbols-outlined"
+                className="text-muted hover:text-gold transition material-symbols-outlined p-1 cursor-pointer"
+                aria-label="Close"
               >
                 close
               </button>
             </div>
 
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search products (wallets, perfumes, watches, caps, bottles, candles...)..."
-                value={extraSearchQuery}
-                onChange={(e) => setExtraSearchQuery(e.target.value)}
-                className="w-full bg-background border border-gold/25 text-xs text-ivory pl-8 pr-3 py-2 rounded outline-none focus:border-gold"
-              />
-              <span className="material-symbols-outlined absolute left-2.5 top-2 text-muted text-base">search</span>
+            {/* Category Filter Bar */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-gold/30">
+                {['All', ...Array.from(new Set(availableInventory.map(i => i.category).filter(Boolean)))].map((cat) => {
+                  const isActive = extraCategoryFilter === cat;
+                  const count = cat === 'All'
+                    ? availableInventory.length
+                    : availableInventory.filter(i => i.category === cat).length;
+
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setExtraCategoryFilter(cat)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-sans font-semibold transition-all duration-200 shrink-0 border flex items-center gap-1.5 cursor-pointer ${
+                        isActive
+                          ? 'bg-gold text-background border-gold shadow-gold-glow'
+                          : 'bg-background/70 text-ivory/80 border-gold/25 hover:border-gold/60 hover:text-gold'
+                      }`}
+                    >
+                      <span>{cat}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        isActive ? 'bg-background/25 text-background' : 'bg-gold/15 text-gold'
+                      }`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={`Search ${extraCategoryFilter === 'All' ? 'products' : extraCategoryFilter.toLowerCase()} (wallets, perfumes, watches, caps...)...`}
+                  value={extraSearchQuery}
+                  onChange={(e) => setExtraSearchQuery(e.target.value)}
+                  className="w-full bg-background border border-gold/25 text-xs text-ivory pl-8 pr-3 py-2.5 rounded outline-none focus:border-gold"
+                />
+                <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-muted text-base">search</span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
+            {/* Product Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-96 overflow-y-auto pr-1">
               {availableInventory
-                .filter(i => !extraSearchQuery || i.name.toLowerCase().includes(extraSearchQuery.toLowerCase()) || i.category.toLowerCase().includes(extraSearchQuery.toLowerCase()))
-                .map((item) => (
-                  <div key={item.id} className="bg-background/80 border border-gold/20 rounded p-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 truncate pr-2">
-                      <img src={item.image_url || (item as any).image} alt={item.name} className="w-10 h-10 object-cover rounded border border-gold/15 shrink-0" />
-                      <div className="truncate">
-                        <p className="font-bold text-ivory text-xs truncate">{item.name}</p>
-                        <p className="text-[10px] text-gold font-mono">Rs. {item.price.toLocaleString()}.00</p>
+                .filter(i => {
+                  const categoryMatch = extraCategoryFilter === 'All' || (i.category && i.category.toLowerCase() === extraCategoryFilter.toLowerCase());
+                  const searchMatch = !extraSearchQuery || 
+                    i.name.toLowerCase().includes(extraSearchQuery.toLowerCase()) || 
+                    (i.category && i.category.toLowerCase().includes(extraSearchQuery.toLowerCase()));
+                  return categoryMatch && searchMatch;
+                })
+                .map((item) => {
+                  const activeColorName = selectedExtraColors[item.id] || (item.colors && item.colors.length > 0 ? item.colors[0].name : '');
+                  const activeColorOpt = item.colors?.find(c => c.name === activeColorName);
+                  const displayImage = activeColorOpt?.image_url || activeColorOpt?.image_urls?.[0] || item.image_url || (item as any).image;
+
+                  return (
+                    <div key={item.id} className="bg-background/90 border border-gold/20 hover:border-gold/40 transition rounded-lg p-3 flex flex-col justify-between space-y-2.5">
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <img src={displayImage} alt={item.name} className="w-12 h-12 object-cover rounded-md border border-gold/20 shrink-0 bg-charcoal shadow-sm" />
+                          <div className="truncate">
+                            <span className="inline-block text-[8px] font-sans font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-gold/15 text-gold mb-0.5">
+                              {item.category || 'General'}
+                            </span>
+                            <p className="font-bold text-ivory text-xs truncate">{item.name}</p>
+                            <p className="text-[10px] text-gold font-mono font-bold">Rs. {item.price.toLocaleString()}.00</p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddExtraItem(item)}
+                          className="px-3 py-1.5 bg-gold hover:bg-gold-light text-background font-bold text-[11px] uppercase tracking-wider rounded font-sans transition shrink-0 cursor-pointer shadow-gold-glow flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-xs font-bold">add</span>
+                          Add
+                        </button>
                       </div>
+
+                      {/* Color Options Selection Pills */}
+                      {item.colors && item.colors.length > 0 && (
+                        <div className="pt-2 border-t border-gold/10 font-sans">
+                          <div className="flex items-center justify-between text-[9px] uppercase font-bold text-gold tracking-wider mb-1 font-sans">
+                            <span>Color: <strong className="text-ivory font-extrabold">{activeColorName}</strong></span>
+                            <span className="text-muted/70 font-normal">({item.colors.length} Available)</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {item.colors.map((cOpt, cIdx) => {
+                              const isSelected = activeColorName === cOpt.name;
+                              return (
+                                <button
+                                  key={cIdx}
+                                  type="button"
+                                  onClick={() => setSelectedExtraColors(prev => ({ ...prev, [item.id]: cOpt.name }))}
+                                  className={`px-2 py-0.5 rounded text-[10px] font-sans font-bold transition border flex items-center gap-1 cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-gold text-background border-gold shadow-xs'
+                                      : 'bg-charcoal text-ivory/80 border-gold/20 hover:border-gold/50'
+                                  }`}
+                                >
+                                  {cOpt.hex && (
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0 shadow-xs"
+                                      style={{ backgroundColor: cOpt.hex }}
+                                    />
+                                  )}
+                                  <span>{cOpt.name}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleAddExtraItem(item)}
-                      className="px-3 py-1.5 bg-gold hover:bg-gold-light text-background font-bold text-[11px] uppercase tracking-wider rounded font-sans transition shrink-0"
-                    >
-                      + Add
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
+
+              {/* Empty state when no items match category filter / search */}
+              {availableInventory.filter(i => {
+                const categoryMatch = extraCategoryFilter === 'All' || (i.category && i.category.toLowerCase() === extraCategoryFilter.toLowerCase());
+                const searchMatch = !extraSearchQuery || 
+                  i.name.toLowerCase().includes(extraSearchQuery.toLowerCase()) || 
+                  (i.category && i.category.toLowerCase().includes(extraSearchQuery.toLowerCase()));
+                return categoryMatch && searchMatch;
+              }).length === 0 && (
+                <div className="col-span-full py-8 text-center border border-dashed border-gold/20 rounded-lg space-y-2">
+                  <span className="material-symbols-outlined text-gold/50 text-3xl">inventory_2</span>
+                  <p className="text-xs text-ivory/80 font-sans font-medium">No items found in "{extraCategoryFilter}" category</p>
+                  {extraSearchQuery && <p className="text-[11px] text-muted font-sans">matching "{extraSearchQuery}"</p>}
+                  <button
+                    type="button"
+                    onClick={() => { setExtraCategoryFilter('All'); setExtraSearchQuery(''); }}
+                    className="inline-block px-3 py-1 bg-gold/15 hover:bg-gold/30 text-gold text-xs font-sans font-bold rounded transition mt-1 cursor-pointer"
+                  >
+                    Show All Categories
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="pt-3 border-t border-gold/15 flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowAddExtraModal(false)}
-                className="px-5 py-2 bg-gold text-background font-bold text-xs uppercase tracking-wider rounded"
+                className="px-5 py-2 bg-gold text-background font-bold text-xs uppercase tracking-wider rounded cursor-pointer"
               >
                 Done
               </button>

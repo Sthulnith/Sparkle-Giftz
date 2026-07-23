@@ -133,19 +133,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: linear-gradient(
     90deg,
     #c9a227 0%,
-    #fbf5b7 20%,
-    #d4af37 40%,
-    #ffffff 50%,
-    #d4af37 60%,
-    #fbf5b7 80%,
+    #fbf5b7 25%,
+    #d4af37 50%,
+    #ffffff 75%,
     #c9a227 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
   animation: gold-sparkle-shimmer 4s linear infinite;
-  display: inline-flex;
+  display: inline-block;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.45));
 }
 
 .animate-letter-reveal {

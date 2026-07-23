@@ -111,16 +111,7 @@ export const Shop = () => {
   const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
   const currentProducts = sortedProducts.slice(startIndex, endIndex);
 
-  // Map color names to Tailwind CSS color classes for swatches
-  const getColorSwatches = (colorName: string) => {
-    const name = colorName.toLowerCase();
-    if (name.includes('black')) return ['#111827', '#374151', '#4b5563'];
-    if (name.includes('navy')) return ['#1e3a8a', '#2563eb', '#3b82f6'];
-    if (name.includes('crimson')) return ['#991b1b', '#dc2626', '#ef4444'];
-    if (name.includes('charcoal')) return ['#1f2937', '#4b5563', '#6b7280'];
-    if (name.includes('sage')) return ['#065f46', '#10b981', '#34d399'];
-    return ['#c9a227', '#d4af37', '#fef08a'];
-  };
+
 
   return (
     <div className="min-h-screen py-6 sm:py-16 px-3 sm:px-6 max-w-7xl mx-auto">
@@ -301,7 +292,14 @@ export const Shop = () => {
                   const discountPercent = product.old_price && product.old_price > product.price
                     ? Math.round(((product.old_price - product.price) / product.old_price) * 100)
                     : 0;
-                  const swatches = getColorSwatches((product as any).color || '');
+                  const boxItems: string[] = (product.gift_box_items && product.gift_box_items.length > 0)
+                    ? product.gift_box_items.map((gbi): string => {
+                        const name = gbi.inventory_items?.name || 'Included Item';
+                        return gbi.quantity > 1 ? `${gbi.quantity}x ${name}` : name;
+                      })
+                    : (product as any).includedItems && (product as any).includedItems.length > 0
+                    ? (product as any).includedItems.map((item: any): string => item.quantity > 1 ? `${item.quantity}x ${item.name}` : item.name)
+                    : [];
 
                   return (
                     <div
@@ -376,26 +374,32 @@ export const Shop = () => {
                           </span>
                         </div>
 
-                        {/* Installment & Cashback info */}
-                        <div className="text-[9px] sm:text-[10px] text-muted/90 font-sans space-y-0.5 border-t border-gold/10 pt-1.5 mb-2">
-                          <div className="flex items-center gap-1">
-                            <span>3 X Rs. {(product.price / 3).toFixed(2)}</span>
-                            <span className="bg-gold/15 text-gold text-[8px] px-1 rounded">KOKO</span>
+                        {/* Included Items in the Box */}
+                        <div className="border-t border-gold/15 pt-2 mt-1.5 mb-3 min-h-[3.5rem] flex flex-col justify-start">
+                          <div className="flex items-center gap-1.5 text-[10px] font-sans font-bold text-gold uppercase tracking-wider mb-1">
+                            <span className="material-symbols-outlined text-[13px] text-gold">inventory_2</span>
+                            <span>Items in the box:</span>
                           </div>
-                          <div className="text-[8px] sm:text-[9px] text-gold/80 truncate">
-                            or up to 4 X Rs. {(product.price / 4).toFixed(2)} with PayZy
-                          </div>
-                        </div>
-
-                        {/* Color swatches */}
-                        <div className="flex items-center gap-1 mb-3">
-                          {swatches.map((hex, idx) => (
-                            <span
-                              key={idx}
-                              className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-sm border border-gold/30 shadow-xs inline-block"
-                              style={{ backgroundColor: hex }}
-                            />
-                          ))}
+                          {boxItems.length > 0 ? (
+                            <ul className="text-[10px] sm:text-[11px] text-ivory/85 space-y-0.5 font-sans">
+                              {boxItems.slice(0, 3).map((item, idx) => (
+                                <li key={idx} className="flex items-center gap-1.5 truncate">
+                                  <span className="w-1 h-1 rounded-full bg-gold shrink-0" />
+                                  <span className="truncate">{item}</span>
+                                </li>
+                              ))}
+                              {boxItems.length > 3 && (
+                                <li className="text-[9px] text-muted italic pl-2.5">
+                                  +{boxItems.length - 3} more items...
+                                </li>
+                              )}
+                            </ul>
+                          ) : (
+                            <div className="text-[10px] text-muted italic flex items-center gap-1 font-sans">
+                              <span className="w-1 h-1 rounded-full bg-gold/50 shrink-0" />
+                              <span className="truncate">Curated luxury items included</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 

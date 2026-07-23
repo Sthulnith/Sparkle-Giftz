@@ -59,6 +59,17 @@ const DEFAULT_REVIEWS: Review[] = [
   }
 ];
 
+const REVIEW_PRESETS = [
+  { aspect: 'aspect-[3/4]', rotate: '-rotate-1 sm:-rotate-1.5', rounded: 'rounded-[16px]' },
+  { aspect: 'aspect-[4/5]', rotate: 'rotate-1 sm:rotate-1.5', rounded: 'rounded-[14px]' },
+  { aspect: 'aspect-[3/4]', rotate: '-rotate-1', rounded: 'rounded-[16px]' },
+  { aspect: 'aspect-[4/5]', rotate: 'rotate-1.5 sm:rotate-2', rounded: 'rounded-[18px]' },
+  { aspect: 'aspect-[3/4]', rotate: '-rotate-1', rounded: 'rounded-[14px]' },
+  { aspect: 'aspect-[4/5]', rotate: 'rotate-1', rounded: 'rounded-[16px]' },
+  { aspect: 'aspect-[3/4]', rotate: '-rotate-1.5', rounded: 'rounded-[18px]' },
+  { aspect: 'aspect-[4/5]', rotate: 'rotate-1', rounded: 'rounded-[16px]' },
+];
+
 export const Reviews = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [clientReviews, setClientReviews] = useState<ClientReview[]>([]);
@@ -165,10 +176,6 @@ export const Reviews = () => {
     }
   };
 
-  // Separate clientReviews into 2 columns for Masonry layout
-  const leftColReviews = clientReviews.map((review, originalIndex) => ({ review, originalIndex })).filter((_, i) => i % 2 === 0);
-  const rightColReviews = clientReviews.map((review, originalIndex) => ({ review, originalIndex })).filter((_, i) => i % 2 === 1);
-
   // Compute 3 visible guest reviews for 3-second shuffle rotation
   const visibleGuestReviews = reviews.length <= 3
     ? reviews.map((r, i) => ({ ...r, uniqueKey: `review-${r.id}-${i}` }))
@@ -184,63 +191,51 @@ export const Reviews = () => {
     <div className="min-h-screen py-8 sm:py-16 px-4 max-w-5xl mx-auto space-y-12">
       
       {/* HEADER MATCHING REFERENCE IMAGE */}
-      <div id="client-showcase" className="text-center space-y-3 pt-2">
-        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-gold tracking-wide">
+      <div id="client-showcase" className="text-center space-y-3 pt-2 font-sans">
+        <h1 className="text-3xl sm:text-5xl font-serif font-bold text-gold tracking-wide">
           Customer Reviews
         </h1>
         {/* Accent pink/gold divider line under title matching reference image */}
-        <div className="w-20 h-1 bg-gradient-to-r from-pink-500 via-gold to-pink-500 mx-auto rounded-full"></div>
+        <div className="w-24 h-1.5 bg-gradient-to-r from-pink-500 via-gold to-pink-500 mx-auto rounded-full shadow-gold-glow"></div>
+        <p className="text-xs sm:text-sm text-muted max-w-xl mx-auto font-sans tracking-wide mt-2">
+          Real unboxing moments, feedback screenshots & client stories.
+        </p>
       </div>
 
-      {/* 2-COLUMN MASONRY GRID MATCHING REFERENCE SCREENSHOTS */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 items-start max-w-4xl mx-auto">
-        {/* Column 1 */}
-        <div className="space-y-3 sm:space-y-6">
-          {leftColReviews.map(({ review, originalIndex }) => (
-            <div
-              key={review.id}
-              onClick={() => setSelectedImageIndex(originalIndex)}
-              className="gold-gradient-border bg-[#14171f] p-1.5 sm:p-2 rounded-lg overflow-hidden hover:border-gold/60 transition shadow-xl cursor-pointer group"
-            >
-              <div className="relative overflow-hidden rounded-md">
-                <img
-                  src={review.image_url || review.image}
-                  alt="Customer review screenshot"
-                  className="w-full h-auto object-cover rounded-md block transition-transform duration-300 group-hover:scale-102"
-                  loading="lazy"
-                />
-                {/* Hover overlay hint */}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-3xl">zoom_in</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* ARTISTIC MASONRY GALLERY (CSS Columns eliminates vertical blank gaps completely) */}
+      <div className="columns-2 sm:columns-2 md:columns-3 gap-2.5 sm:gap-4 max-w-4xl mx-auto py-2 font-sans">
+        {clientReviews.map((review, index) => {
+          const preset = REVIEW_PRESETS[index % REVIEW_PRESETS.length];
 
-        {/* Column 2 */}
-        <div className="space-y-3 sm:space-y-6">
-          {rightColReviews.map(({ review, originalIndex }) => (
+          return (
             <div
               key={review.id}
-              onClick={() => setSelectedImageIndex(originalIndex)}
-              className="gold-gradient-border bg-[#14171f] p-1.5 sm:p-2 rounded-lg overflow-hidden hover:border-gold/60 transition shadow-xl cursor-pointer group"
+              onClick={() => setSelectedImageIndex(index)}
+              className={`break-inside-avoid mb-2.5 sm:mb-4 relative group cursor-pointer transition-all duration-500 transform-gpu ${preset.rotate} hover:rotate-0 hover:scale-[1.04] hover:z-30 hover:-translate-y-1.5`}
             >
-              <div className="relative overflow-hidden rounded-md">
-                <img
-                  src={review.image_url || review.image}
-                  alt="Customer review screenshot"
-                  className="w-full h-auto object-cover rounded-md block transition-transform duration-300 group-hover:scale-102"
-                  loading="lazy"
-                />
-                {/* Hover overlay hint */}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-3xl">zoom_in</span>
+              <div className={`gold-gradient-border bg-[#14171f] p-1.5 sm:p-2 ${preset.rounded} shadow-xl transition-all duration-300 group-hover:shadow-[0_15px_35px_rgba(212,175,55,0.4)]`}>
+                <div className={`relative overflow-hidden ${preset.rounded} ${preset.aspect} bg-charcoal`}>
+                  <img
+                    src={review.image_url || review.image}
+                    alt={`Customer review ${index + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                    loading="lazy"
+                  />
+
+                  {/* Hover Zoom Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-2.5">
+                    <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gold text-background flex items-center justify-center shadow-gold-glow mb-1 transition-transform group-hover:scale-110">
+                      <span className="material-symbols-outlined text-lg font-bold">zoom_in</span>
+                    </span>
+                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-ivory drop-shadow">
+                      Tap to Enlarge
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {/* FULLSCREEN IMAGE LIGHTBOX MODAL */}

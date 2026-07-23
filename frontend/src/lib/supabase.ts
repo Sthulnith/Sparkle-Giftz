@@ -14,6 +14,14 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 
+export interface InventoryColorOption {
+  name: string;
+  hex?: string;
+  image_url?: string;
+  image_urls?: string[];
+  stock?: number;
+}
+
 export interface InventoryItem {
   id: number;
   sku: string;
@@ -26,6 +34,8 @@ export interface InventoryItem {
   low_stock_threshold: number;
   enabled: boolean;
   image_url: string;
+  image_urls?: string[];
+  colors?: InventoryColorOption[];
   created_at?: string;
   updated_at?: string;
 }
@@ -85,7 +95,7 @@ export interface Order {
   total: number;
   payment_method: 'COD' | 'PAYHERE';
   payment_status: 'PENDING' | 'PAID' | 'FAILED';
-  order_status: 'PENDING' | 'CONFIRMED' | 'PACKED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  order_status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
   gift_message?: string;
   wrapping?: string;
   delivery_date?: string;
@@ -544,7 +554,7 @@ export async function createOrder(input: {
       total: input.total,
       payment_method: input.payment_method,
       payment_status: input.payment_status,
-      order_status: input.order_status,
+      order_status: 'PENDING',
       gift_message: input.gift_message || null,
       wrapping: input.wrapping || null,
       delivery_date: input.delivery_date || null,
@@ -560,133 +570,293 @@ export async function createOrder(input: {
     return null;
   }
 
-  const order = data as Order;
+  // Stock deduction is now postponed until Admin CONFIRMS the order
+  return data as Order;
+}
 
-  // Deduct product stock for regular gift boxes
-  for (const ci of input.cart_items) {
-    if (!ci.isCustom && typeof ci.productId === 'number') {
-      const { data: prod } = await supabase.from('products').select('stock').eq('id', ci.productId).single();
-      if (prod) {
-        const newStock = Math.max(0, (prod as { stock: number }).stock - ci.quantity);
-        await supabase.from('products').update({ stock: newStock }).eq('id', ci.productId);
-      }
+/** Extract all inventory items included in an order (from custom_gift_details, preMadeCustomDetails, or gift_box_items) */
+export async function extractOrderItems(order: Order): Promise<{ id?: number | string; name: string; quantity: number }[]> {
+  const items: { id?: number | string; name: string; quantity: number }[] = [];
+
+  // 1. Direct custom_gift_details on order
+  if (order.custom_gift_details?.items) {
+    for (const item of order.custom_gift_details.items) {
+      items.push({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity || 1,
+      });
     }
   }
 
-  // Deduct inventory stock for custom gift items
-  const allCustomItems = [
-    ...(input.custom_gift_details?.items || []),
-    ...input.cart_items.flatMap(ci => ci.customDetails?.items || []),
-  ];
+  // 2. Each item in order.cart_items
+  for (const ci of (order.cart_items || [])) {
+    const ciQty = ci.quantity || 1;
 
-  if (allCustomItems.length > 0) {
-    for (const cItem of allCustomItems) {
-      const { data: invItem } = await supabase
-        .from('inventory_items')
-        .select('id, stock, name, sku')
-        .or(`id.eq.${cItem.id},name.ilike.${cItem.name}`)
-        .maybeSingle();
-
-      if (invItem) {
-        const inv = invItem as InventoryItem;
-        const prev = inv.stock;
-        const next = Math.max(0, prev - cItem.quantity);
-        await supabase.from('inventory_items').update({ stock: next }).eq('id', inv.id);
-        await supabase.from('stock_logs').insert({
-          item_id: inv.id,
-          item_name: inv.name,
-          sku: inv.sku,
-          type: 'ORDER_DEDUCT',
-          change_amount: -(cItem.quantity),
-          previous_stock: prev,
-          new_stock: next,
-          reference_order: order_number,
-          notes: `Order deduction for ${order_number}`,
+    // 2a. Custom details on cart item
+    if (ci.customDetails?.items) {
+      for (const item of ci.customDetails.items) {
+        items.push({
+          id: item.id,
+          name: item.name,
+          quantity: (item.quantity || 1) * ciQty,
         });
       }
     }
 
-    await supabase.from('orders').update({ stock_deducted: true }).eq('id', order.id);
+    // 2b. Pre-made custom details (keptItems + extraAddedItems)
+    if ((ci as any).preMadeCustomDetails) {
+      const pmDetails = (ci as any).preMadeCustomDetails;
+      const kept = pmDetails.keptItems || [];
+      const extra = pmDetails.extraAddedItems || [];
+      const allPmItems = [...kept, ...extra];
+
+      for (const item of allPmItems) {
+        const itemId = item.id || item.itemId || item.inventory_item_id;
+        items.push({
+          id: itemId,
+          name: item.name,
+          quantity: (item.quantity || item.qty || 1) * ciQty,
+        });
+      }
+    }
+
+    // 2c. Determine numeric product ID if linked to a pre-built gift box
+    let numericProdId: number | null = null;
+    if (typeof ci.productId === 'number') {
+      numericProdId = ci.productId;
+    } else if (typeof ci.productId === 'string' && ci.productId.startsWith('pmb-')) {
+      const parts = ci.productId.split('-');
+      if (parts[1] && !isNaN(Number(parts[1]))) {
+        numericProdId = Number(parts[1]);
+      }
+    } else if ((ci as any).preMadeCustomDetails?.boxId) {
+      numericProdId = Number((ci as any).preMadeCustomDetails.boxId);
+    }
+
+    // If we have a product ID and no preMadeCustomDetails were present, fetch default gift_box_items from DB
+    if (numericProdId && !(ci as any).preMadeCustomDetails) {
+      const { data: boxItems } = await supabase
+        .from('gift_box_items')
+        .select('quantity, inventory_items(id, name, sku, stock)')
+        .eq('product_id', numericProdId);
+
+      if (boxItems && boxItems.length > 0) {
+        for (const bi of boxItems) {
+          const inv = bi.inventory_items as unknown as InventoryItem | null;
+          if (inv) {
+            items.push({
+              id: inv.id,
+              name: inv.name,
+              quantity: (bi.quantity || 1) * ciQty,
+            });
+          }
+        }
+      }
+    }
   }
 
-  return order;
+  // 3. Consolidate duplicate items by ID or Name
+  const consolidatedMap = new Map<string, { id?: number | string; name: string; quantity: number }>();
+  for (const item of items) {
+    if (!item.name && !item.id) continue;
+    const key = item.id ? String(item.id) : item.name.toLowerCase().trim();
+    const existing = consolidatedMap.get(key);
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      consolidatedMap.set(key, { ...item });
+    }
+  }
+
+  return Array.from(consolidatedMap.values());
 }
 
-/** Update order status. If CANCELLED, restores inventory stock. */
+/** Deduct inventory stock for all items included in an order (runs when Admin CONFIRMS the order) */
+export async function deductOrderStock(order: Order): Promise<boolean> {
+  try {
+    if (order.stock_deducted) return true; // Stock already deducted
+
+    const consolidatedItems = await extractOrderItems(order);
+    if (consolidatedItems.length === 0) return true;
+
+    const refOrderStr = order.customer_name
+      ? `${order.order_number || order.id} (${order.customer_name})`
+      : (order.order_number || `ORD-${order.id}`);
+
+    for (const item of consolidatedItems) {
+      let query = supabase.from('inventory_items').select('id, stock, name, sku');
+      if (item.id && !isNaN(Number(item.id))) {
+        query = query.eq('id', Number(item.id));
+      } else if (item.name) {
+        query = query.ilike('name', item.name);
+      } else {
+        continue;
+      }
+
+      const { data: invItem } = await query.maybeSingle();
+
+      if (invItem) {
+        const inv = invItem as InventoryItem;
+        const prev = inv.stock || 0;
+        const next = Math.max(0, prev - item.quantity);
+
+        const { error: updateErr } = await supabase
+          .from('inventory_items')
+          .update({ stock: next })
+          .eq('id', inv.id);
+
+        if (updateErr) {
+          console.error('[supabase] inventory_items deduction error:', updateErr.message);
+        }
+
+        try {
+          await supabase.from('stock_logs').insert({
+            item_id: inv.id,
+            item_name: inv.name,
+            sku: inv.sku || `SKU-${inv.id}`,
+            type: 'ORDER_DEDUCT',
+            change_amount: -(item.quantity),
+            previous_stock: prev,
+            new_stock: next,
+            reference_order: refOrderStr,
+            notes: `Order confirmed stock deduction for ${order.customer_name || 'Customer'} [${order.order_number}]`,
+          });
+        } catch (logErr) {
+          console.warn('[supabase] stock_log insert warning:', logErr);
+        }
+      }
+    }
+
+    await supabase.from('orders').update({ stock_deducted: true }).eq('id', order.id);
+    return true;
+  } catch (err) {
+    console.error('[supabase] deductOrderStock error:', err);
+    return false;
+  }
+}
+
+/** Restore inventory stock if order is cancelled or reverted to pending */
+export async function restoreOrderStock(order: Order): Promise<boolean> {
+  try {
+    if (!order.stock_deducted) return true; // Stock wasn't deducted
+
+    const consolidatedItems = await extractOrderItems(order);
+    if (consolidatedItems.length === 0) return true;
+
+    const refOrderStr = order.customer_name
+      ? `${order.order_number || order.id} (${order.customer_name})`
+      : (order.order_number || `ORD-${order.id}`);
+
+    for (const item of consolidatedItems) {
+      let query = supabase.from('inventory_items').select('id, stock, name, sku');
+      if (item.id && !isNaN(Number(item.id))) {
+        query = query.eq('id', Number(item.id));
+      } else if (item.name) {
+        query = query.ilike('name', item.name);
+      } else {
+        continue;
+      }
+
+      const { data: invItem } = await query.maybeSingle();
+
+      if (invItem) {
+        const inv = invItem as InventoryItem;
+        const prev = inv.stock || 0;
+        const next = prev + item.quantity;
+
+        const { error: updateErr } = await supabase
+          .from('inventory_items')
+          .update({ stock: next })
+          .eq('id', inv.id);
+
+        if (updateErr) {
+          console.error('[supabase] inventory_items restore error:', updateErr.message);
+        }
+
+        try {
+          await supabase.from('stock_logs').insert({
+            item_id: inv.id,
+            item_name: inv.name,
+            sku: inv.sku || `SKU-${inv.id}`,
+            type: 'ORDER_RESTORE',
+            change_amount: item.quantity,
+            previous_stock: prev,
+            new_stock: next,
+            reference_order: refOrderStr,
+            notes: `Stock restored for ${order.customer_name || 'Customer'} [${order.order_number}]`,
+          });
+        } catch (logErr) {
+          console.warn('[supabase] stock_log insert warning:', logErr);
+        }
+      }
+    }
+
+    await supabase.from('orders').update({ stock_deducted: false }).eq('id', order.id);
+    return true;
+  } catch (err) {
+    console.error('[supabase] restoreOrderStock error:', err);
+    return false;
+  }
+}
+
+/** Delete an order from the database */
+export async function deleteOrder(id: number): Promise<boolean> {
+  const { error } = await supabase.from('orders').delete().eq('id', id);
+  if (error) {
+    console.error('[supabase] deleteOrder error:', error.message);
+    return false;
+  }
+  return true;
+}
+
+/** Update order status. If CONFIRMED, deducts stock. If CANCELLED or PENDING, restores stock. */
 export async function updateOrderStatus(
   orderId: number,
   status: Order['order_status'],
   paymentStatus?: Order['payment_status']
 ): Promise<boolean> {
-  // Fetch the order to check if we need to restore stock
-  const { data: orderData } = await supabase
-    .from('orders')
-    .select('*, order_items(*)')
-    .eq('id', orderId)
-    .single();
+  try {
+    const { data: orderData, error: fetchErr } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .maybeSingle();
 
-  const order = orderData as Order | null;
+    if (fetchErr || !orderData) {
+      console.error('[supabase] fetch order error:', fetchErr?.message);
+      return false;
+    }
 
-  const update: Partial<Order> = {
-    order_status: status,
-    updated_at: new Date().toISOString() as unknown as string,
-  };
-  if (paymentStatus) update.payment_status = paymentStatus;
+    const order = orderData as Order;
 
-  const { error } = await supabase.from('orders').update(update).eq('id', orderId);
-  if (error) {
-    console.error('[supabase] updateOrderStatus error:', error.message);
+    const updateObj: Record<string, any> = {
+      order_status: status,
+      updated_at: new Date().toISOString(),
+    };
+    if (paymentStatus) updateObj.payment_status = paymentStatus;
+
+    const { error: updateErr } = await supabase.from('orders').update(updateObj).eq('id', orderId);
+    if (updateErr) {
+      console.error('[supabase] updateOrderStatus error:', updateErr.message);
+      return false;
+    }
+
+    try {
+      if (status === 'CONFIRMED') {
+        await deductOrderStock(order);
+      } else if ((status === 'CANCELLED' || status === 'PENDING') && order.stock_deducted) {
+        await restoreOrderStock(order);
+      }
+    } catch (stockErr) {
+      console.warn('[supabase] Non-fatal stock update warning:', stockErr);
+    }
+
+    return true;
+  } catch (err) {
+    console.error('[supabase] updateOrderStatus exception:', err);
     return false;
   }
-
-  // Restore inventory stock on CANCELLED (if stock was previously deducted)
-  if (status === 'CANCELLED' && order?.stock_deducted) {
-    const allCustomItems = [
-      ...(order.custom_gift_details?.items || []),
-      ...(order.cart_items || []).flatMap(ci => ci.customDetails?.items || []),
-    ];
-
-    for (const cItem of allCustomItems) {
-      const { data: invItem } = await supabase
-        .from('inventory_items')
-        .select('id, stock, name, sku')
-        .or(`id.eq.${cItem.id},name.ilike.${cItem.name}`)
-        .maybeSingle();
-
-      if (invItem) {
-        const inv = invItem as InventoryItem;
-        const prev = inv.stock;
-        const next = prev + cItem.quantity;
-        await supabase.from('inventory_items').update({ stock: next }).eq('id', inv.id);
-        await supabase.from('stock_logs').insert({
-          item_id: inv.id,
-          item_name: inv.name,
-          sku: inv.sku,
-          type: 'ORDER_RESTORE',
-          change_amount: cItem.quantity,
-          previous_stock: prev,
-          new_stock: next,
-          reference_order: order.order_number,
-          notes: `Stock restored — Order ${order.order_number} cancelled`,
-        });
-      }
-    }
-
-    // Restore regular product stock
-    for (const ci of (order.cart_items || [])) {
-      if (!ci.isCustom && typeof ci.productId === 'number') {
-        const { data: prod } = await supabase.from('products').select('stock').eq('id', ci.productId).single();
-        if (prod) {
-          const newStock = (prod as { stock: number }).stock + ci.quantity;
-          await supabase.from('products').update({ stock: newStock }).eq('id', ci.productId);
-        }
-      }
-    }
-
-    await supabase.from('orders').update({ stock_deducted: false }).eq('id', orderId);
-  }
-
-  return true;
 }
 
 // ─── Client Reviews Helpers ───────────────────────────────────────────────────
@@ -702,6 +872,20 @@ export async function getClientReviews(): Promise<ClientReview[]> {
     return [];
   }
   return (data as ClientReview[]) || [];
+}
+
+export async function createMultipleClientReviews(imageUrls: string[], message?: string): Promise<boolean> {
+  if (!imageUrls || imageUrls.length === 0) return true;
+  const records = imageUrls.map(url => ({ image_url: url, message: message || '' }));
+  const { error } = await supabase
+    .from('client_reviews')
+    .insert(records);
+
+  if (error) {
+    console.error('[supabase] createMultipleClientReviews error:', error.message);
+    return false;
+  }
+  return true;
 }
 
 export async function createClientReview(imageUrl: string, message?: string): Promise<ClientReview | null> {

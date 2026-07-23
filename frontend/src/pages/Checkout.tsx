@@ -200,7 +200,7 @@ export const Checkout = () => {
         total,
         payment_method: paymentMethod,
         payment_status: paymentMethod === 'PAYHERE' ? 'PAID' : 'PENDING',
-        order_status: paymentMethod === 'COD' ? 'CONFIRMED' : 'PENDING',
+        order_status: 'PENDING',
         gift_message: itemDetailsMessage || firstItem?.giftMessage || undefined,
         wrapping: itemDetailsWrapping || firstItem?.wrapping || 'Standard Premium Box',
         delivery_date: deliveryDate,
@@ -223,16 +223,20 @@ export const Checkout = () => {
       window.dispatchEvent(new Event('sparkle_cart_updated'));
 
       // Save confirmation snapshot to sessionStorage for OrderSuccess page
-      sessionStorage.setItem('sparkle_last_order', JSON.stringify({
+      const formattedOrder = {
         ...createdOrder,
         orderNumber: createdOrder.order_number,
         customerName: createdOrder.customer_name,
         createdAt: createdOrder.created_at,
         deliveryDate: createdOrder.delivery_date,
-      }));
+        paymentMethod: createdOrder.payment_method === 'PAYHERE' ? 'Bank Transfer' : 'Cash on Delivery (COD)',
+        paymentStatus: createdOrder.payment_status,
+      };
+
+      sessionStorage.setItem('sparkle_last_order', JSON.stringify(formattedOrder));
 
       // Redirect to Confirmation
-      setPlacedOrder(createdOrder as any);
+      setPlacedOrder(formattedOrder as any);
     } catch (err) {
       console.error('[Checkout] Error placing order:', err);
       alert('An error occurred while placing your order. Please try again.');
@@ -243,9 +247,12 @@ export const Checkout = () => {
 
   // SUCCESS SCREEN STATE
   if (placedOrder) {
+    const isBankPayment = (placedOrder as any).payment_method === 'PAYHERE' || (placedOrder as any).paymentMethod === 'Bank Transfer' || (placedOrder as any).paymentMethod === 'PAYHERE';
+    const paymentLabel = isBankPayment ? 'Bank Transfer' : 'Cash on Delivery (COD)';
+
     return (
-      <div className="min-h-[80vh] flex items-center justify-center py-16 px-4 max-w-2xl mx-auto">
-        <div className="gold-gradient-border bg-charcoal p-10 rounded text-center space-y-6 w-full shadow-gold-glow">
+      <div className="min-h-[80vh] flex items-center justify-center py-16 px-4 max-w-2xl mx-auto font-sans">
+        <div className="gold-gradient-border bg-charcoal p-8 sm:p-10 rounded text-center space-y-6 w-full shadow-gold-glow">
           <span className="material-symbols-outlined text-gold text-6xl">check_circle</span>
           
           <div className="space-y-2">
@@ -255,26 +262,74 @@ export const Checkout = () => {
 
           <div className="section-divider my-4"></div>
 
-          <div className="space-y-3 text-sm text-ivory text-left bg-background/50 p-6 rounded border border-gold/15">
+          <div className="space-y-3 text-sm text-ivory text-left bg-background/60 p-6 rounded-lg border border-gold/20 shadow">
             <p className="font-sans text-xs text-muted">
-              Order Reference: <span className="text-gold font-bold font-sans text-sm">{placedOrder.orderNumber}</span>
+              Order Reference: <span className="text-gold font-bold font-mono text-sm tracking-wide">{placedOrder.orderNumber || (placedOrder as any).order_number}</span>
             </p>
             <p className="font-sans text-xs text-muted">
-              Client Name: <span className="text-ivory font-semibold">{placedOrder.customerName}</span>
+              Client Name: <span className="text-ivory font-semibold">{placedOrder.customerName || (placedOrder as any).customer_name}</span>
             </p>
             <p className="font-sans text-xs text-muted">
               Shipping Address: <span className="text-ivory font-semibold">{placedOrder.address}, {placedOrder.city}</span>
             </p>
             <p className="font-sans text-xs text-muted">
-              Required Delivery Date: <span className="text-gold font-bold">{placedOrder.deliveryDate || 'Standard Delivery'}</span>
+              Required Delivery Date: <span className="text-gold font-bold">{placedOrder.deliveryDate || (placedOrder as any).delivery_date || 'Standard Delivery'}</span>
             </p>
             <p className="font-sans text-xs text-muted">
-              Total Amount: <span className="text-gold font-bold font-sans">LKR {placedOrder.total.toLocaleString()}.00</span>
+              Total Amount: <span className="text-gold font-bold font-mono text-sm">LKR {Number(placedOrder.total || 0).toLocaleString()}.00</span>
             </p>
             <p className="font-sans text-xs text-muted">
-              Payment Option: <span className="text-ivory font-semibold">{placedOrder.paymentMethod} ({placedOrder.paymentStatus})</span>
+              Payment Option: <span className="text-gold font-bold">{paymentLabel}</span> <span className="text-ivory/80 text-[11px] font-normal">({(placedOrder as any).payment_status || (placedOrder as any).paymentStatus || 'Pending'})</span>
             </p>
           </div>
+
+          {/* ONLINE PAYMENT BANK DETAILS & WHATSAPP BUTTON FOR PLACED ORDER */}
+          {isBankPayment && (
+            <div className="gold-gradient-border bg-charcoal p-5 rounded-lg space-y-4 font-sans text-xs border border-gold/30 text-left my-4">
+              <div className="flex items-center gap-2 text-gold border-b border-gold/15 pb-2">
+                <span className="material-symbols-outlined text-lg">account_balance</span>
+                <span className="font-serif font-bold text-sm tracking-wider uppercase">Bank Transfer Instructions</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-ivory bg-background/60 p-4 rounded border border-gold/15">
+                <div>
+                  <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Bank Name</p>
+                  <p className="font-bold text-ivory text-sm">Bank of Ceylon</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Branch</p>
+                  <p className="font-bold text-ivory text-sm">Makola</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Account Number</p>
+                  <p className="font-bold font-mono text-gold text-base tracking-widest">95939553</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Account Holder Name</p>
+                  <p className="font-bold text-ivory text-sm">N V S Sathsarani</p>
+                </div>
+              </div>
+
+              <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded text-amber-200 text-[11px] leading-relaxed flex items-start gap-2">
+                <span className="material-symbols-outlined text-amber-400 text-sm shrink-0 mt-0.5">info</span>
+                <div>
+                  <strong>Action Required:</strong> After completed transfer, please send your bank slip via WhatsApp so our team can verify your payment and confirm order <strong>[{placedOrder.orderNumber}]</strong>.
+                </div>
+              </div>
+
+              <a
+                href={`https://wa.me/94723487062?text=${encodeURIComponent(
+                  `Hi Sparkle Giftz! I have transferred the payment for my order [${placedOrder.orderNumber}] (Total: LKR ${placedOrder.total.toLocaleString()}.00). Here is my bank transfer slip.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2.5 w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs uppercase tracking-wider rounded transition shadow-lg cursor-pointer min-h-[44px]"
+              >
+                <span className="material-symbols-outlined text-base">chat</span>
+                <span>Send Bank Slip on WhatsApp (+94 72 348 7062)</span>
+              </a>
+            </div>
+          )}
 
           <p className="text-xs text-muted leading-relaxed font-sans max-w-md mx-auto">
             A luxury curation desk representative will contact you shortly on your provided telephone number to coordinate shipment delivery timings.
@@ -492,11 +547,59 @@ export const Checkout = () => {
                   className="accent-gold"
                 />
                 <div className="font-sans">
-                  <p className="text-xs font-semibold uppercase text-ivory tracking-wide">Online Payment (PayHere)</p>
-                  <p className="text-[10px] text-muted">Pay securely via Credit Card / Mobile Wallets</p>
+                  <p className="text-xs font-semibold uppercase text-ivory tracking-wide">Online Payment / Bank Transfer</p>
+                  <p className="text-[10px] text-muted">Pay via Bank Transfer or Online Banking</p>
                 </div>
               </label>
             </div>
+
+            {/* ONLINE PAYMENT / BANK TRANSFER DETAILS CARD */}
+            {paymentMethod === 'PAYHERE' && (
+              <div className="gold-gradient-border bg-background/80 p-5 rounded-lg space-y-4 font-sans text-xs border border-gold/30 mt-3 animate-fadeIn">
+                <div className="flex items-center gap-2 text-gold border-b border-gold/15 pb-2">
+                  <span className="material-symbols-outlined text-lg">account_balance</span>
+                  <span className="font-serif font-bold text-sm tracking-wider uppercase">Bank Transfer Account Details</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-ivory bg-charcoal/90 p-4 rounded border border-gold/15">
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Bank Name</p>
+                    <p className="font-bold text-ivory text-sm">Bank of Ceylon</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Branch</p>
+                    <p className="font-bold text-ivory text-sm">Makola</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Account Number</p>
+                    <p className="font-bold font-mono text-gold text-base tracking-widest">95939553</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold">Account Holder Name</p>
+                    <p className="font-bold text-ivory text-sm">N V S Sathsarani</p>
+                  </div>
+                </div>
+
+                <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded text-amber-200 text-[11px] leading-relaxed flex items-start gap-2">
+                  <span className="material-symbols-outlined text-amber-400 text-sm shrink-0 mt-0.5">info</span>
+                  <div>
+                    <strong>Action Required:</strong> After completed transfer, please send your bank slip via WhatsApp so our desk can verify & confirm your order.
+                  </div>
+                </div>
+
+                <a
+                  href={`https://wa.me/94723487062?text=${encodeURIComponent(
+                    `Hi Sparkle Giftz! I am placing an Online Payment / Bank Transfer order (Total: LKR ${total.toLocaleString()}.00). Here is my bank transfer slip.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2.5 w-full py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs uppercase tracking-wider rounded transition shadow-lg cursor-pointer min-h-[44px]"
+                >
+                  <span className="material-symbols-outlined text-base">chat</span>
+                  <span>Send Bank Slip via WhatsApp (+94 72 348 7062)</span>
+                </a>
+              </div>
+            )}
           </div>
 
           <button

@@ -36,32 +36,27 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
     <>
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-gold/20 transition-all duration-300 shadow-[0_2px_20px_rgba(212,175,55,0.08)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-3 sm:py-5 flex justify-between items-center gap-2">
           
-          {/* Mobile Hamburger Menu Icon (☰) matching Image 2 */}
           {/* Mobile Hamburger Menu Icon */}
           <button
             type="button"
             onClick={() => setIsMenuOpen(true)}
-            className="md:hidden p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-ivory hover:text-gold transition focus:outline-none"
+            className="md:hidden p-1.5 min-w-[38px] min-h-[38px] flex items-center justify-center text-ivory hover:text-gold transition focus:outline-none shrink-0"
             aria-label="Open Navigation Menu"
           >
             <span className="material-symbols-outlined text-2xl sm:text-3xl">menu</span>
           </button>
 
           {/* Brand Logo & Title */}
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
-            <img src={logo} alt="Sparkle Giftz Logo" className="h-10 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
-            <span className="text-sm sm:text-2xl font-serif font-bold tracking-[0.12em] sm:tracking-[0.22em] gold-sparkle-text truncate" style={{ textShadow: '0 0 18px rgba(212,175,55,0.55), 0 1px 4px rgba(0,0,0,0.6)' }}>
-              {["S", "P", "A", "R", "K", "L", "E", "\u00A0", "G", "I", "F", "T", "Z"].map((char, index) => (
-                <span
-                  key={index}
-                  className="inline-block animate-letter-reveal"
-                  style={{ animationDelay: `${index * 60}ms` }}
-                >
-                  {char}
-                </span>
-              ))}
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
+            <img 
+              src={logo} 
+              alt="Sparkle Giftz Logo" 
+              className="h-9 sm:h-14 w-auto object-contain shrink-0 transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" 
+            />
+            <span className="text-base xs:text-lg sm:text-2xl font-serif font-extrabold tracking-[0.12em] sm:tracking-[0.2em] gold-sparkle-text whitespace-nowrap">
+              SPARKLE GIFTZ
             </span>
           </Link>
 
@@ -112,8 +107,8 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
               {/* Header & Close Button */}
               <div className="flex items-center justify-between pb-4 border-b border-gold/15 mb-5">
                 <div className="flex items-center gap-2">
-                  <img src={logo} alt="Sparkle Giftz" className="h-7 w-auto object-contain" />
-                  <span className="font-serif text-sm font-bold text-gold tracking-wider">Sparkle Giftz</span>
+                  <img src={logo} alt="Sparkle Giftz" className="h-8 w-auto object-contain" />
+                  <span className="font-serif text-base font-bold gold-sparkle-text tracking-wider">Sparkle Giftz</span>
                 </div>
                 <button
                   type="button"
@@ -211,7 +206,7 @@ function HeaderNav({ cartCount }: { cartCount: number }) {
             <div className="pt-6 border-t border-gold/15 space-y-4">
               {/* Social Icons matching Image 1 */}
               <div className="flex items-center gap-4 text-gold/80">
-                <a href="https://www.facebook.com/share/1BAPjxJXSv/?mibextid=wwXIfr" target="_blank" rel="noreferrer" className="hover:text-gold transition">
+                <a href="https://www.facebook.com/profile.php?id=61565354071341" target="_blank" rel="noreferrer" className="hover:text-gold transition">
                   <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 </a>
                 <a href="#" className="hover:text-gold transition">
@@ -265,9 +260,23 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="flex flex-col min-h-screen bg-background text-ivory selection:bg-gold selection:text-background">
-          {/* Announcement Bar */}
-          <div className="bg-gold text-background text-center py-2 text-xs font-semibold tracking-wider uppercase">
-            Complimentary Premium Delivery for Colombo & Suburbs
+          {/* Luxury Top Announcement Bar */}
+          <div className="bg-gold text-background h-10 sm:h-11 px-4 flex items-center justify-center text-[10px] sm:text-[11px] font-sans font-medium tracking-[0.18em] uppercase transition-all select-none">
+            <div className="flex items-center gap-[7px]">
+              <span>Every Moment Deserves an Unforgettable Gift</span>
+              <svg
+                className="w-3 h-3 sm:w-[13px] sm:h-[13px] text-background fill-none stroke-current stroke-[1.75] shrink-0"
+                viewBox="0 0 24 24"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="8" width="18" height="13" rx="1.5" />
+                <path d="M12 8v13" />
+                <path d="M3 12h18" />
+                <path d="M12 8C12 8 8.5 3.5 6 3.5C4 3.5 2.5 4.8 2.5 6.5C2.5 8 5.5 8 12 8Z" />
+                <path d="M12 8C12 8 15.5 3.5 18 3.5C20 3.5 21.5 4.8 21.5 6.5C21.5 8 18.5 8 12 8Z" />
+              </svg>
+            </div>
           </div>
 
           {/* Header Navigation with Mobile Drawer */}
@@ -357,7 +366,7 @@ function App() {
                   </a>
 
                   <a
-                    href="https://www.facebook.com/share/1BAPjxJXSv/?mibextid=wwXIfr"
+                    href="https://www.facebook.com/profile.php?id=61565354071341"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 w-full py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold text-[11px] sm:text-xs rounded transition duration-300 font-sans tracking-wider"
