@@ -261,8 +261,8 @@ function App() {
       <Router>
         <div className="flex flex-col min-h-screen bg-background text-ivory selection:bg-gold selection:text-background">
           {/* Luxury Top Announcement Bar */}
-          <div className="bg-gold text-background h-10 sm:h-11 px-4 flex items-center justify-center text-[10px] sm:text-[11px] font-sans font-medium tracking-[0.18em] uppercase transition-all select-none">
-            <div className="flex items-center gap-[7px]">
+          <div className="bg-gold text-background min-h-[36px] py-1.5 px-2 sm:px-4 flex items-center justify-center text-[9px] xs:text-[10px] sm:text-[11px] font-sans font-semibold sm:font-medium tracking-[0.06em] xs:tracking-[0.12em] sm:tracking-[0.18em] uppercase transition-all select-none text-center">
+            <div className="inline-flex items-center justify-center gap-1.5 xs:gap-[7px] max-w-full">
               <span>Every Moment Deserves an Unforgettable Gift</span>
               <svg
                 className="w-3 h-3 sm:w-[13px] sm:h-[13px] text-background fill-none stroke-current stroke-[1.75] shrink-0"
