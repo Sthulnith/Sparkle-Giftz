@@ -87,14 +87,11 @@ const AnimatedReviewCard: React.FC<AnimatedReviewCardProps> = ({ review, index, 
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(el);
-        }
+        setIsVisible(entry.isIntersecting);
       },
       {
         threshold: 0.08,
-        rootMargin: '0px 0px -30px 0px',
+        rootMargin: '0px 0px -20px 0px',
       }
     );
 
@@ -102,7 +99,7 @@ const AnimatedReviewCard: React.FC<AnimatedReviewCardProps> = ({ review, index, 
     return () => observer.disconnect();
   }, []);
 
-  const staggerDelay = (index % 4) * 120; // 0ms, 120ms, 240ms, 360ms stagger
+  const staggerDelay = (index % 4) * 100; // 0ms, 100ms, 200ms, 300ms stagger
 
   return (
     <div
@@ -152,10 +149,7 @@ const AnimatedGuestCard: React.FC<AnimatedGuestCardProps> = ({ item, idx }) => {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(el);
-        }
+        setIsVisible(entry.isIntersecting);
       },
       { threshold: 0.08 }
     );
