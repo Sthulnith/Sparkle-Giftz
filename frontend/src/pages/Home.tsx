@@ -119,12 +119,13 @@ export const Home = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-xl mx-auto">
             <Link
               to="/shop"
-              className="inline-block w-full sm:w-auto px-10 py-3.5 rounded-full border border-gold bg-gold text-background font-sans font-semibold text-xs uppercase tracking-[0.2em] transition-all duration-300 hover:bg-transparent hover:text-gold hover:shadow-gold-glow hover:-translate-y-0.5 active:translate-y-0 text-center"
+              className="cta-btn-primary w-full sm:w-auto"
             >
-              Explore Collection
+              <span className="material-symbols-outlined text-[#D4AF37] text-lg sm:text-xl">grid_view</span>
+              <span>Explore Collection</span>
             </Link>
             <button
               onClick={handleNavigateToClientShowcase}

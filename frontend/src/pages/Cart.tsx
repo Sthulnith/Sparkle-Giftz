@@ -83,18 +83,20 @@ export const Cart = () => {
         <div className="gold-gradient-border bg-charcoal p-12 rounded text-center w-full max-w-xl">
           <span className="material-symbols-outlined text-gold text-5xl mb-4">shopping_bag</span>
           <p className="text-ivory mb-6 font-sans text-sm font-light">Your luxury cart is currently empty.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/shop"
-              className="inline-block px-6 py-3 bg-charcoal hover:bg-gold/10 border border-gold/40 text-gold font-semibold font-sans text-xs uppercase tracking-widest transition duration-300 rounded"
-            >
-              Browse Shop Collection
-            </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 max-w-lg mx-auto">
             <Link
               to="/customize-gift"
-              className="inline-block px-6 py-3 bg-gold hover:bg-gold-light text-background font-bold font-sans text-xs uppercase tracking-widest transition duration-300 rounded shadow"
+              className="cta-btn-primary w-full sm:w-auto"
             >
-              Customize Your Own Gift
+              <span className="material-symbols-outlined text-[#D4AF37] text-base">auto_awesome</span>
+              <span>Customize Your Own Gift</span>
+            </Link>
+            <Link
+              to="/shop"
+              className="cta-btn-secondary w-full sm:w-auto"
+            >
+              <span className="material-symbols-outlined text-[#D4AF37] text-base">grid_view</span>
+              <span>Explore Collection</span>
             </Link>
           </div>
         </div>

@@ -153,3 +153,158 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   animation: letter-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ==========================================================================
+   SPARKLE GIFTZ - LUXURY MATTE BLACK & METALLIC GOLD CTA BUTTONS
+   ========================================================================== */
+
+/* Animated Gold Shimmer Sweep Across Button */
+@keyframes gold-shimmer-sweep {
+  0% {
+    transform: translateX(-150%) skewX(-25deg);
+  }
+  30%, 100% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+}
+
+/* Gentle Refined Golden Glow & Scale Pulse for Primary CTA */
+@keyframes cta-gold-pulse-primary {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.3), 0 0 32px rgba(212, 175, 55, 0.15);
+    border-color: #D4AF37;
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 28px rgba(212, 175, 55, 0.55), 0 0 48px rgba(212, 175, 55, 0.3);
+    border-color: #F4D03F;
+  }
+}
+
+/* Gentle Refined Golden Glow & Scale Pulse for Secondary CTA */
+@keyframes cta-gold-pulse-secondary {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.2), 0 0 22px rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.7);
+  }
+  50% {
+    transform: scale(1.025);
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.4), 0 0 38px rgba(212, 175, 55, 0.2);
+    border-color: #D4AF37;
+  }
+}
+
+/* Primary CTA Button - "Customize Your Own Gift" */
+.cta-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 1.05rem 2.25rem;
+  border-radius: 15px;
+  background-color: #121212;
+  border: 2px solid #D4AF37;
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 0.875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  animation: cta-gold-pulse-primary 4.5s ease-in-out infinite;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  will-change: transform, box-shadow;
+  box-sizing: border-box;
+}
+
+/* Shimmer overlay beam */
+.cta-btn-primary::after,
+.cta-btn-secondary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(244, 208, 63, 0.35) 50%,
+    transparent 100%
+  );
+  transform: translateX(-150%) skewX(-25deg);
+  animation: gold-shimmer-sweep 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cta-btn-primary:hover {
+  animation-play-state: paused;
+  transform: translateY(-4px) scale(1.03);
+  background: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #F4D03F 100%);
+  color: #121212;
+  border-color: #FFF3A8;
+  box-shadow: 0 10px 35px rgba(212, 175, 55, 0.65), 0 0 25px rgba(244, 208, 63, 0.5);
+}
+
+.cta-btn-primary:hover .material-symbols-outlined {
+  color: #121212 !important;
+  transition: color 0.3s ease;
+}
+
+.cta-btn-primary:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+/* Secondary CTA Button - "Explore Collection" */
+.cta-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 1.05rem 2.25rem;
+  border-radius: 15px;
+  background-color: #121212;
+  border: 2px solid rgba(212, 175, 55, 0.7);
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  animation: cta-gold-pulse-secondary 4.5s ease-in-out infinite;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  will-change: transform, box-shadow;
+  box-sizing: border-box;
+}
+
+.cta-btn-secondary:hover {
+  animation-play-state: paused;
+  transform: translateY(-4px) scale(1.025);
+  background: linear-gradient(135deg, rgba(184, 134, 11, 0.25) 0%, rgba(212, 175, 55, 0.45) 100%);
+  border-color: #F4D03F;
+  color: #FFFFFF;
+  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.45), 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+.cta-btn-secondary:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+
+

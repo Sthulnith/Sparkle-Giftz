@@ -128,12 +128,12 @@ export const Shop = () => {
 
         {/* TOP-RIGHT PRODUCT CONTROLS: Customize Gift & Filter Buttons */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto">
-          {/* Prominent "Customize Your Own Gift" Button */}
+          {/* Prominent "Customize Your Own Gift" Primary CTA */}
           <Link
             to="/customize-gift"
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gold via-amber-300 to-gold text-background hover:brightness-110 font-extrabold font-sans text-xs uppercase tracking-wider rounded-md shadow-gold-glow transition-all duration-300 group shrink-0 min-h-[44px]"
+            className="cta-btn-primary !py-2.5 !px-5 shrink-0"
           >
-            <span className="material-symbols-outlined text-base group-hover:rotate-12 transition-transform">auto_awesome</span>
+            <span className="material-symbols-outlined text-[#D4AF37] text-base">auto_awesome</span>
             <span>Customize Your Own Gift</span>
           </Link>
 
@@ -279,9 +279,10 @@ export const Shop = () => {
               <p className="text-xs text-muted font-sans">Check back soon or create your own custom gift box!</p>
               <Link
                 to="/customize-gift"
-                className="inline-block mt-4 px-6 py-2.5 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider font-sans rounded transition shadow"
+                className="cta-btn-primary inline-flex mt-4"
               >
-                Customize Your Own Gift
+                <span className="material-symbols-outlined text-[#D4AF37] text-base">auto_awesome</span>
+                <span>Customize Your Own Gift</span>
               </Link>
             </div>
           ) : (
