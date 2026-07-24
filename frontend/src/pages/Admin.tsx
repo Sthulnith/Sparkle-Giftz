@@ -519,13 +519,21 @@ export const Admin = () => {
   // Remove Image from list
   const handleRemoveImage = (index: number, isEdit: boolean) => {
     if (isEdit && editingProduct) {
-      const updatedImages = [...(editingProduct.image_urls || [])];
+      const currentList = editingProduct.image_urls || [];
+      const updatedImages = [...currentList];
       updatedImages.splice(index, 1);
-      setEditingProduct({ ...editingProduct, image_urls: updatedImages });
+      setEditingProduct({
+        ...editingProduct,
+        image_urls: updatedImages,
+      });
     } else {
-      const updatedImages = [...(newProduct.image_urls || [])];
+      const currentList = newProduct.image_urls || [];
+      const updatedImages = [...currentList];
       updatedImages.splice(index, 1);
-      setNewProduct(prev => ({ ...prev, image_urls: updatedImages }));
+      setNewProduct(prev => ({
+        ...prev,
+        image_urls: updatedImages,
+      }));
     }
   };
 
@@ -1782,7 +1790,10 @@ export const Admin = () => {
                       required
                       min="0"
                       value={newInvItem.price || ''}
-                      onChange={(e) => setNewInvItem({ ...newInvItem, price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewInvItem({ ...newInvItem, price: val === '' ? 0 : parseFloat(val) || 0 });
+                      }}
                       className="w-full bg-background border border-gold/25 p-3 rounded text-sm text-ivory focus:border-gold outline-none min-h-[44px]"
                     />
                   </div>
@@ -1795,7 +1806,10 @@ export const Admin = () => {
                       type="number"
                       min="0"
                       value={newInvItem.cost_price || ''}
-                      onChange={(e) => setNewInvItem({ ...newInvItem, cost_price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewInvItem({ ...newInvItem, cost_price: val === '' ? 0 : parseFloat(val) || 0 });
+                      }}
                       className="w-full bg-background border border-gold/25 p-3 rounded text-sm text-ivory focus:border-gold outline-none min-h-[44px]"
                     />
                   </div>
@@ -2215,8 +2229,11 @@ export const Admin = () => {
                       type="number"
                       required
                       min="0"
-                      value={editingInvItem.price}
-                      onChange={(e) => setEditingInvItem({ ...editingInvItem, price: parseFloat(e.target.value) || 0 })}
+                      value={editingInvItem.price || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingInvItem({ ...editingInvItem, price: val === '' ? 0 : parseFloat(val) || 0 });
+                      }}
                       className="w-full bg-background border border-gold/25 p-3 rounded text-sm text-ivory focus:border-gold outline-none min-h-[44px]"
                     />
                   </div>
@@ -2229,7 +2246,10 @@ export const Admin = () => {
                       type="number"
                       min="0"
                       value={editingInvItem.cost_price || ''}
-                      onChange={(e) => setEditingInvItem({ ...editingInvItem, cost_price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingInvItem({ ...editingInvItem, cost_price: val === '' ? 0 : parseFloat(val) || 0 });
+                      }}
                       className="w-full bg-background border border-gold/25 p-3 rounded text-sm text-ivory focus:border-gold outline-none min-h-[44px]"
                     />
                   </div>
@@ -3080,7 +3100,10 @@ export const Admin = () => {
                       required
                       min="0"
                       value={newProduct.price || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0, stock: 9999 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewProduct({ ...newProduct, price: val === '' ? 0 : parseFloat(val) || 0, stock: 9999 });
+                      }}
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none font-semibold text-gold"
                     />
                   </div>
@@ -3090,7 +3113,10 @@ export const Admin = () => {
                       type="number"
                       min="0"
                       value={newProduct.old_price || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, old_price: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewProduct({ ...newProduct, old_price: val === '' ? undefined : parseFloat(val) || undefined });
+                      }}
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
                     />
                   </div>
@@ -3229,24 +3255,52 @@ export const Admin = () => {
 
                 {/* IMAGES MANAGEMENT */}
                 <div className="border-t border-gold/15 pt-4">
-                  <h4 className="text-xs uppercase text-gold font-sans tracking-wide mb-3 font-semibold">Gift Box Presentation Images</h4>
-                  
-                  {newProduct.image_urls && newProduct.image_urls.length > 0 && (
-                    <div className="grid grid-cols-5 gap-3 mb-4">
-                      {newProduct.image_urls.map((img, idx) => (
-                        <div key={idx} className="relative w-full h-16 rounded border border-gold/20 bg-background overflow-hidden group">
-                          <img src={img} alt="preview" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(idx, false)}
-                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-red-400 hover:text-red-300 transition duration-200"
-                          >
-                            <span className="material-symbols-outlined text-base">delete</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    const currentNewImages = newProduct.image_urls || [];
+                    return (
+                      <>
+                        <h4 className="text-xs uppercase text-gold font-sans tracking-wide mb-3 font-semibold flex items-center justify-between">
+                          <span>Gift Box Presentation Images ({currentNewImages.length})</span>
+                          {currentNewImages.length > 0 && (
+                            <span className="text-[10px] text-muted font-normal">Click top-right red "✕" to remove image</span>
+                          )}
+                        </h4>
+                        
+                        {currentNewImages.length > 0 && (
+                          <div className="flex flex-wrap gap-3 mb-4">
+                            {currentNewImages.map((img, idx) => (
+                              <div key={idx} className="relative w-20 h-20 rounded-lg border border-gold/30 bg-charcoal overflow-hidden group shadow-md">
+                                <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                                
+                                {/* Always-visible Top-Right Delete Button Badge */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(idx, false)}
+                                  className="absolute top-1 right-1 bg-red-950/90 hover:bg-red-700 text-red-200 border border-red-500/60 rounded-full w-5 h-5 flex items-center justify-center transition cursor-pointer z-10 shadow"
+                                  title="Remove this image"
+                                >
+                                  <span className="material-symbols-outlined text-xs font-bold">close</span>
+                                </button>
+
+                                {/* Full Overlay on Hover */}
+                                <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition duration-200 z-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveImage(idx, false)}
+                                    className="p-1 px-2 bg-red-600/90 text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow hover:bg-red-700 transition"
+                                    title="Delete Photo"
+                                  >
+                                    <span className="material-symbols-outlined text-xs">delete</span>
+                                    <span>Remove</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                     <div className="space-y-1">
@@ -3346,8 +3400,11 @@ export const Admin = () => {
                       type="number"
                       required
                       min="0"
-                      value={editingProduct.price}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0, stock: 9999 })}
+                      value={editingProduct.price || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingProduct({ ...editingProduct, price: val === '' ? 0 : parseFloat(val) || 0, stock: 9999 });
+                      }}
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none font-semibold text-gold"
                     />
                   </div>
@@ -3357,7 +3414,10 @@ export const Admin = () => {
                       type="number"
                       min="0"
                       value={editingProduct.old_price || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, old_price: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingProduct({ ...editingProduct, old_price: val === '' ? undefined : parseFloat(val) || undefined });
+                      }}
                       className="w-full bg-background border border-gold/25 p-2.5 rounded text-ivory focus:border-gold outline-none"
                     />
                   </div>
@@ -3494,24 +3554,52 @@ export const Admin = () => {
 
                 {/* IMAGES MANAGEMENT */}
                 <div className="border-t border-gold/15 pt-4">
-                  <h4 className="text-xs uppercase text-gold font-sans tracking-wide mb-3 font-semibold">Gift Box Images</h4>
-                  
-                  {editingProduct.image_urls && editingProduct.image_urls.length > 0 && (
-                    <div className="grid grid-cols-5 gap-3 mb-4">
-                      {editingProduct.image_urls.map((img, idx) => (
-                        <div key={idx} className="relative w-full h-16 rounded border border-gold/20 bg-background overflow-hidden group">
-                          <img src={img} alt="preview" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(idx, true)}
-                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-red-400 hover:text-red-300 transition duration-200"
-                          >
-                            <span className="material-symbols-outlined text-base">delete</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    const currentEditingImages = editingProduct.image_urls || [];
+                    return (
+                      <>
+                        <h4 className="text-xs uppercase text-gold font-sans tracking-wide mb-3 font-semibold flex items-center justify-between">
+                          <span>Gift Box Images ({currentEditingImages.length})</span>
+                          {currentEditingImages.length > 0 && (
+                            <span className="text-[10px] text-muted font-normal">Click top-right red "✕" to remove image</span>
+                          )}
+                        </h4>
+                        
+                        {currentEditingImages.length > 0 && (
+                          <div className="flex flex-wrap gap-3 mb-4">
+                            {currentEditingImages.map((img, idx) => (
+                              <div key={idx} className="relative w-20 h-20 rounded-lg border border-gold/30 bg-charcoal overflow-hidden group shadow-md">
+                                <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                                
+                                {/* Always-visible Top-Right Delete Button Badge */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(idx, true)}
+                                  className="absolute top-1 right-1 bg-red-950/90 hover:bg-red-700 text-red-200 border border-red-500/60 rounded-full w-5 h-5 flex items-center justify-center transition cursor-pointer z-10 shadow"
+                                  title="Remove this image"
+                                >
+                                  <span className="material-symbols-outlined text-xs font-bold">close</span>
+                                </button>
+
+                                {/* Full Overlay on Hover */}
+                                <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition duration-200 z-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveImage(idx, true)}
+                                    className="p-1 px-2 bg-red-600/90 text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow hover:bg-red-700 transition"
+                                    title="Delete Photo"
+                                  >
+                                    <span className="material-symbols-outlined text-xs">delete</span>
+                                    <span>Remove</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                     <div className="space-y-1">

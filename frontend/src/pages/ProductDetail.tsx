@@ -162,15 +162,35 @@ export const ProductDetail = () => {
     });
   };
 
-  const handleUpdateExtraQty = (itemId: string | number, delta: number) => {
+  const handleUpdateExtraQty = (itemId: string | number, delta: number, selectedColor?: string) => {
     setExtraAddedItems(prev => {
-      return prev.map(i => {
-        if (String(i.itemId) === String(itemId)) {
-          const nextQty = i.quantity + delta;
-          return nextQty > 0 ? { ...i, quantity: nextQty } : null;
-        }
-        return i;
-      }).filter(Boolean) as GiftBoxIncludedItem[];
+      let targetIndex = -1;
+      if (selectedColor !== undefined) {
+        targetIndex = prev.findIndex(i => String(i.itemId) === String(itemId) && (i as any).selectedColor === selectedColor);
+      } else {
+        targetIndex = prev.findIndex(i => String(i.itemId) === String(itemId));
+      }
+
+      if (targetIndex === -1) return prev;
+
+      const target = prev[targetIndex];
+      const nextQty = target.quantity + delta;
+
+      if (nextQty <= 0) {
+        return prev.filter((_, idx) => idx !== targetIndex);
+      }
+
+      return prev.map((item, idx) => idx === targetIndex ? { ...item, quantity: nextQty } : item);
+    });
+  };
+
+  const handleRemoveExtraItem = (itemId: string | number, selectedColor?: string) => {
+    setExtraAddedItems(prev => {
+      return prev.filter(i => {
+        const itemMatches = String(i.itemId) === String(itemId);
+        const colorMatches = selectedColor !== undefined ? (i as any).selectedColor === selectedColor : true;
+        return !(itemMatches && colorMatches);
+      });
     });
   };
 
@@ -626,11 +646,31 @@ export const ProductDetail = () => {
                   const activeColorOpt = item.colors?.find(c => c.name === activeColorName);
                   const displayImage = activeColorOpt?.image_url || activeColorOpt?.image_urls?.[0] || item.image_url || (item as any).image;
 
+                  const addedEntries = extraAddedItems.filter(i => String(i.itemId) === String(item.id));
+                  const totalQtyForProduct = addedEntries.reduce((sum, i) => sum + i.quantity, 0);
+                  const isOutOfStock = item.stock <= 0;
+
                   return (
-                    <div key={item.id} className="bg-background/90 border border-gold/20 hover:border-gold/40 transition rounded-lg p-3 flex flex-col justify-between space-y-2.5">
+                    <div
+                      key={item.id}
+                      className={`bg-background/90 border transition rounded-lg p-3 flex flex-col justify-between space-y-2.5 relative ${
+                        isOutOfStock
+                          ? 'opacity-60 border-red-900/30'
+                          : totalQtyForProduct > 0
+                          ? 'border-gold shadow-gold-glow bg-gold/5'
+                          : 'border-gold/20 hover:border-gold/40'
+                      }`}
+                    >
                       <div className="flex items-start justify-between gap-2.5">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <img src={displayImage} alt={item.name} className="w-12 h-12 object-cover rounded-md border border-gold/20 shrink-0 bg-charcoal shadow-sm" />
+                          <div className="relative shrink-0">
+                            <img src={displayImage} alt={item.name} className="w-12 h-12 object-cover rounded-md border border-gold/20 shrink-0 bg-charcoal shadow-sm" />
+                            {totalQtyForProduct > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 bg-gold text-background font-extrabold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow border border-background">
+                                {totalQtyForProduct}
+                              </span>
+                            )}
+                          </div>
                           <div className="truncate">
                             <span className="inline-block text-[8px] font-sans font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-gold/15 text-gold mb-0.5">
                               {item.category || 'General'}
@@ -640,14 +680,44 @@ export const ProductDetail = () => {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleAddExtraItem(item)}
-                          className="px-3 py-1.5 bg-gold hover:bg-gold-light text-background font-bold text-[11px] uppercase tracking-wider rounded font-sans transition shrink-0 cursor-pointer shadow-gold-glow flex items-center gap-1"
-                        >
-                          <span className="material-symbols-outlined text-xs font-bold">add</span>
-                          Add
-                        </button>
+                        {/* Action buttons: + ADD or - qty + */}
+                        {isOutOfStock ? (
+                          <span className="px-2 py-1 bg-red-950/40 text-red-400 font-bold text-[9px] uppercase tracking-wider rounded font-sans border border-red-900/30 shrink-0">
+                            Out of Stock
+                          </span>
+                        ) : totalQtyForProduct > 0 ? (
+                          <div className="flex items-center gap-1 bg-charcoal border border-gold/40 rounded p-0.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateExtraQty(item.id, -1, activeColorName || undefined)}
+                              className="w-6 h-6 bg-background text-gold hover:bg-gold hover:text-background rounded flex items-center justify-center font-bold text-xs transition cursor-pointer"
+                              title="Decrease"
+                            >
+                              -
+                            </button>
+                            <span className="text-xs font-bold text-ivory font-sans px-1">{totalQtyForProduct}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleAddExtraItem(item)}
+                              disabled={item.stock > 0 && totalQtyForProduct >= item.stock}
+                              className={`w-6 h-6 bg-background text-gold rounded flex items-center justify-center font-bold text-xs transition ${
+                                item.stock > 0 && totalQtyForProduct >= item.stock ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gold hover:text-background cursor-pointer'
+                              }`}
+                              title="Increase"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleAddExtraItem(item)}
+                            className="px-3 py-1.5 bg-gold hover:bg-gold-light text-background font-bold text-[11px] uppercase tracking-wider rounded font-sans transition shrink-0 cursor-pointer shadow-gold-glow flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-xs font-bold">add</span>
+                            Add
+                          </button>
+                        )}
                       </div>
 
                       {/* Color Options Selection Pills */}
@@ -711,11 +781,86 @@ export const ProductDetail = () => {
               )}
             </div>
 
-            <div className="pt-3 border-t border-gold/15 flex justify-end">
+            {/* Bottom Added Extra Items Summary Strip */}
+            <div className="pt-3 border-t border-gold/15 space-y-2">
+              <div className="flex items-center justify-between text-xs font-sans">
+                <span className="font-bold text-gold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm">shopping_bag</span>
+                  <span>Added Extra Items ({extraAddedItems.reduce((acc, i) => acc + i.quantity, 0)})</span>
+                </span>
+                {extraAddedItems.length > 0 && (
+                  <span className="font-mono text-gold font-bold text-xs">
+                    Subtotal: +Rs. {extraAddedItems.reduce((sum, i) => sum + i.price * i.quantity, 0).toLocaleString()}.00
+                  </span>
+                )}
+              </div>
+
+              {extraAddedItems.length > 0 ? (
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-gold/30">
+                  {extraAddedItems.map((addedItem, idx) => (
+                    <div
+                      key={`${addedItem.itemId}-${(addedItem as any).selectedColor || idx}`}
+                      className="bg-background border border-gold/30 rounded-lg p-2 flex items-center gap-2.5 shrink-0 min-w-[210px] shadow-sm relative group"
+                    >
+                      <img
+                        src={addedItem.image || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop'}
+                        alt={addedItem.name}
+                        className="w-10 h-10 object-cover rounded border border-gold/20 shrink-0 bg-charcoal"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-ivory text-xs truncate leading-tight">{addedItem.name}</p>
+                        <p className="text-[10px] text-gold font-mono font-semibold">+Rs. {(addedItem.price * addedItem.quantity).toLocaleString()}.00</p>
+                      </div>
+
+                      {/* Quantity adjustment & Remove */}
+                      <div className="flex items-center gap-1 bg-charcoal border border-gold/25 rounded p-0.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExtraQty(addedItem.itemId, -1, (addedItem as any).selectedColor)}
+                          className="w-5 h-5 bg-background text-gold hover:bg-gold hover:text-background rounded flex items-center justify-center font-bold text-[11px] transition cursor-pointer"
+                          title="Decrease"
+                        >
+                          -
+                        </button>
+                        <span className="text-[11px] font-bold text-ivory font-sans px-1">{addedItem.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateExtraQty(addedItem.itemId, 1, (addedItem as any).selectedColor)}
+                          className="w-5 h-5 bg-background text-gold hover:bg-gold hover:text-background rounded flex items-center justify-center font-bold text-[11px] transition cursor-pointer"
+                          title="Increase"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExtraItem(addedItem.itemId, (addedItem as any).selectedColor)}
+                        className="text-muted/60 hover:text-red-400 transition material-symbols-outlined text-sm cursor-pointer p-0.5 ml-0.5"
+                        title="Remove"
+                      >
+                        close
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted font-sans italic py-1">
+                  No extra items added yet. Click "+ Add" on items above to include them into this gift package.
+                </p>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-gold/15 flex items-center justify-between">
+              <span className="text-xs text-muted font-sans">
+                {extraAddedItems.length > 0
+                  ? `${extraAddedItems.reduce((acc, i) => acc + i.quantity, 0)} extra item(s) selected`
+                  : 'No extra items added'}
+              </span>
               <button
                 type="button"
                 onClick={() => setShowAddExtraModal(false)}
-                className="px-5 py-2 bg-gold text-background font-bold text-xs uppercase tracking-wider rounded cursor-pointer"
+                className="px-6 py-2 bg-gold hover:bg-gold-light text-background font-bold text-xs uppercase tracking-wider rounded cursor-pointer transition shadow-gold-glow"
               >
                 Done
               </button>

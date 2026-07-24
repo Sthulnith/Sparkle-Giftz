@@ -52,35 +52,35 @@ export const Home = () => {
     <div className="bg-background min-h-screen relative overflow-hidden">
       
       {/* 1. HERO SECTION */}
-      <section className="min-h-[calc(100vh-120px)] relative flex flex-col items-center justify-center py-12 px-4 border-b border-gold/10 overflow-hidden">
+      <section className="min-h-[calc(100vh-90px)] relative flex flex-col items-center justify-center py-4 sm:py-12 px-3 sm:px-4 border-b border-gold/10 overflow-hidden">
         {/* Background Video */}
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0 opacity-30"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0 opacity-50"
         >
           <source src={heroBgVideo} type="video/mp4" />
         </video>
         {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-background/60 z-0 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-background/40 z-0 pointer-events-none"></div>
         {/* Background Glow */}
         <div className="absolute right-0 top-1/4 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
         
-        <div className="max-w-4xl w-full text-center space-y-8 relative z-10 my-auto">
+        <div className="max-w-4xl w-full text-center space-y-2.5 sm:space-y-6 md:space-y-8 relative z-10 my-auto">
           {/* Crown & Subtitle */}
-          <div className="space-y-3 pt-4">
-            <svg viewBox="0 0 24 24" className="w-10 h-10 mx-auto text-gold fill-none stroke-current stroke-[1.5]">
+          <div className="space-y-1.5 sm:space-y-3 pt-1 sm:pt-4">
+            <svg viewBox="0 0 24 24" className="w-7 h-7 sm:w-10 sm:h-10 mx-auto text-gold fill-none stroke-current stroke-[1.5]">
               <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M3 20h18" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             
-            <div className="space-y-2">
-              <p className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-gold font-medium">
+            <div className="space-y-1 sm:space-y-2">
+              <p className="text-[9px] sm:text-xs font-sans uppercase tracking-[0.25em] sm:tracking-[0.3em] text-gold font-medium">
                 Premium Gifts. Lasting Impressions.
               </p>
-              <div className="flex items-center justify-center gap-4 max-w-xs mx-auto">
+              <div className="flex items-center justify-center gap-3 sm:gap-4 max-w-[200px] sm:max-w-xs mx-auto">
                 <div className="h-[1px] bg-gold/20 flex-grow"></div>
                 <div className="w-1.5 h-1.5 bg-gold rotate-45"></div>
                 <div className="h-[1px] bg-gold/20 flex-grow"></div>
@@ -89,75 +89,75 @@ export const Home = () => {
           </div>
 
           {/* Main Headline */}
-          <div className="space-y-1">
-            <h1 className="text-5xl md:text-7xl font-serif tracking-[0.15em] text-gold uppercase leading-tight font-extralight">
+          <div className="space-y-0.5 sm:space-y-1">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-serif tracking-[0.12em] sm:tracking-[0.15em] text-gold uppercase leading-tight font-extralight">
               Luxury
             </h1>
-            <h1 className="text-5xl md:text-7xl font-serif tracking-[0.15em] text-ivory uppercase leading-tight font-extralight">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-serif tracking-[0.12em] sm:tracking-[0.15em] text-ivory uppercase leading-tight font-extralight">
               Gift Boxes
             </h1>
-            <h2 className="text-2xl md:text-3xl font-serif tracking-[0.35em] text-gold uppercase mt-4 font-light">
+            <h2 className="text-base sm:text-2xl md:text-3xl font-serif tracking-[0.25em] sm:tracking-[0.35em] text-gold uppercase mt-1 sm:mt-4 font-light">
               For Him
             </h2>
           </div>
 
           {/* Divider with Gift Icon */}
-          <div className="relative flex items-center justify-center py-4">
+          <div className="relative flex items-center justify-center py-1 sm:py-4">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gold/15"></div>
             </div>
-            <div className="relative px-4 bg-background">
-              <span className="material-symbols-outlined text-gold text-xl block">redeem</span>
+            <div className="relative px-3 sm:px-4 bg-background">
+              <span className="material-symbols-outlined text-gold text-base sm:text-xl block">redeem</span>
             </div>
           </div>
 
           {/* Subtitles & Descriptions */}
-          <div className="space-y-4">
-            <p className="text-xl md:text-2xl font-serif text-ivory tracking-wide font-light">
+          <div>
+            <p className="text-sm sm:text-xl md:text-2xl font-serif text-ivory tracking-wide font-light">
               Curated. Refined. Unforgettable.
             </p>
           </div>
 
           {/* CTA Buttons */}
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-xl mx-auto">
+          <div className="pt-2 sm:pt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-6 w-full max-w-xl mx-auto">
             <Link
               to="/shop"
-              className="cta-btn-primary w-full sm:w-auto"
+              className="cta-btn-primary w-full sm:w-auto !py-2.5 sm:!py-3.5 !px-6 sm:!px-10 text-xs"
             >
-              <span className="material-symbols-outlined text-[#D4AF37] text-lg sm:text-xl">grid_view</span>
+              <span className="material-symbols-outlined text-[#D4AF37] text-base sm:text-xl">grid_view</span>
               <span>Explore Collection</span>
             </Link>
             <button
               onClick={handleNavigateToClientShowcase}
-              className="inline-block w-full sm:w-auto px-10 py-3.5 rounded-full border border-gold text-gold font-sans font-semibold text-xs uppercase tracking-[0.2em] transition-all duration-300 hover:text-background hover:bg-gold hover:shadow-gold-glow hover:-translate-y-0.5 active:translate-y-0 text-center cursor-pointer"
+              className="w-full sm:w-auto !py-2.5 sm:!py-3.5 !px-6 sm:!px-10 rounded-full border border-gold/70 text-gold font-sans font-semibold text-xs uppercase tracking-[0.14em] hover:bg-gold/10 hover:border-gold transition-colors duration-200 text-center cursor-pointer"
             >
               See Guest Feedback
             </button>
           </div>
 
           {/* 4 Premium Features Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 pt-6 max-w-3xl mx-auto border-t border-gold/5 mt-8">
-            <div className="flex flex-col items-center p-2 space-y-2 border-r border-gold/10 last:border-0 md:border-r md:last:border-0">
-              <span className="material-symbols-outlined text-gold text-2xl">diamond</span>
-              <p className="text-[9px] md:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pt-3 sm:pt-6 max-w-3xl mx-auto border-t border-gold/5 mt-4 sm:mt-8">
+            <div className="flex flex-col items-center p-1 sm:p-2 space-y-1 sm:space-y-2 border-r border-gold/10 last:border-0 md:border-r md:last:border-0">
+              <span className="material-symbols-outlined text-gold text-lg sm:text-2xl">diamond</span>
+              <p className="text-[8px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
                 Handcrafted Curation
               </p>
             </div>
-            <div className="flex flex-col items-center p-2 space-y-2 border-r border-gold/10 last:border-0 md:border-r md:last:border-0">
-              <span className="material-symbols-outlined text-gold text-2xl">workspace_premium</span>
-              <p className="text-[9px] md:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
+            <div className="flex flex-col items-center p-2 space-y-1 sm:space-y-2 border-r border-gold/10 last:border-0 md:border-r md:last:border-0">
+              <span className="material-symbols-outlined text-gold text-lg sm:text-2xl">workspace_premium</span>
+              <p className="text-[8px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
                 Bespoke Packaging
               </p>
             </div>
-            <div className="flex flex-col items-center p-2 space-y-2 border-r border-gold/10 last:border-0 md:border-r md:last:border-0">
-              <span className="material-symbols-outlined text-gold text-2xl">local_shipping</span>
-              <p className="text-[9px] md:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
+            <div className="flex flex-col items-center p-1 sm:p-2 space-y-1 sm:space-y-2 border-r border-gold/10 last:border-0 md:border-r md:last:border-0">
+              <span className="material-symbols-outlined text-gold text-lg sm:text-2xl">local_shipping</span>
+              <p className="text-[8px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
                 Express Delivery
               </p>
             </div>
-            <div className="flex flex-col items-center p-2 space-y-2">
-              <span className="material-symbols-outlined text-gold text-2xl">support_agent</span>
-              <p className="text-[9px] md:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
+            <div className="flex flex-col items-center p-1 sm:p-2 space-y-1 sm:space-y-2">
+              <span className="material-symbols-outlined text-gold text-lg sm:text-2xl">support_agent</span>
+              <p className="text-[8px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] text-ivory text-center">
                 Personal Concierge
               </p>
             </div>

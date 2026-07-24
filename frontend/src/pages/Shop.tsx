@@ -305,7 +305,7 @@ export const Shop = () => {
                   return (
                     <div
                       key={product.id}
-                      className="gold-gradient-border bg-charcoal p-2 sm:p-3.5 rounded flex flex-col justify-between hover:shadow-gold-glow transition-all duration-300 group relative"
+                      className="gold-gradient-border bg-charcoal p-2 sm:p-3.5 rounded flex flex-col justify-between package-card-hover group relative"
                     >
                       <div>
                         {/* Image Frame with Badges */}
@@ -407,7 +407,7 @@ export const Shop = () => {
                       {/* Bottom Action Button */}
                       <Link
                         to={`/product/${product.slug}`}
-                        className="block text-center w-full py-1.5 sm:py-2.5 bg-[#1b2238] hover:bg-gold hover:text-background border border-gold/30 text-ivory font-semibold text-[10px] sm:text-xs font-sans uppercase tracking-wider transition duration-300 rounded-sm"
+                        className="block text-center w-full py-1.5 sm:py-2.5 bg-[#1b2238] group-hover:bg-[#2563eb] group-hover:text-white border border-gold/30 group-hover:border-blue-400 text-ivory font-semibold text-[10px] sm:text-xs font-sans uppercase tracking-wider transition duration-300 rounded-sm shadow"
                       >
                         {product.stock > 0 ? 'SELECT OPTIONS' : 'READ MORE'}
                       </Link>

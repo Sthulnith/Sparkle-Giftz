@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getClientReviews, type ClientReview } from '../lib/supabase';
 
 interface Review {
@@ -69,6 +69,141 @@ const REVIEW_PRESETS = [
   { aspect: 'aspect-[3/4]', rotate: '-rotate-1.5', rounded: 'rounded-[18px]' },
   { aspect: 'aspect-[4/5]', rotate: 'rotate-1', rounded: 'rounded-[16px]' },
 ];
+
+interface AnimatedReviewCardProps {
+  review: ClientReview;
+  index: number;
+  preset: { aspect: string; rotate: string; rounded: string };
+  onClick: () => void;
+}
+
+const AnimatedReviewCard: React.FC<AnimatedReviewCardProps> = ({ review, index, preset, onClick }) => {
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      {
+        threshold: 0.08,
+        rootMargin: '0px 0px -30px 0px',
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const staggerDelay = (index % 4) * 120; // 0ms, 120ms, 240ms, 360ms stagger
+
+  return (
+    <div
+      ref={cardRef}
+      onClick={onClick}
+      style={{ transitionDelay: isVisible ? `${staggerDelay}ms` : '0ms' }}
+      className={`break-inside-avoid mb-2.5 sm:mb-4 relative group cursor-pointer review-card-reveal ${
+        isVisible ? 'is-visible' : ''
+      } ${preset.rotate}`}
+    >
+      <div className={`gold-gradient-border bg-[#14171f] p-1.5 sm:p-2 ${preset.rounded} shadow-xl review-card-hover relative`}>
+        <div className={`relative overflow-hidden ${preset.rounded} ${preset.aspect} bg-charcoal`}>
+          <img
+            src={review.image_url || (review as any).image}
+            alt={`Customer review ${index + 1}`}
+            className="w-full h-full object-cover review-image-zoom"
+            loading="lazy"
+          />
+
+          {/* Hover Zoom & Tap Indicator Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-2.5">
+            <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gold text-background flex items-center justify-center shadow-gold-glow mb-1 transition-transform group-hover:scale-110">
+              <span className="material-symbols-outlined text-lg font-bold">zoom_in</span>
+            </span>
+            <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-ivory drop-shadow">
+              Tap to Enlarge
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface AnimatedGuestCardProps {
+  item: Review & { uniqueKey: string };
+  idx: number;
+}
+
+const AnimatedGuestCard: React.FC<AnimatedGuestCardProps> = ({ item, idx }) => {
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.08 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const staggerDelay = idx * 120;
+
+  return (
+    <div
+      ref={cardRef}
+      style={{ transitionDelay: isVisible ? `${staggerDelay}ms` : '0ms' }}
+      className={`gold-gradient-border bg-[#14171f] p-5 rounded-md space-y-3 relative review-card-reveal review-card-hover ${
+        isVisible ? 'is-visible' : ''
+      } ${idx > 0 ? 'hidden md:block' : 'block'}`}
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-xs font-extrabold text-gold">
+            {item.avatar}
+          </div>
+          <div>
+            <h3 className="font-sans font-bold text-sm text-ivory leading-none">{item.author}</h3>
+            <span className="text-[10px] text-muted font-sans mt-1 block">{item.time}</span>
+          </div>
+        </div>
+
+        {item.verified && (
+          <span className="text-[9px] text-[#00c853] font-sans font-bold uppercase tracking-widest border border-[#00c853]/30 bg-[#00c853]/10 px-2 py-0.5 rounded">
+            VERIFIED
+          </span>
+        )}
+      </div>
+
+      <div className="flex text-gold text-xs gap-0.5">
+        {Array.from({ length: item.rating }).map((_, i) => (
+          <span key={i}>★</span>
+        ))}
+      </div>
+
+      <p className="text-xs text-muted leading-relaxed font-sans italic">
+        "{item.text}"
+      </p>
+    </div>
+  );
+};
 
 export const Reviews = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -202,38 +337,18 @@ export const Reviews = () => {
         </p>
       </div>
 
-      {/* ARTISTIC MASONRY GALLERY (CSS Columns eliminates vertical blank gaps completely) */}
+      {/* ARTISTIC MASONRY GALLERY WITH INTERSECTION OBSERVER SCROLL ANIMATION */}
       <div className="columns-2 sm:columns-2 md:columns-3 gap-2.5 sm:gap-4 max-w-4xl mx-auto py-2 font-sans">
         {clientReviews.map((review, index) => {
           const preset = REVIEW_PRESETS[index % REVIEW_PRESETS.length];
-
           return (
-            <div
+            <AnimatedReviewCard
               key={review.id}
+              review={review}
+              index={index}
+              preset={preset}
               onClick={() => setSelectedImageIndex(index)}
-              className={`break-inside-avoid mb-2.5 sm:mb-4 relative group cursor-pointer transition-all duration-500 transform-gpu ${preset.rotate} hover:rotate-0 hover:scale-[1.04] hover:z-30 hover:-translate-y-1.5`}
-            >
-              <div className={`gold-gradient-border bg-[#14171f] p-1.5 sm:p-2 ${preset.rounded} shadow-xl transition-all duration-300 group-hover:shadow-[0_15px_35px_rgba(212,175,55,0.4)]`}>
-                <div className={`relative overflow-hidden ${preset.rounded} ${preset.aspect} bg-charcoal`}>
-                  <img
-                    src={review.image_url || review.image}
-                    alt={`Customer review ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                    loading="lazy"
-                  />
-
-                  {/* Hover Zoom Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end p-2.5">
-                    <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gold text-background flex items-center justify-center shadow-gold-glow mb-1 transition-transform group-hover:scale-110">
-                      <span className="material-symbols-outlined text-lg font-bold">zoom_in</span>
-                    </span>
-                    <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-ivory drop-shadow">
-                      Tap to Enlarge
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            />
           );
         })}
       </div>
@@ -320,40 +435,7 @@ export const Reviews = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-5 min-h-[160px]"
         >
           {visibleGuestReviews.map((item, idx) => (
-            <div
-              key={item.uniqueKey}
-              className={`gold-gradient-border bg-[#14171f] p-5 rounded-md space-y-3 relative hover:border-gold/50 transition duration-500 shadow-lg animate-fadeIn ${
-                idx > 0 ? 'hidden md:block' : 'block'
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-xs font-extrabold text-gold">
-                    {item.avatar}
-                  </div>
-                  <div>
-                    <h3 className="font-sans font-bold text-sm text-ivory leading-none">{item.author}</h3>
-                    <span className="text-[10px] text-muted font-sans mt-1 block">{item.time}</span>
-                  </div>
-                </div>
-
-                {item.verified && (
-                  <span className="text-[9px] text-[#00c853] font-sans font-bold uppercase tracking-widest border border-[#00c853]/30 bg-[#00c853]/10 px-2 py-0.5 rounded">
-                    VERIFIED
-                  </span>
-                )}
-              </div>
-
-              <div className="flex text-gold text-xs gap-0.5">
-                {Array.from({ length: item.rating }).map((_, i) => (
-                  <span key={i}>★</span>
-                ))}
-              </div>
-
-              <p className="text-xs text-muted leading-relaxed font-sans italic">
-                "{item.text}"
-              </p>
-            </div>
+            <AnimatedGuestCard key={item.uniqueKey} item={item} idx={idx} />
           ))}
         </div>
 
