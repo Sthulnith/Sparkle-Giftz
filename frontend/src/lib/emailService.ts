@@ -11,7 +11,7 @@ export interface EmailParams {
   message_body: string;
 }
 
-/** Helper to generate prefilled mailto link for direct mail app opening */
+/** Helper to generate spam-safe prefilled mailto link for direct mail app opening */
 export function generateOrderMailtoUrl(order: Order, status: 'CONFIRMED' | 'CANCELLED'): string {
   const isConfirmed = status === 'CONFIRMED';
   const orderRef = order.order_number || `SG-${order.id}`;
@@ -19,13 +19,15 @@ export function generateOrderMailtoUrl(order: Order, status: 'CONFIRMED' | 'CANC
     ? order.order_items.map(i => `${i.qty}x ${i.product_name}`).join(', ')
     : 'Curated Luxury Gift Box';
 
+  // Spam-safe subject lines (avoid ALL-CAPS words & alert emojis)
   const subject = isConfirmed
-    ? `Your Order #${orderRef} is CONFIRMED - Sparkle Giftz`
-    : `Order Update: #${orderRef} CANCELLED - Sparkle Giftz`;
+    ? `Order Confirmation: #${orderRef} - Sparkle Giftz`
+    : `Order Update for #${orderRef} - Sparkle Giftz`;
 
+  // Spam-safe natural language body text with sender identity
   const body = isConfirmed
-    ? `Dear ${order.customer_name},\n\nGreat news! Your luxury gift box order #${orderRef} has been CONFIRMED by our team at Sparkle Giftz.\n\nOrder Summary:\n• Reference: ${orderRef}\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Items: ${itemSummary}\n\nOur curators are preparing your luxury box. We will notify you once it is dispatched for delivery.\n\nThank you for choosing Sparkle Giftz!`
-    : `Dear ${order.customer_name},\n\nWe regret to inform you that your order #${orderRef} has been CANCELLED.\n\nOrder Details:\n• Reference: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n\nIf you have any questions or require further assistance, please contact our concierge team.\n\nThank you,\nSparkle Giftz Team`;
+    ? `Dear ${order.customer_name},\n\nYour gift box order #${orderRef} has been confirmed by Sparkle Giftz.\n\nOrder Summary:\n• Reference Number: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Items: ${itemSummary}\n\nOur team is currently preparing your order. We will notify you when it is dispatched.\n\nIf you have any questions, feel free to reply to this email or contact our concierge desk.\n\nWarm regards,\nSparkle Giftz Team\nhttps://sparklegiftz.com`
+    : `Dear ${order.customer_name},\n\nThis is an update regarding your order #${orderRef} with Sparkle Giftz.\n\nYour order #${orderRef} (Total: Rs.${order.total.toLocaleString()}.00) has been cancelled.\n\nIf you have any questions or would like to discuss alternative gift box curations, please reply to this email or reach out to our concierge desk.\n\nKind regards,\nSparkle Giftz Team\nhttps://sparklegiftz.com`;
 
   return `mailto:${encodeURIComponent(order.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
@@ -50,20 +52,20 @@ export async function sendOrderStatusEmail(
   }
 
   const isConfirmed = status === 'CONFIRMED';
-  const statusTitle = isConfirmed ? 'CONFIRMED' : 'CANCELLED';
+  const statusTitle = isConfirmed ? 'Confirmed' : 'Cancelled';
   const orderRef = order.order_number || `SG-${order.id}`;
 
   const emailSubject = isConfirmed
-    ? `🎉 Your Order #${orderRef} is CONFIRMED - Sparkle Giftz`
-    : `⚠️ Order Status Update: #${orderRef} CANCELLED - Sparkle Giftz`;
+    ? `Order Confirmation: #${orderRef} - Sparkle Giftz`
+    : `Order Update for #${orderRef} - Sparkle Giftz`;
 
   const itemSummary = order.order_items && order.order_items.length > 0
     ? order.order_items.map(i => `${i.qty}x ${i.product_name}`).join(', ')
     : 'Curated Luxury Gift Box';
 
   const messageBody = isConfirmed
-    ? `Dear ${order.customer_name},\n\nGreat news! Your luxury gift box order #${orderRef} has been CONFIRMED by our team at Sparkle Giftz.\n\nOrder Summary:\n• Reference: ${orderRef}\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Items: ${itemSummary}\n\nOur curators are preparing your luxury box. We will notify you once it is dispatched for delivery.\n\nThank you for choosing Sparkle Giftz!`
-    : `Dear ${order.customer_name},\n\nWe regret to inform you that your order #${orderRef} has been CANCELLED.\n\nOrder Details:\n• Reference: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n\nIf you have any questions or require further assistance, please contact our concierge team.\n\nThank you,\nSparkle Giftz Team`;
+    ? `Dear ${order.customer_name},\n\nYour gift box order #${orderRef} has been confirmed by Sparkle Giftz.\n\nOrder Summary:\n• Reference Number: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Items: ${itemSummary}\n\nOur team is currently preparing your order. We will notify you when it is dispatched.\n\nIf you have any questions, feel free to reply to this email or contact our concierge desk.\n\nWarm regards,\nSparkle Giftz Team\nhttps://sparklegiftz.com`
+    : `Dear ${order.customer_name},\n\nThis is an update regarding your order #${orderRef} with Sparkle Giftz.\n\nYour order #${orderRef} (Total: Rs.${order.total.toLocaleString()}.00) has been cancelled.\n\nIf you have any questions or would like to discuss alternative gift box curations, please reply to this email or reach out to our concierge desk.\n\nKind regards,\nSparkle Giftz Team\nhttps://sparklegiftz.com`;
 
   const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
