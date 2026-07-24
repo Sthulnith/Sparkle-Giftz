@@ -548,15 +548,20 @@ export const Admin = () => {
       if (exists) {
         updatedItems = current.filter(gi => Number(gi.inventory_item_id) !== Number(item.id));
       } else {
+        const defaultColor = (item.colors && item.colors.length > 0) ? item.colors[0].name : undefined;
         const newGi: GiftBoxItem = {
           product_id: 0,
           inventory_item_id: Number(item.id),
           quantity: 1,
+          selected_color: defaultColor,
           inventory_items: item as unknown as import('../lib/supabase').InventoryItem,
         };
         updatedItems = [...current, newGi];
       }
-      const itemsText = updatedItems.map(gi => `• ${gi.quantity}x ${gi.inventory_items?.name || ''}`).join('\n');
+      const itemsText = updatedItems.map(gi => {
+        const colorStr = gi.selected_color ? ` (${gi.selected_color})` : '';
+        return `• ${gi.quantity}x ${gi.inventory_items?.name || ''}${colorStr}`;
+      }).join('\n');
       const baseParts = (prev.description || '').split(/\n\nIncluded Items:\n/);
       const baseDesc = baseParts[0]?.trim() || 'A curated luxury gift box containing hand-selected premium store items.';
       return {
@@ -576,7 +581,33 @@ export const Admin = () => {
         }
         return gi;
       });
-      const itemsText = updatedItems.map(gi => `• ${gi.quantity}x ${gi.inventory_items?.name || ''}`).join('\n');
+      const itemsText = updatedItems.map(gi => {
+        const colorStr = gi.selected_color ? ` (${gi.selected_color})` : '';
+        return `• ${gi.quantity}x ${gi.inventory_items?.name || ''}${colorStr}`;
+      }).join('\n');
+      const baseParts = (prev.description || '').split(/\n\nIncluded Items:\n/);
+      const baseDesc = baseParts[0]?.trim() || 'A curated luxury gift box containing hand-selected premium store items.';
+      return {
+        ...prev,
+        gift_box_items: updatedItems,
+        description: `${baseDesc}\n\nIncluded Items:\n${itemsText}`,
+      };
+    });
+  };
+
+  const handleUpdateIncludeItemColorNew = (itemId: string | number, colorName: string) => {
+    setNewProduct(prev => {
+      const current = prev.gift_box_items || [];
+      const updatedItems = current.map(gi => {
+        if (Number(gi.inventory_item_id) === Number(itemId)) {
+          return { ...gi, selected_color: colorName };
+        }
+        return gi;
+      });
+      const itemsText = updatedItems.map(gi => {
+        const colorStr = gi.selected_color ? ` (${gi.selected_color})` : '';
+        return `• ${gi.quantity}x ${gi.inventory_items?.name || ''}${colorStr}`;
+      }).join('\n');
       const baseParts = (prev.description || '').split(/\n\nIncluded Items:\n/);
       const baseDesc = baseParts[0]?.trim() || 'A curated luxury gift box containing hand-selected premium store items.';
       return {
@@ -595,15 +626,20 @@ export const Admin = () => {
     if (exists) {
       updatedItems = current.filter(gi => Number(gi.inventory_item_id) !== Number(item.id));
     } else {
+      const defaultColor = (item.colors && item.colors.length > 0) ? item.colors[0].name : undefined;
       const newGi: GiftBoxItem = {
         product_id: editingProduct.id,
         inventory_item_id: Number(item.id),
         quantity: 1,
+        selected_color: defaultColor,
         inventory_items: item as unknown as import('../lib/supabase').InventoryItem,
       };
       updatedItems = [...current, newGi];
     }
-    const itemsText = updatedItems.map(gi => `• ${gi.quantity}x ${gi.inventory_items?.name || ''}`).join('\n');
+    const itemsText = updatedItems.map(gi => {
+      const colorStr = gi.selected_color ? ` (${gi.selected_color})` : '';
+      return `• ${gi.quantity}x ${gi.inventory_items?.name || ''}${colorStr}`;
+    }).join('\n');
     const baseParts = (editingProduct.description || '').split(/\n\nIncluded Items:\n/);
     const baseDesc = baseParts[0]?.trim() || 'A curated luxury gift box containing hand-selected premium store items.';
     setEditingProduct({
@@ -622,7 +658,32 @@ export const Admin = () => {
       }
       return gi;
     });
-    const itemsText = updatedItems.map(gi => `• ${gi.quantity}x ${gi.inventory_items?.name || ''}`).join('\n');
+    const itemsText = updatedItems.map(gi => {
+      const colorStr = gi.selected_color ? ` (${gi.selected_color})` : '';
+      return `• ${gi.quantity}x ${gi.inventory_items?.name || ''}${colorStr}`;
+    }).join('\n');
+    const baseParts = (editingProduct.description || '').split(/\n\nIncluded Items:\n/);
+    const baseDesc = baseParts[0]?.trim() || '';
+    setEditingProduct({
+      ...editingProduct,
+      gift_box_items: updatedItems,
+      description: `${baseDesc}\n\nIncluded Items:\n${itemsText}`,
+    });
+  };
+
+  const handleUpdateIncludeItemColorEdit = (itemId: string | number, colorName: string) => {
+    if (!editingProduct) return;
+    const current = editingProduct.gift_box_items || [];
+    const updatedItems = current.map(gi => {
+      if (Number(gi.inventory_item_id) === Number(itemId)) {
+        return { ...gi, selected_color: colorName };
+      }
+      return gi;
+    });
+    const itemsText = updatedItems.map(gi => {
+      const colorStr = gi.selected_color ? ` (${gi.selected_color})` : '';
+      return `• ${gi.quantity}x ${gi.inventory_items?.name || ''}${colorStr}`;
+    }).join('\n');
     const baseParts = (editingProduct.description || '').split(/\n\nIncluded Items:\n/);
     const baseDesc = baseParts[0]?.trim() || '';
     setEditingProduct({
@@ -718,6 +779,7 @@ export const Admin = () => {
     const includedItems = (newProduct.gift_box_items || []).map(gi => ({
       inventory_item_id: Number(gi.inventory_item_id),
       quantity: gi.quantity,
+      selected_color: gi.selected_color || undefined,
     }));
     const result = await createProduct({
       name: newProduct.name.trim(),
@@ -748,6 +810,7 @@ export const Admin = () => {
     const includedItems = (editingProduct.gift_box_items || []).map(gi => ({
       inventory_item_id: Number(gi.inventory_item_id),
       quantity: gi.quantity,
+      selected_color: gi.selected_color || undefined,
     }));
     const ok = await updateProduct(
       editingProduct.id,
@@ -3212,24 +3275,43 @@ export const Admin = () => {
                             </label>
 
                             {isChecked && (
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-[10px] text-muted font-sans font-semibold uppercase">Qty:</span>
-                                <div className="flex items-center bg-charcoal border border-gold/30 rounded">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateIncludeItemQtyNew(item.id, -1)}
-                                    className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
-                                  >
-                                    -
-                                  </button>
-                                  <span className="w-6 text-center text-xs font-bold text-ivory font-mono">{currentQty}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateIncludeItemQtyNew(item.id, 1)}
-                                    className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
-                                  >
-                                    +
-                                  </button>
+                              <div className="flex items-center gap-3 shrink-0">
+                                {item.colors && item.colors.length > 0 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] text-gold font-sans font-bold uppercase">Color:</span>
+                                    <select
+                                      value={selectedObj?.selected_color || item.colors[0]?.name || ''}
+                                      onChange={(e) => handleUpdateIncludeItemColorNew(item.id, e.target.value)}
+                                      className="bg-charcoal border border-gold/40 rounded text-xs text-ivory font-bold px-2 py-0.5 focus:border-gold outline-none cursor-pointer"
+                                    >
+                                      {item.colors.map((c, cIdx) => (
+                                        <option key={cIdx} value={c.name} className="bg-charcoal text-ivory">
+                                          {c.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] text-muted font-sans font-semibold uppercase">Qty:</span>
+                                  <div className="flex items-center bg-charcoal border border-gold/30 rounded">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateIncludeItemQtyNew(item.id, -1)}
+                                      className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="w-6 text-center text-xs font-bold text-ivory font-mono">{currentQty}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateIncludeItemQtyNew(item.id, 1)}
+                                      className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             )}
@@ -3512,24 +3594,43 @@ export const Admin = () => {
                             </label>
 
                             {isChecked && (
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-[10px] text-muted font-sans font-semibold uppercase">Qty:</span>
-                                <div className="flex items-center bg-charcoal border border-gold/30 rounded">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateIncludeItemQtyEdit(item.id, -1)}
-                                    className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
-                                  >
-                                    -
-                                  </button>
-                                  <span className="w-6 text-center text-xs font-bold text-ivory font-mono">{currentQty}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateIncludeItemQtyEdit(item.id, 1)}
-                                    className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
-                                  >
-                                    +
-                                  </button>
+                              <div className="flex items-center gap-3 shrink-0">
+                                {item.colors && item.colors.length > 0 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] text-gold font-sans font-bold uppercase">Color:</span>
+                                    <select
+                                      value={selectedObj?.selected_color || item.colors[0]?.name || ''}
+                                      onChange={(e) => handleUpdateIncludeItemColorEdit(item.id, e.target.value)}
+                                      className="bg-charcoal border border-gold/40 rounded text-xs text-ivory font-bold px-2 py-0.5 focus:border-gold outline-none cursor-pointer"
+                                    >
+                                      {item.colors.map((c, cIdx) => (
+                                        <option key={cIdx} value={c.name} className="bg-charcoal text-ivory">
+                                          {c.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] text-muted font-sans font-semibold uppercase">Qty:</span>
+                                  <div className="flex items-center bg-charcoal border border-gold/30 rounded">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateIncludeItemQtyEdit(item.id, -1)}
+                                      className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="w-6 text-center text-xs font-bold text-ivory font-mono">{currentQty}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateIncludeItemQtyEdit(item.id, 1)}
+                                      className="w-6 h-6 text-gold hover:bg-gold hover:text-background font-bold text-xs flex items-center justify-center transition"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             )}

@@ -45,6 +45,7 @@ export interface GiftBoxItem {
   product_id: number;
   inventory_item_id: number;
   quantity: number;
+  selected_color?: string;
   sort_order?: number;
   // joined from inventory_items:
   inventory_items?: InventoryItem;
@@ -194,9 +195,10 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       gift_box_items (
         id,
         quantity,
+        selected_color,
         sort_order,
         inventory_item_id,
-        inventory_items ( id, sku, name, category, price, image_url )
+        inventory_items ( id, sku, name, category, price, image_url, colors )
       )
     `)
     .eq('slug', slug)
@@ -219,9 +221,10 @@ export async function getAdminProducts(): Promise<Product[]> {
       gift_box_items (
         id,
         quantity,
+        selected_color,
         sort_order,
         inventory_item_id,
-        inventory_items ( id, sku, name, category, price, image_url )
+        inventory_items ( id, sku, name, category, price, image_url, colors )
       )
     `)
     .order('created_at', { ascending: false });
@@ -243,7 +246,7 @@ export async function createProduct(input: {
   stock: number;
   default_wrapping?: string;
   image_urls?: string[];
-  includedItems?: { inventory_item_id: number; quantity: number }[];
+  includedItems?: { inventory_item_id: number; quantity: number; selected_color?: string }[];
 }): Promise<Product | null> {
   const slug = input.slug || input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
@@ -276,6 +279,7 @@ export async function createProduct(input: {
       product_id: product.id,
       inventory_item_id: item.inventory_item_id,
       quantity: item.quantity,
+      selected_color: item.selected_color || null,
       sort_order: idx,
     }));
     const { error: itemErr } = await supabase.from('gift_box_items').insert(itemRows);
@@ -299,7 +303,7 @@ export async function updateProduct(
     image_urls: string[];
     is_active: boolean;
   }>,
-  includedItems?: { inventory_item_id: number; quantity: number }[]
+  includedItems?: { inventory_item_id: number; quantity: number; selected_color?: string }[]
 ): Promise<boolean> {
   const { error } = await supabase
     .from('products')
@@ -319,6 +323,7 @@ export async function updateProduct(
         product_id: id,
         inventory_item_id: item.inventory_item_id,
         quantity: item.quantity,
+        selected_color: item.selected_color || null,
         sort_order: idx,
       }));
       const { error: itemErr } = await supabase.from('gift_box_items').insert(itemRows);
