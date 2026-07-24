@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getProducts, type Product } from '../lib/supabase';
 
 const ITEMS_PER_PAGE = 10;
 
 export const Shop = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -305,7 +306,8 @@ export const Shop = () => {
                   return (
                     <div
                       key={product.id}
-                      className="gold-gradient-border bg-charcoal p-2 sm:p-3.5 rounded flex flex-col justify-between package-card-hover group relative"
+                      onClick={() => navigate(`/product/${product.slug}`)}
+                      className="gold-gradient-border bg-charcoal p-2 sm:p-3.5 rounded flex flex-col justify-between package-card-hover group relative cursor-pointer"
                     >
                       <div>
                         {/* Image Frame with Badges */}
