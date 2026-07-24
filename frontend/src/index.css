@@ -60,6 +60,15 @@
   }
 }
 
+/* Prevent iOS Safari & Mobile Chrome Auto-Zoom on Input Focus */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Scrollbar None Utility for Horizontal Mobile Scrollbars */
 .scrollbar-none::-webkit-scrollbar {
   display: none;
