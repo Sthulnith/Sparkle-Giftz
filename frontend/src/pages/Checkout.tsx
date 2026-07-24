@@ -185,16 +185,18 @@ export const Checkout = () => {
 
     try {
       const firstItem = cartItems[0];
-      const itemDetailsWrapping = cartItems.map(item => `${item.name} (${item.wrapping})`).join(', ');
+      const itemDetailsWrapping = cartItems.length > 1
+        ? `${firstItem?.name || 'Gift Box'} +${cartItems.length - 1} more (${firstItem?.wrapping || 'Signature Matte Black'})`
+        : `${firstItem?.name || 'Gift Box'} (${firstItem?.wrapping || 'Signature Matte Black'})`;
       const itemDetailsMessage = cartItems.map(item => item.giftMessage).filter(Boolean).join(' | ');
       const customGift = cartItems.find(i => i.isCustom && i.customDetails)?.customDetails;
 
       const createdOrder = await createOrder({
-        customer_name: fullName,
-        phone,
-        email,
-        address,
-        city,
+        customer_name: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
+        address: address.trim(),
+        city: city.trim(),
         subtotal,
         delivery_fee: deliveryFee,
         total,
@@ -202,7 +204,7 @@ export const Checkout = () => {
         payment_status: paymentMethod === 'PAYHERE' ? 'PAID' : 'PENDING',
         order_status: 'PENDING',
         gift_message: itemDetailsMessage || firstItem?.giftMessage || undefined,
-        wrapping: itemDetailsWrapping || firstItem?.wrapping || 'Standard Premium Box',
+        wrapping: itemDetailsWrapping.length > 90 ? itemDetailsWrapping.slice(0, 87) + '...' : itemDetailsWrapping,
         delivery_date: deliveryDate,
         cart_items: cartItems as any,
         custom_gift_details: customGift as any,
