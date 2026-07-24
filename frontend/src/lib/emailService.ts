@@ -9,6 +9,8 @@ export interface EmailParams {
   delivery_date: string;
   items_summary: string;
   message_body: string;
+  from_name?: string;
+  reply_to?: string;
 }
 
 /** Helper to generate spam-safe prefilled mailto link for direct mail app opening */
@@ -89,6 +91,8 @@ export async function sendOrderStatusEmail(
     template_params: {
       to_email: order.email,
       to_name: order.customer_name,
+      from_name: 'Sparkle Giftz Concierge',
+      reply_to: 'support@sparklegiftz.com',
       order_ref: orderRef,
       order_status: statusTitle,
       total_price: `Rs.${order.total.toLocaleString()}.00`,
