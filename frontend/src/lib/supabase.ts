@@ -195,7 +195,6 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       gift_box_items (
         id,
         quantity,
-        selected_color,
         sort_order,
         inventory_item_id,
         inventory_items ( id, sku, name, category, price, image_url, colors )
@@ -221,7 +220,6 @@ export async function getAdminProducts(): Promise<Product[]> {
       gift_box_items (
         id,
         quantity,
-        selected_color,
         sort_order,
         inventory_item_id,
         inventory_items ( id, sku, name, category, price, image_url, colors )
@@ -279,7 +277,6 @@ export async function createProduct(input: {
       product_id: product.id,
       inventory_item_id: item.inventory_item_id,
       quantity: item.quantity,
-      selected_color: item.selected_color || null,
       sort_order: idx,
     }));
     const { error: itemErr } = await supabase.from('gift_box_items').insert(itemRows);
@@ -323,7 +320,6 @@ export async function updateProduct(
         product_id: id,
         inventory_item_id: item.inventory_item_id,
         quantity: item.quantity,
-        selected_color: item.selected_color || null,
         sort_order: idx,
       }));
       const { error: itemErr } = await supabase.from('gift_box_items').insert(itemRows);
