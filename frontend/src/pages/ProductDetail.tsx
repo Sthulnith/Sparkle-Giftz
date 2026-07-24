@@ -19,6 +19,7 @@ export const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'details' | 'wrapping'>('details');
 
@@ -34,6 +35,28 @@ export const ProductDetail = () => {
   // Gift options
   const [giftMessage, setGiftMessage] = useState<string>('');
   const [wrappingOption, setWrappingOption] = useState<string>('Signature Matte Black & Gold Foil');
+
+  // Lightbox handlers
+  const handlePrevLightboxImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setActiveImageIndex((prev) => (prev === 0 ? (displayImages.length || 1) - 1 : prev - 1));
+  };
+
+  const handleNextLightboxImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setActiveImageIndex((prev) => (prev === (displayImages.length || 1) - 1 ? 0 : prev + 1));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isLightboxOpen) return;
+      if (e.key === 'Escape') setIsLightboxOpen(false);
+      if (e.key === 'ArrowLeft') handlePrevLightboxImage();
+      if (e.key === 'ArrowRight') handleNextLightboxImage();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen]);
 
   useEffect(() => {
     if (!slug) return;
@@ -251,20 +274,37 @@ export const ProductDetail = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* PRODUCT GALLERY */}
         <div className="space-y-4">
-          <div className="gold-gradient-border bg-charcoal h-72 sm:h-[450px] aspect-square overflow-hidden rounded relative">
+          <div
+            onClick={() => displayImages.length > 0 && setIsLightboxOpen(true)}
+            className="gold-gradient-border bg-charcoal h-72 sm:h-[450px] aspect-square overflow-hidden rounded relative group cursor-pointer"
+            title="Click to view full screen image"
+          >
             {displayImages.length > 0 ? (
-              <img
-                src={displayImages[activeImageIndex] || displayImages[0]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img
+                  src={displayImages[activeImageIndex] || displayImages[0]}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                {/* Zoom Badge Button */}
+                <div className="absolute top-3 right-3 z-10 bg-black/60 backdrop-blur-xs border border-gold/30 text-gold p-2 rounded-full opacity-80 group-hover:opacity-100 group-hover:bg-gold group-hover:text-background transition shadow-lg">
+                  <span className="material-symbols-outlined text-lg block">zoom_in</span>
+                </div>
+                {/* Fullscreen Overlay Hint */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-gold text-base">fullscreen</span>
+                  <span className="text-xs font-sans font-bold uppercase tracking-wider text-ivory drop-shadow">
+                    Click to View Full Image
+                  </span>
+                </div>
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted uppercase font-sans">
                 No Image Available
               </div>
             )}
             {product.stock <= 0 && (
-              <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-20">
                 <span className="border border-red-500/30 bg-red-950/60 text-red-200 text-sm px-4 py-2 font-sans font-bold uppercase tracking-widest">
                   Out of Stock
                 </span>
@@ -908,6 +948,68 @@ export const ProductDetail = () => {
           )}
         </div>
       </div>
+
+      {/* FULLSCREEN IMAGE LIGHTBOX MODAL */}
+      {isLightboxOpen && displayImages.length > 0 && (
+        <div
+          onClick={() => setIsLightboxOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn"
+        >
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-4 right-4 z-50 text-white/80 hover:text-white p-2.5 rounded-full bg-black/60 hover:bg-black/90 border border-gold/30 transition cursor-pointer"
+            title="Close Fullscreen View (Esc)"
+          >
+            <span className="material-symbols-outlined text-2xl block">close</span>
+          </button>
+
+          {/* Previous Arrow */}
+          {displayImages.length > 1 && (
+            <button
+              type="button"
+              onClick={handlePrevLightboxImage}
+              className="absolute left-3 sm:left-6 z-50 text-gold hover:text-white p-3 rounded-full bg-black/70 hover:bg-black/90 border border-gold/40 transition cursor-pointer shadow-lg"
+              title="Previous Image (Left Arrow)"
+            >
+              <span className="material-symbols-outlined text-2xl block">chevron_left</span>
+            </button>
+          )}
+
+          {/* Main Image Frame */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-4xl max-h-[85vh] flex flex-col items-center justify-center space-y-3"
+          >
+            <img
+              src={displayImages[activeImageIndex] || displayImages[0]}
+              alt={product ? product.name : 'Full view'}
+              className="max-w-full max-h-[78vh] object-contain rounded-lg shadow-2xl border border-gold/30 bg-black"
+            />
+
+            {/* Title & Counter Badge */}
+            <div className="bg-black/80 backdrop-blur border border-gold/30 text-ivory text-xs font-sans font-semibold px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2">
+              <span className="text-gold font-bold">{product ? product.name : 'Gift Box'}</span>
+              {displayImages.length > 1 && (
+                <span className="text-muted text-[11px]">({activeImageIndex + 1} of {displayImages.length})</span>
+              )}
+            </div>
+          </div>
+
+          {/* Next Arrow */}
+          {displayImages.length > 1 && (
+            <button
+              type="button"
+              onClick={handleNextLightboxImage}
+              className="absolute right-3 sm:right-6 z-50 text-gold hover:text-white p-3 rounded-full bg-black/70 hover:bg-black/90 border border-gold/40 transition cursor-pointer shadow-lg"
+              title="Next Image (Right Arrow)"
+            >
+              <span className="material-symbols-outlined text-2xl block">chevron_right</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
