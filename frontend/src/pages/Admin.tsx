@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { clearSession, isAuthenticated } from '../lib/auth';
+import { sendOrderStatusEmail } from '../lib/emailService';
 import {
   getAdminProducts,
   createProduct,
@@ -939,11 +940,18 @@ export const Admin = () => {
     setStockAdjustNote('');
   };
 
-  // Order Status Handler — Supabase backed
+  // Order Status Handler — Supabase backed + Automatic Email Notification
   const handleOrderStatusChange = async (orderId: number, status: Order['order_status']) => {
+    const targetOrder = orders.find(o => o.id === orderId);
     const paymentStatus = status === 'CONFIRMED' ? 'PAID' as const : undefined;
     const ok = await updateOrderStatus(orderId, status, paymentStatus);
     if (ok) {
+      // Automatically send confirmation or cancellation email if status is CONFIRMED or CANCELLED
+      if (targetOrder && (status === 'CONFIRMED' || status === 'CANCELLED')) {
+        const emailResult = await sendOrderStatusEmail(targetOrder, status);
+        console.log(`[Admin] Automatic status email (${status}):`, emailResult.message);
+      }
+
       await loadData();
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder(prev => prev ? {
