@@ -11,14 +11,39 @@ export interface EmailParams {
   message_body: string;
 }
 
+/** Helper to generate prefilled mailto link for direct mail app opening */
+export function generateOrderMailtoUrl(order: Order, status: 'CONFIRMED' | 'CANCELLED'): string {
+  const isConfirmed = status === 'CONFIRMED';
+  const orderRef = order.order_number || `SG-${order.id}`;
+  const itemSummary = order.order_items && order.order_items.length > 0
+    ? order.order_items.map(i => `${i.qty}x ${i.product_name}`).join(', ')
+    : 'Curated Luxury Gift Box';
+
+  const subject = isConfirmed
+    ? `Your Order #${orderRef} is CONFIRMED - Sparkle Giftz`
+    : `Order Update: #${orderRef} CANCELLED - Sparkle Giftz`;
+
+  const body = isConfirmed
+    ? `Dear ${order.customer_name},\n\nGreat news! Your luxury gift box order #${orderRef} has been CONFIRMED by our team at Sparkle Giftz.\n\nOrder Summary:\n• Reference: ${orderRef}\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Items: ${itemSummary}\n\nOur curators are preparing your luxury box. We will notify you once it is dispatched for delivery.\n\nThank you for choosing Sparkle Giftz!`
+    : `Dear ${order.customer_name},\n\nWe regret to inform you that your order #${orderRef} has been CANCELLED.\n\nOrder Details:\n• Reference: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n\nIf you have any questions or require further assistance, please contact our concierge team.\n\nThank you,\nSparkle Giftz Team`;
+
+  return `mailto:${encodeURIComponent(order.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/** Open default email client with prefilled order status message */
+export function openMailClientForOrder(order: Order, status: 'CONFIRMED' | 'CANCELLED'): void {
+  const mailtoUrl = generateOrderMailtoUrl(order, status);
+  window.open(mailtoUrl, '_blank');
+}
+
 /**
  * Automatically sends order status update emails (CONFIRMED / CANCELLED) to customer.
- * Uses EmailJS REST API with fallback notifications.
+ * Uses EmailJS API when VITE_EMAILJS_PUBLIC_KEY is configured, with mailto fallback.
  */
 export async function sendOrderStatusEmail(
   order: Order,
   status: 'CONFIRMED' | 'CANCELLED'
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; usedFallback?: boolean }> {
   if (!order.email) {
     console.warn('[EmailService] Customer email address is missing for order:', order.order_number || order.id);
     return { success: false, message: 'Customer email address is missing' };
@@ -40,10 +65,20 @@ export async function sendOrderStatusEmail(
     ? `Dear ${order.customer_name},\n\nGreat news! Your luxury gift box order #${orderRef} has been CONFIRMED by our team at Sparkle Giftz.\n\nOrder Summary:\n• Reference: ${orderRef}\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Items: ${itemSummary}\n\nOur curators are preparing your luxury box. We will notify you once it is dispatched for delivery.\n\nThank you for choosing Sparkle Giftz!`
     : `Dear ${order.customer_name},\n\nWe regret to inform you that your order #${orderRef} has been CANCELLED.\n\nOrder Details:\n• Reference: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n\nIf you have any questions or require further assistance, please contact our concierge team.\n\nThank you,\nSparkle Giftz Team`;
 
-  // EmailJS REST API Integration
-  const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_sparkle';
-  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_order_status';
-  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'user_sparkle_pub';
+  const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+  // If EmailJS env credentials are not provided, trigger mailto fallback
+  if (!serviceId || !templateId || !publicKey) {
+    console.info('[EmailService] EmailJS env credentials missing. Using mailto fallback.');
+    openMailClientForOrder(order, status);
+    return {
+      success: true,
+      message: `Opened mail client for ${order.email} (EmailJS keys not configured in environment)`,
+      usedFallback: true,
+    };
+  }
 
   const payload = {
     service_id: serviceId,
@@ -76,11 +111,21 @@ export async function sendOrderStatusEmail(
       return { success: true, message: `Email notification sent to ${order.email}` };
     } else {
       const errText = await response.text();
-      console.warn(`[EmailService] EmailJS status: ${response.status} - ${errText}`);
-      return { success: true, message: `Status updated & email queued for ${order.email}` };
+      console.warn(`[EmailService] EmailJS API error (${response.status}): ${errText}`);
+      openMailClientForOrder(order, status);
+      return {
+        success: true,
+        message: `Opened mail app for ${order.email} (EmailJS returned status ${response.status})`,
+        usedFallback: true,
+      };
     }
   } catch (err) {
     console.error('[EmailService] Error sending status email:', err);
-    return { success: true, message: `Status updated for order #${orderRef}` };
+    openMailClientForOrder(order, status);
+    return {
+      success: true,
+      message: `Opened mail app for ${order.email}`,
+      usedFallback: true,
+    };
   }
 }

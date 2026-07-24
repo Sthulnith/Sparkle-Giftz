@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { clearSession, isAuthenticated } from '../lib/auth';
-import { sendOrderStatusEmail } from '../lib/emailService';
+import { sendOrderStatusEmail, openMailClientForOrder } from '../lib/emailService';
 import {
   getAdminProducts,
   createProduct,
@@ -3928,18 +3928,27 @@ export const Admin = () => {
                     <option value="CANCELLED">CANCELLED</option>
                   </select>
                 </div>
-                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => openMailClientForOrder(selectedOrder, selectedOrder.order_status === 'CANCELLED' ? 'CANCELLED' : 'CONFIRMED')}
+                    className="flex-1 sm:flex-none px-3.5 py-2.5 bg-[#1b2238] hover:bg-[#2563eb] border border-blue-400/40 text-blue-300 hover:text-white font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px] flex items-center justify-center gap-1.5 cursor-pointer rounded"
+                    title="Open pre-filled email client to send status update to customer"
+                  >
+                    <span className="material-symbols-outlined text-sm font-bold">mail</span>
+                    Send Email
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleDeleteOrder(selectedOrder)}
-                    className="flex-1 sm:flex-none px-4 py-2.5 bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px] flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px] flex items-center justify-center gap-1.5 cursor-pointer rounded"
                   >
                     <span className="material-symbols-outlined text-sm font-bold">delete</span>
                     Delete Order
                   </button>
                   <button
                     onClick={() => setSelectedOrder(null)}
-                    className="flex-1 sm:flex-none px-5 py-2.5 bg-gold hover:bg-gold-light text-background font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px] cursor-pointer"
+                    className="flex-1 sm:flex-none px-5 py-2.5 bg-gold hover:bg-gold-light text-background font-semibold text-xs font-sans uppercase tracking-wider transition min-h-[44px] cursor-pointer rounded"
                   >
                     Close Summary
                   </button>
