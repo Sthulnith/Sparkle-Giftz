@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createOrder } from '../lib/supabase';
+import { sendOrderPlacementEmail } from '../lib/emailService';
 
 interface CustomItem {
   id: number | string;
@@ -216,6 +217,24 @@ export const Checkout = () => {
         return;
       }
 
+      // Automatically send order placement confirmation email to customer ONLY
+      try {
+        const emailResult = await sendOrderPlacementEmail({
+          id: createdOrder.id,
+          order_number: createdOrder.order_number,
+          customer_name: createdOrder.customer_name,
+          email: createdOrder.email,
+          total: createdOrder.total,
+          delivery_date: createdOrder.delivery_date,
+          payment_method: createdOrder.payment_method === 'PAYHERE' ? 'Bank Transfer' : 'Cash on Delivery (COD)',
+          cart_items: cartItems.map(i => ({ quantity: i.quantity, name: i.name })),
+        });
+        console.log('[Checkout] Email result:', emailResult);
+      } catch (emailErr) {
+        console.error('[Checkout] Email sending error:', emailErr);
+      }
+
+
       // Notify other windows/components
       window.dispatchEvent(new Event('sparkle_products_updated'));
       window.dispatchEvent(new Event('storage'));
@@ -332,6 +351,26 @@ export const Checkout = () => {
               </a>
             </div>
           )}
+
+          {/* EMAIL NOTIFICATION & SPAM ALERT BANNER */}
+          <div className="bg-gold/10 border border-gold/40 p-4 sm:p-5 rounded-lg text-left space-y-2.5 my-5 shadow-md animate-fadeIn font-sans">
+            <div className="flex items-center gap-2.5 text-gold font-bold text-xs uppercase tracking-wider">
+              <span className="material-symbols-outlined text-xl text-gold">mark_email_unread</span>
+              <span>Order Details Sent to Your Email</span>
+            </div>
+            <p className="text-xs text-ivory/90 leading-relaxed">
+              We've dispatched your order receipt & curation details to <strong className="text-gold font-semibold">{placedOrder.email || (placedOrder as any).email}</strong>.
+            </p>
+            <div className="bg-background/80 border border-gold/20 p-3 rounded text-[11px] text-muted space-y-1.5">
+              <p className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                <span className="material-symbols-outlined text-sm text-amber-400">info</span>
+                <span>Important: Check Spam / Junk Folder</span>
+              </p>
+              <p className="text-ivory/80 leading-relaxed">
+                If you don't see our message in your primary inbox, please check your <strong>Spam / Junk</strong> folder and mark it as <strong className="text-gold font-semibold">"Not Spam"</strong> or <strong className="text-gold font-semibold">"Mark as Safe"</strong> to receive continuous status updates on your order.
+              </p>
+            </div>
+          </div>
 
           <p className="text-xs text-muted leading-relaxed font-sans max-w-md mx-auto">
             A luxury curation desk representative will contact you shortly on your provided telephone number to coordinate shipment delivery timings.

@@ -53,6 +53,9 @@ export const CustomizeGift: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [availableProducts, setAvailableProducts] = useState<CustomProductItem[]>([]);
 
+  // Full-screen image-only view state
+  const [selectedFullImage, setSelectedFullImage] = useState<string | null>(null);
+
   // Load custom inventory directly from Supabase
   useEffect(() => {
     const fetchInventory = async () => {
@@ -338,7 +341,7 @@ export const CustomizeGift: React.FC = () => {
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
               {filteredProducts.map((product) => {
                 const selected = selectedItems[product.id];
                 const qty = selected ? selected.quantity : 0;
@@ -353,26 +356,33 @@ export const CustomizeGift: React.FC = () => {
                 return (
                   <div
                     key={product.id}
-                    className={`bg-background/80 border rounded-lg p-3 flex flex-col justify-between transition-all duration-200 hover:border-gold/50 relative ${
+                    className={`bg-background/80 border rounded-lg p-2 sm:p-3 flex flex-col justify-between transition-all duration-200 hover:border-gold/50 relative ${
                       isOutOfStock ? 'opacity-60 border-red-900/30' : qty > 0 ? 'border-gold shadow-gold-glow bg-gold/5' : 'border-gold/20'
                     }`}
                   >
                     <div>
-                      {/* Image Frame */}
-                      <div className="aspect-square bg-charcoal rounded overflow-hidden mb-2 relative border border-gold/15 group">
+                      {/* Image Frame - Click to View Full Image Only */}
+                      <div
+                        onClick={() => setSelectedFullImage(displayImage)}
+                        className="aspect-square bg-charcoal rounded overflow-hidden mb-2 relative border border-gold/15 group cursor-pointer"
+                        title="Click to view full image"
+                      >
                         <img src={displayImage} alt={product.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                          <span className="material-symbols-outlined text-white text-2xl drop-shadow-md">zoom_in</span>
+                        </div>
                         {qty > 0 && (
-                          <span className="absolute top-2 right-2 bg-gold text-background font-extrabold text-[11px] w-6 h-6 rounded-full flex items-center justify-center shadow">
+                          <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-gold text-background font-extrabold text-[10px] sm:text-[11px] w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center shadow z-10">
                             {qty}
                           </span>
                         )}
                         {isOutOfStock && (
-                          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-black/80 text-center py-1 text-[10px] font-bold uppercase tracking-wider text-red-400 border-y border-red-500/30">
+                          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-black/80 text-center py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-red-400 border-y border-red-500/30 z-10">
                             OUT OF STOCK
                           </div>
                         )}
                         {isLowStock && !isOutOfStock && (
-                          <span className="absolute top-2 left-2 bg-amber-600/90 text-white text-[9px] font-extrabold px-2 py-0.5 rounded shadow uppercase font-sans">
+                          <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-amber-600/90 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded shadow uppercase font-sans z-10">
                             Only {product.stock} left
                           </span>
                         )}
@@ -380,7 +390,7 @@ export const CustomizeGift: React.FC = () => {
 
                       {/* Variant Photo Thumbnails (If current selected color has multiple photos) */}
                       {activeVariantPhotos.length > 1 && (
-                        <div className="flex gap-1.5 mb-2 overflow-x-auto pb-1 scrollbar-none">
+                        <div className="flex gap-1 mb-2 overflow-x-auto pb-1 scrollbar-none">
                           {activeVariantPhotos.map((photo: string, pIdx: number) => {
                             const isCurrent = displayImage === photo;
                             return (
@@ -403,7 +413,7 @@ export const CustomizeGift: React.FC = () => {
                                     return prev;
                                   });
                                 }}
-                                className={`w-8 h-8 rounded overflow-hidden border transition shrink-0 cursor-pointer ${
+                                className={`w-6 h-6 sm:w-8 sm:h-8 rounded overflow-hidden border transition shrink-0 cursor-pointer ${
                                   isCurrent ? 'border-gold ring-1 ring-gold shadow-sm' : 'border-gold/20 opacity-70 hover:opacity-100'
                                 }`}
                               >
@@ -415,14 +425,14 @@ export const CustomizeGift: React.FC = () => {
                       )}
 
                       <div className="flex justify-between items-center mb-0.5">
-                        <span className="text-[9px] uppercase tracking-wider text-muted font-sans truncate">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-muted font-sans truncate">
                           {product.category}
                         </span>
-                        <span className="text-[9px] font-mono text-muted/60">
+                        <span className="text-[8px] sm:text-[9px] font-mono text-muted/60">
                           {product.sku}
                         </span>
                       </div>
-                      <h4 className="font-serif text-xs sm:text-sm font-semibold text-ivory line-clamp-1 mb-1">
+                      <h4 className="font-serif text-xs sm:text-sm font-semibold text-ivory line-clamp-1 mb-1" title={product.name}>
                         {product.name}
                       </h4>
                       <p className="text-gold font-bold text-xs font-sans mb-2">
@@ -431,13 +441,13 @@ export const CustomizeGift: React.FC = () => {
 
                       {/* Color Options Selection Pills */}
                       {product.colors && product.colors.length > 0 && (
-                        <div className="mb-3 font-sans">
-                          <p className="text-[9px] uppercase font-bold text-gold tracking-wider mb-1.5 flex items-center justify-between">
-                            <span className="flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[11px]">palette</span>
-                              <span>COLOR: <strong className="text-ivory font-extrabold uppercase">{activeColorName}</strong></span>
+                        <div className="mb-2.5 font-sans">
+                          <p className="text-[8px] sm:text-[9px] uppercase font-bold text-gold tracking-wider mb-1 flex items-center justify-between">
+                            <span className="flex items-center gap-1 truncate">
+                              <span className="material-symbols-outlined text-[10px] sm:text-[11px] shrink-0">palette</span>
+                              <span className="truncate">COLOR: <strong className="text-ivory font-extrabold uppercase">{activeColorName}</strong></span>
                             </span>
-                            <span className="text-[9px] text-muted font-normal">({product.colors.length} Available)</span>
+                            <span className="text-[8px] sm:text-[9px] text-muted font-normal shrink-0">({product.colors.length})</span>
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {product.colors.map((cOpt, cIdx) => {
@@ -447,7 +457,7 @@ export const CustomizeGift: React.FC = () => {
                                   key={cIdx}
                                   type="button"
                                   onClick={() => handleSelectColor(product, cOpt.name)}
-                                  className={`px-2 py-1 rounded text-[10px] font-sans font-bold transition border flex items-center gap-1.5 cursor-pointer ${
+                                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-[10px] font-sans font-bold transition border flex items-center gap-1 cursor-pointer ${
                                     isSelected
                                       ? 'bg-gold text-background border-gold shadow'
                                       : 'bg-charcoal text-ivory/80 border-gold/20 hover:border-gold/50'
@@ -455,11 +465,11 @@ export const CustomizeGift: React.FC = () => {
                                 >
                                   {cOpt.hex && (
                                     <span
-                                      className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0 shadow-xs"
+                                      className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full border border-white/20 shrink-0 shadow-xs"
                                       style={{ backgroundColor: cOpt.hex }}
                                     />
                                   )}
-                                  <span>{cOpt.name}</span>
+                                  <span className="truncate max-w-[60px] sm:max-w-none">{cOpt.name}</span>
                                 </button>
                               );
                             })}
@@ -473,7 +483,7 @@ export const CustomizeGift: React.FC = () => {
                       <button
                         type="button"
                         disabled
-                        className="w-full py-2 bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-sans uppercase font-bold tracking-wider rounded cursor-not-allowed"
+                        className="w-full py-1.5 sm:py-2 bg-red-950/30 border border-red-900/40 text-red-400 text-[10px] sm:text-xs font-sans uppercase font-bold tracking-wider rounded cursor-not-allowed"
                       >
                         OUT OF STOCK
                       </button>
@@ -482,7 +492,7 @@ export const CustomizeGift: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleUpdateQuantity(product.id, -1)}
-                          className="w-7 h-7 bg-background text-gold hover:bg-gold hover:text-background rounded flex items-center justify-center font-bold text-sm transition cursor-pointer"
+                          className="w-6 h-6 sm:w-7 sm:h-7 bg-background text-gold hover:bg-gold hover:text-background rounded flex items-center justify-center font-bold text-xs sm:text-sm transition cursor-pointer"
                         >
                           -
                         </button>
@@ -491,7 +501,7 @@ export const CustomizeGift: React.FC = () => {
                           type="button"
                           onClick={() => handleUpdateQuantity(product.id, 1)}
                           disabled={qty >= product.stock}
-                          className={`w-7 h-7 bg-background text-gold rounded flex items-center justify-center font-bold text-sm transition ${
+                          className={`w-6 h-6 sm:w-7 sm:h-7 bg-background text-gold rounded flex items-center justify-center font-bold text-xs sm:text-sm transition ${
                             qty >= product.stock ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gold hover:text-background cursor-pointer'
                           }`}
                         >
@@ -502,9 +512,9 @@ export const CustomizeGift: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleAddItem(product)}
-                        className="w-full py-2 bg-charcoal hover:bg-gold hover:text-background border border-gold/30 text-gold text-xs font-sans uppercase font-bold tracking-wider rounded transition duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full py-1.5 sm:py-2 bg-charcoal hover:bg-gold hover:text-background border border-gold/30 text-gold text-[10px] sm:text-xs font-sans uppercase font-bold tracking-wider rounded transition duration-200 flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-sm">add</span>
+                        <span className="material-symbols-outlined text-xs sm:text-sm">add</span>
                         Add to Box
                       </button>
                     )}
@@ -722,6 +732,33 @@ export const CustomizeGift: React.FC = () => {
         </div>
 
       </div>
+
+      {/* FULL-IMAGE ONLY LIGHTBOX MODAL */}
+      {selectedFullImage && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setSelectedFullImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setSelectedFullImage(null)}
+            className="absolute top-4 right-4 text-white/90 hover:text-gold transition-colors bg-charcoal/80 border border-gold/30 rounded-full p-2.5 flex items-center justify-center shadow-lg z-50 cursor-pointer"
+            title="Close Full View"
+          >
+            <span className="material-symbols-outlined text-2xl">close</span>
+          </button>
+          <div
+            className="relative max-w-5xl max-h-[90vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedFullImage}
+              alt="Full Product View"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-gold/30"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
