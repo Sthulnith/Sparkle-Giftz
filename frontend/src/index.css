@@ -60,6 +60,29 @@
   }
 }
 
+/* Material Symbols Icon Loading Optimization — prevents raw text flash (e.g. 'workspace_premium') */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+  overflow: hidden;
+  max-width: 1.5em;
+  max-height: 1.5em;
+  user-select: none;
+  vertical-align: middle;
+}
+
 /* Prevent iOS Safari & Mobile Chrome Auto-Zoom on Input Focus */
 @media screen and (max-width: 768px) {
   input,
