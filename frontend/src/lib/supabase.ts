@@ -160,6 +160,16 @@ export interface ClientReview {
   created_at: string;
 }
 
+export interface GuestTextReview {
+  id?: number;
+  author: string;
+  rating: number;
+  text: string;
+  avatar?: string;
+  verified?: boolean;
+  created_at?: string;
+}
+
 // ─── Product Helpers ───────────────────────────────────────────────────────────
 
 /** Fetch all active gift boxes with their linked inventory items */
@@ -1043,3 +1053,53 @@ export async function uploadReviewPhoto(rawFile: File): Promise<string | null> {
     return null;
   }
 }
+
+// ─── Guest Text Reviews DB Operations ──────────────────────────────────────────
+
+export async function getGuestTextReviews(): Promise<GuestTextReview[]> {
+  const { data, error } = await supabase
+    .from('guest_text_reviews')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.warn('[supabase] getGuestTextReviews warning:', error.message);
+    return [];
+  }
+  return (data as GuestTextReview[]) || [];
+}
+
+export async function createGuestTextReview(input: {
+  author: string;
+  rating: number;
+  text: string;
+}): Promise<GuestTextReview | null> {
+  const avatar = input.author.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'SG';
+  const { data, error } = await supabase
+    .from('guest_text_reviews')
+    .insert({
+      author: input.author,
+      rating: input.rating,
+      text: input.text,
+      avatar,
+      verified: true,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[supabase] createGuestTextReview error:', error.message);
+    return null;
+  }
+  return data as GuestTextReview;
+}
+
+export async function deleteGuestTextReview(id: number): Promise<boolean> {
+  const { error } = await supabase.from('guest_text_reviews').delete().eq('id', id);
+  if (error) {
+    console.error('[supabase] deleteGuestTextReview error:', error.message);
+    return false;
+  }
+  return true;
+}
+

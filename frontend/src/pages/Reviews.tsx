@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getClientReviews, type ClientReview } from '../lib/supabase';
+import { getClientReviews, getGuestTextReviews, createGuestTextReview, type ClientReview } from '../lib/supabase';
 
 interface Review {
   id: number;
@@ -215,14 +215,34 @@ export const Reviews = () => {
 
   useEffect(() => {
     const loadAllReviews = async () => {
-      // 1. Guest Text Testimonials
-      const stored = localStorage.getItem('sparkle_reviews');
-      if (stored) {
-        setReviews(JSON.parse(stored));
+      // 1. Live Supabase Guest Text Reviews
+      const dbGuestReviews = await getGuestTextReviews();
+      
+      let mergedReviews: Review[] = [];
+      if (dbGuestReviews && dbGuestReviews.length > 0) {
+        const formattedDbReviews: Review[] = dbGuestReviews.map((r) => ({
+          id: r.id || Date.now(),
+          author: r.author,
+          rating: r.rating || 5,
+          text: r.text,
+          time: r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently',
+          avatar: r.avatar || r.author.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+          verified: r.verified ?? true,
+        }));
+        mergedReviews = [...formattedDbReviews, ...DEFAULT_REVIEWS];
       } else {
-        localStorage.setItem('sparkle_reviews', JSON.stringify(DEFAULT_REVIEWS));
-        setReviews(DEFAULT_REVIEWS);
+        const stored = localStorage.getItem('sparkle_reviews');
+        if (stored) {
+          try {
+            mergedReviews = JSON.parse(stored);
+          } catch {
+            mergedReviews = DEFAULT_REVIEWS;
+          }
+        } else {
+          mergedReviews = DEFAULT_REVIEWS;
+        }
       }
+      setReviews(mergedReviews);
 
       // 2. Live Supabase Admin Customer Screenshot Reviews
       const liveReviews = await getClientReviews();
@@ -262,14 +282,14 @@ export const Reviews = () => {
     return () => clearInterval(timer);
   }, [reviews.length, isGuestPaused]);
 
-  const handleAddReviewSubmit = (e: React.FormEvent) => {
+  const handleAddReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAuthor || !newText) {
       alert('Please fill out all fields.');
       return;
     }
 
-    const newReview: Review = {
+    const newReviewItem: Review = {
       id: Date.now(),
       author: newAuthor,
       rating: newRating,
@@ -279,7 +299,18 @@ export const Reviews = () => {
       verified: true
     };
 
-    const updated = [newReview, ...reviews];
+    // Save to Supabase Database
+    const dbResult = await createGuestTextReview({
+      author: newAuthor,
+      rating: newRating,
+      text: newText,
+    });
+
+    if (dbResult) {
+      newReviewItem.id = dbResult.id || newReviewItem.id;
+    }
+
+    const updated = [newReviewItem, ...reviews];
     localStorage.setItem('sparkle_reviews', JSON.stringify(updated));
     setReviews(updated);
 
