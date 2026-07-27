@@ -11,53 +11,7 @@ interface Review {
   verified: boolean;
 }
 
-const DEFAULT_REVIEWS: Review[] = [
-  {
-    id: 1,
-    author: 'Pasan Karunanayake',
-    rating: 5,
-    text: "I recently bought a premium corporate curation box from Sparkle Giftz, and I must say, I'm thoroughly impressed! The export-quality selection, elegant gold formatting and presentation are masterclass.",
-    time: '2 days ago',
-    avatar: 'PK',
-    verified: true,
-  },
-  {
-    id: 2,
-    author: 'Senuri Silva',
-    rating: 5,
-    text: "The Noir Classic was a massive hit for my anniversary. The premium chocolates, weighted pen, and velvet-lined casing made it feel extremely bespoke. Fast delivery to Colombo too!",
-    time: '1 week ago',
-    avatar: 'SS',
-    verified: true,
-  },
-  {
-    id: 3,
-    author: 'Dilhara S.',
-    rating: 5,
-    text: "Absolutely exquisite gift box customization. The greeting card was handwritten beautifully. The attention to detail is gold standard.",
-    time: '3 weeks ago',
-    avatar: 'DS',
-    verified: true,
-  },
-  {
-    id: 4,
-    author: 'Thilina Perera',
-    rating: 5,
-    text: "Top-notch customer support and delivery. The executive charcoal set was packed beautifully and handled with utmost care. Highly recommended for corporate gifts.",
-    time: '1 month ago',
-    avatar: 'TP',
-    verified: true,
-  },
-  {
-    id: 5,
-    author: 'Nimanthi Abeyrathne',
-    rating: 5,
-    text: "Unmatched quality and swift doorstep delivery. Loved the luxury presentation!",
-    time: '1 month ago',
-    avatar: 'NA',
-    verified: true,
-  }
-];
+
 
 const REVIEW_PRESETS = [
   { aspect: 'aspect-[3/4]', rotate: '-rotate-1 sm:-rotate-1.5', rounded: 'rounded-[16px]' },
@@ -215,33 +169,48 @@ export const Reviews = () => {
 
   useEffect(() => {
     const loadAllReviews = async () => {
+      const dummyNames = ['Pasan Karunanayake', 'Senuri Silva', 'Dilhara S.', 'Thilina Perera', 'Nimanthi Abeyrathne'];
+
       // 1. Live Supabase Guest Text Reviews
       const dbGuestReviews = await getGuestTextReviews();
       
       let mergedReviews: Review[] = [];
       if (dbGuestReviews && dbGuestReviews.length > 0) {
-        const formattedDbReviews: Review[] = dbGuestReviews.map((r) => ({
-          id: r.id || Date.now(),
-          author: r.author,
-          rating: r.rating || 5,
-          text: r.text,
-          time: r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently',
-          avatar: r.avatar || r.author.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-          verified: r.verified ?? true,
-        }));
-        mergedReviews = [...formattedDbReviews, ...DEFAULT_REVIEWS];
-      } else {
-        const stored = localStorage.getItem('sparkle_reviews');
-        if (stored) {
-          try {
-            mergedReviews = JSON.parse(stored);
-          } catch {
-            mergedReviews = DEFAULT_REVIEWS;
+        mergedReviews = dbGuestReviews
+          .filter(r => !dummyNames.includes(r.author))
+          .map((r) => ({
+            id: r.id || Date.now(),
+            author: r.author,
+            rating: r.rating || 5,
+            text: r.text,
+            time: r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently',
+            avatar: r.avatar || r.author.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+            verified: r.verified ?? true,
+          }));
+      }
+
+      // Check localStorage for any local real reviews, filtering out dummy reviews
+      const stored = localStorage.getItem('sparkle_reviews');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as Review[];
+          const filteredLocal = parsed.filter(r => !dummyNames.includes(r.author));
+          // Update localStorage to strip dummy reviews permanently
+          localStorage.setItem('sparkle_reviews', JSON.stringify(filteredLocal));
+          
+          // Merge unique by ID
+          const existingIds = new Set(mergedReviews.map(r => r.id));
+          for (const item of filteredLocal) {
+            if (!existingIds.has(item.id)) {
+              mergedReviews.push(item);
+              existingIds.add(item.id);
+            }
           }
-        } else {
-          mergedReviews = DEFAULT_REVIEWS;
+        } catch {
+          // Ignore parse errors
         }
       }
+
       setReviews(mergedReviews);
 
       // 2. Live Supabase Admin Customer Screenshot Reviews
