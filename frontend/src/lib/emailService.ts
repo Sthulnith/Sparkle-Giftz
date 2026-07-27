@@ -69,9 +69,9 @@ export async function sendOrderStatusEmail(
     ? `Dear ${order.customer_name},\n\nYour gift box order #${orderRef} has been confirmed by Sparkle Giftz.\n\nOrder Summary:\n• Reference Number: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Items: ${itemSummary}\n\nOur team is currently preparing your order. We will notify you when it is dispatched.\n\nIf you have any questions, feel free to reply to this email or contact our concierge desk.\n\nWarm regards,\nSparkle Giftz Team\nhttps://sparklegiftz.com`
     : `Dear ${order.customer_name},\n\nThis is an update regarding your order #${orderRef} with Sparkle Giftz.\n\nYour order #${orderRef} (Total: Rs.${order.total.toLocaleString()}.00) has been cancelled.\n\nIf you have any questions or would like to discuss alternative gift box curations, please reply to this email or reach out to our concierge desk.\n\nKind regards,\nSparkle Giftz Team\nhttps://sparklegiftz.com`;
 
-  const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+  const serviceId  = import.meta.env.VITE_EMAILJS_SERVICE_ID  || 'fywpymfldfjlznyc';
+  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_u8p17vr';
+  const publicKey  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY  || 'mJHJigm4VSTq0o4ls';
 
   // If EmailJS env credentials are not provided, trigger mailto fallback
   if (!serviceId || !templateId || !publicKey) {
@@ -171,9 +171,9 @@ export async function sendOrderPlacementEmail(
 
   const messageBody = `Dear ${order.customer_name},\n\nThank you for placing your luxury gift box order with Sparkle Giftz!\n\nOrder Details:\n• Order Reference: ${orderRef}\n• Total Amount: Rs.${order.total.toLocaleString()}.00\n• Payment Option: ${order.payment_method || 'Standard Payment'}\n• Delivery Date: ${order.delivery_date || 'Standard Delivery'}\n• Items: ${itemSummary}\n\nWe have received your order and our concierge team is currently preparing your gift set.\n\nWarm regards,\nSparkle Giftz Concierge\nhttps://sparklegiftz.com`;
 
-  const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-  const publicKey  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+  const serviceId  = import.meta.env.VITE_EMAILJS_SERVICE_ID  || 'fywpymfldfjlznyc';
+  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_u8p17vr';
+  const publicKey  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY  || 'mJHJigm4VSTq0o4ls';
 
   // Debug: log masked credentials to confirm .env is loaded correctly
   console.log('[EmailService] Credentials check — serviceId:', serviceId, '| templateId:', templateId, '| publicKey:', publicKey ? publicKey.slice(0, 6) + '...' : 'MISSING');
